@@ -1,0 +1,9 @@
+[workspace]
+
+members = [
+    "rx",
+    "rx-net",
+    "rx-db",
+    "rx-web",
+    "rx-rest",
+]
