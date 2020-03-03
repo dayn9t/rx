@@ -6,5 +6,5 @@ members = [
     "rx-db",
     "rx-web",
     "rx-rest",
-    "bookworm",
+    "binder",
 ]
