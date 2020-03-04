@@ -1,109 +1,87 @@
-use hyper_tls::HttpsConnector;
-use hyper::Client;
-use hyper::rt::{self, Stream, Future};
+mod encoding;
 
-use html5ever::rcdom::{RcDom, Handle};
-use html5ever::tendril::StrTendril;
+use http_req::request;
+
+#[macro_use]
+extern crate html5ever;
+
 use html5ever::parse_document;
+use html5ever::rcdom::{Handle, NodeData, RcDom};
 use html5ever::tendril::TendrilSink;
-use html5ever::rcdom::NodeData;
 
-use std::collections::HashSet;
-use std::default::Default;
-use std::sync::Arc;
-use std::borrow::Borrow;
-use std::clone::Clone;
+// This is not proper HTML serialization, of course.
 
-use futures::future;
+fn walk(indent: usize, handle: &Handle) {
+    let node = handle;
+    // FIXME: don't allocate
+    //    print!("{}", repeat(" ").take(indent).collect::<String>());
+    match node.data {
+        NodeData::Document => println!("#Document"),
 
-#[derive(Clone)]
-struct FocusHref {
-    ahref: HashSet<String>,
-    imghref: HashSet<String>,
+        NodeData::Doctype {
+            ref name,
+            ref public_id,
+            ref system_id,
+        } => println!("<!DOCTYPE {} \"{}\" \"{}\">", name, public_id, system_id),
+
+        NodeData::Text { ref contents } => {
+            println!("#text: {}", escape_default(&contents.borrow()))
+        }
+
+        NodeData::Comment { ref contents } => println!("<!-- {} -->", escape_default(contents)),
+
+        NodeData::Element {
+            ref name,
+            ref attrs,
+            ..
+        } => {
+            assert!(name.ns == ns!(html));
+            print!("<{}", name.local);
+            for attr in attrs.borrow().iter() {
+                assert!(attr.name.ns == ns!());
+                print!(" {}=\"{}\"", attr.name.local, attr.value);
+            }
+            println!(">");
+        }
+
+        NodeData::ProcessingInstruction { .. } => unreachable!(),
+    }
+
+    for child in node.children.borrow().iter() {
+        walk(indent + 4, child);
+    }
 }
 
-impl FocusHref {
-    fn new(url: String) -> impl Future<Item=FocusHref, Error=()> {
-        let url: hyper::Uri = url.parse().unwrap();
-        let https = HttpsConnector::new(4).unwrap();
-        let client = Client::builder().build::<_, hyper::Body>(https);
-        let mut dummy = Arc::new(
-            FocusHref {
-                ahref: HashSet::new(),
-                imghref: HashSet::new(),
-            });
-        let done = client.get(url).map(move |res| {
-            let before = res.into_body().chunks(100).into_future().and_then(move |resource| {
-                if let Some(ref items) = resource.0 {
-                    let mut str_tendrils: Vec<StrTendril> = Vec::new();
-                    for item in items.into_iter() {
-                        let tendril = StrTendril::from(std::str::from_utf8(item.as_ref()).unwrap());
-                        str_tendrils.push(tendril);
-                    }
-                    let dom = parse_document(RcDom::default(), Default::default()).from_iter(str_tendrils);
-                    Arc::make_mut(&mut dummy).visit(dom.document);
-                    return Ok(Arc::make_mut(&mut dummy).clone());
-                } else {
-                    panic!("occur error!");
-                }
-            }).wait().unwrap();
-            return before;
-        }).map_err(|_| {});
-        return done;
-    }
-    fn visit(&mut self, handle: Handle) {
-        let nodes = handle;
-        match nodes.data {
-            NodeData::Element {
-                ref name,
-                ref attrs,
-                ..
-            } => {
-                let a_span = "a";
-                let img_span = "img";
-                let local_checking = &name.local.to_string();
-                let attr_span = "href";
-                let img_attr = "data-src";
-                if local_checking == a_span {
-                    for attr in attrs.borrow().iter() {
-                        let attr_checking = &attr.name.local.to_string();
-                        if attr_checking == attr_span {
-                            self.ahref.insert(attr.value.to_string());
-                        }
-                    }
-                }
-                if local_checking == img_span {
-                    for attr in attrs.borrow().iter() {
-                        let attr_checking = &attr.name.local.to_string();
-                        if attr_checking == img_attr {
-                            self.imghref.insert(attr.value.to_string());
-                        }
-                    }
-                }
-            }
-            _ => ()
-        }
-        for child in nodes.children.borrow().iter() {
-            self.visit(child.clone());
-        }
-    }
+pub fn escape_default(s: &str) -> String {
+    s.chars().flat_map(|c| c.escape_default()).collect()
 }
 
 fn main() {
-    let focus = FocusHref::new("https://alpha.wallhaven.cc/random".to_string());
-    let done = focus.and_then(|hrefs| {
-        println!("<a> label href list ---------->");
-        for elem in hrefs.ahref.iter() {
-            println!("{}", elem);
-        }
-        println!("ending of <a> label href list ---------");
-        println!("<img> label href list ---------->");
-        for elem in hrefs.imghref.iter() {
-            println!("{}", elem);
-        }
-        println!("ending of <img> label href list --------");
-        return Ok(());
-    }).map_err(|_| {});
-    rt::run(done);
-}
+    //let url = "http://116.228.67.70:30080/";
+    let url = "https://www.i7wx.com/book/54/54350/";
+    let mut writer = Vec::new(); //container for body of a response
+    let res = request::get(url, &mut writer).unwrap();
 
+    println!("res: {}", res.headers());
+
+    println!("Status: {} {}", res.status_code(), res.reason());
+    println!("Len: {}", writer.len());
+
+    if let Some(s) = encoding::to_utf8(&writer) {
+        println!("result: ##{}##", s);
+    }
+
+    let stdin = io::stdin();
+    let dom = parse_document(RcDom::default(), Default::default())
+        .from_utf8()
+        .read_from(&mut stdin.lock())
+        .unwrap();
+    walk(0, &dom.document);
+
+    if !dom.errors.is_empty() {
+        println!("\nParse errors:");
+        for err in dom.errors.iter() {
+            println!("    {}", err);
+        }
+    }
+}

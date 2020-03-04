@@ -7,7 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hyper_tls = "*"
+#hyper-tls = "*"
+#html5ever = "*"
+#hyper = "*"
+#futures = "*"
+http_req = "*"
+
+encoding_rs = "*"
 html5ever = "*"
-hyper = "*"
-futures = "*"
