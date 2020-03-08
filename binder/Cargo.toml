@@ -16,3 +16,7 @@ http_req = "*"
 encoding_rs = "*"
 html5ever = "*"
 regex = "*"
+
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
