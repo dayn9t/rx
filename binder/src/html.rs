@@ -48,7 +48,7 @@ impl Document {
 pub struct Node {
     pub name: String,
     pub attrs: HashMap<String, String>,
-    pub texts: Vec<String>,
+    pub text: Vec<String>,
     pub children: Vec<Box<Node>>,
 }
 
@@ -64,37 +64,31 @@ pub fn walk(handle: &Handle) -> Node {
     let mut node = Node::default();
 
     match handle.data {
-        NodeData::Document => {}
+        NodeData::Document => {
+            node.name = "Document".to_string();
+        }
         NodeData::Element {
             ref name,
             ref attrs,
             ..
         } => {
-            //t child = Box::new( Node::default());
-            let mut child_node = Node::default();
-            println!("## Element {}", name.local);
-            child_node.name = name.local.to_string();
+            node.name = name.local.to_string();
 
             for attr in attrs.borrow().iter() {
-                print!(" {}=\"{}\"", attr.name.local, attr.value);
-                child_node.attrs.insert(attr.name.local.to_string(), attr.value.to_string());
+                //print!(" {}=\"{}\"", attr.name.local, attr.value);
+                node.attrs.insert(attr.name.local.to_string(), attr.value.to_string());
             }
-
-            node.children.push(Box::new(child_node));
         }
-        _ => {
-
-        }
+        _ =>  unreachable!()
     }
-
 
     for child in handle.children.borrow().iter() {
         let mut is_node = false;
         match child.data {
             NodeData::Document => is_node = true,
-            NodeData::Element => is_node = true,
-            NodeData::Text => {
-                node.texts.push(contents.borrow().to_string());
+            NodeData::Element { .. } => is_node = true,
+            NodeData::Text { ref contents } => {
+                node.text.push(contents.borrow().to_string());
             }
             _ => {}
         }
@@ -102,8 +96,6 @@ pub fn walk(handle: &Handle) -> Node {
             let child_node = walk(child);
             node.children.push(Box::new(child_node));
         }
-
-        //walk(child, &mut child_node);
     }
     node
 }
