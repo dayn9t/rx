@@ -1,9 +1,9 @@
 use crate::encoding::gbk_to_utf8;
-use http_req::request;
 use html5ever::parse_document;
 use html5ever::rcdom::{Handle, NodeData, RcDom};
 use html5ever::tendril::TendrilSink;
 use html5ever::LocalName;
+use http_req::request;
 
 pub use serde_json::to_string_pretty as to_json;
 
@@ -13,11 +13,9 @@ use std::collections::HashMap;
 pub use std::io::Result;
 
 /// HTML文档
-pub struct Document
-{
+pub struct Document {
     pub dom: RcDom,
 }
-
 
 impl Document {
     /// 解析数据产生文档对象
@@ -37,7 +35,6 @@ impl Document {
         Ok(Document { dom })
     }
 
-
     /// 获取字符集
     fn get_charset(&self) -> Option<String> {
         find_charset(&self.dom.document)
@@ -52,12 +49,50 @@ pub struct Node {
     pub children: Vec<Box<Node>>,
 }
 
-
 impl Node {
+    /// 获取h1
+    fn find_h1(&self) -> Vec<Node> {
+        let mut nodes = Vec::new();
+
+        nodes
+    }
+
+    /// 遍历节点
+    pub fn walk<F>(&self, fun: F) -> bool
+        where
+            F: FnMut(&Node) -> bool,
+    {
+        if !fun(self) { return false; }
+        for child in &self.children {
+            if !child.walk(fun) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     pub fn to_json(&self) -> String {
         to_json(self).unwrap()
     }
 }
+
+pub struct NodeIterator
+{
+    parents : Option<Box<NodeIterator>>,
+}
+
+
+impl Iterator for NodeIterator {
+    type Item = Node;
+
+    fn next (&mut self) -> Option<Self::Item> {
+
+        Some((curr_fahr, curr_celc))
+    }
+}
+
+
 
 /// 遍历节点
 pub fn walk(handle: &Handle) -> Node {
@@ -76,10 +111,11 @@ pub fn walk(handle: &Handle) -> Node {
 
             for attr in attrs.borrow().iter() {
                 //print!(" {}=\"{}\"", attr.name.local, attr.value);
-                node.attrs.insert(attr.name.local.to_string(), attr.value.to_string());
+                node.attrs
+                    .insert(attr.name.local.to_string(), attr.value.to_string());
             }
         }
-        _ =>  unreachable!()
+        _ => unreachable!(),
     }
 
     for child in handle.children.borrow().iter() {
@@ -100,13 +136,8 @@ pub fn walk(handle: &Handle) -> Node {
     node
 }
 
-
 // 获取属性
-fn find_attr(
-    handle: &Handle,
-    elem_name: &LocalName,
-    attr_name: &LocalName,
-) -> Option<String> {
+fn find_attr(handle: &Handle, elem_name: &LocalName, attr_name: &LocalName) -> Option<String> {
     let node = handle;
 
     match node.data {
@@ -135,14 +166,16 @@ fn find_attr(
     None
 }
 
-
 // 获取字符集
 fn find_charset(handle: &Handle) -> Option<String> {
     //let node = handle;
-    let content = find_attr(handle, &LocalName::from("meta"), &LocalName::from("content"))?;
+    let content = find_attr(
+        handle,
+        &LocalName::from("meta"),
+        &LocalName::from("content"),
+    )?;
 
     let re = regex::Regex::new(r"charset=(\w+)").unwrap();
     let cap = re.captures(&content)?;
     Some(cap.get(1).unwrap().as_str().to_uppercase())
 }
-

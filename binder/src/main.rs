@@ -3,13 +3,11 @@ mod html;
 
 use http_req::request;
 
-
 #[macro_use]
 extern crate html5ever;
 
 #[macro_use]
 extern crate serde_derive;
-
 
 fn main() {
     //let url = "http://116.228.67.70:30080/";
