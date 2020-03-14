@@ -1,35 +1,48 @@
-mod encoding;
-mod html;
-
-use http_req::request;
-
+#[macro_use]
+extern crate clap;
 #[macro_use]
 extern crate html5ever;
-
 #[macro_use]
 extern crate serde_derive;
 
+use std::path::Path;
+
+use http::uri::Builder;
+use http::uri::Uri;
+use http_req::request;
+use serde_json::to_string_pretty as to_json;
+
+mod binder;
+mod encoding;
+mod html;
+
 fn main() {
-    //let url = "http://116.228.67.70:30080/";
+    let matches = clap_app!(binder =>
+        (version: "1.0")
+        (author: "J. <dayn9t@gmail.com>")
+        (about: "Book binder，bind scattered pages into a book")
+        (@subcommand list =>
+            (about: "List all books")
+        )
+        (@subcommand add =>
+            (about: "Add a new book")
+            (@arg URL: +required "URL of pages to be bound")
+            (@arg BOOK: "Sets a custom name for the new book")
+        )
+        (@subcommand remove =>
+            (about: "Remove a book")
+            (@arg BOOK: +required "The book to be removed")
+        )
+        (@subcommand update =>
+            (about: "Update book(s)")
+            (@arg BOOK: "The book to be updated")
+        )
+    ).get_matches();
 
-    //let url = "https://www.i7wx.com/book/54/54350/";
-    let url = "https://www.i7wx.com/book/54/54350/15739329.html";
-    let mut data = Vec::new(); //container for body of a response
-    let res = request::get(url, &mut data).unwrap();
+    let root = Path::new("~/repo/binder");
 
-    //println!("res: {}", res.headers());
-    //println!("Status: {} {}", res.status_code(), res.reason());
 
-    let doc = html::Document::parse(&mut &data[..]).unwrap();
+    //let files = fs::read_dir(root);
 
-    let root = html::walk(&doc.dom.document);
-
-    println!("\nDoc: {}", root.to_json());
-
-    if !doc.dom.errors.is_empty() {
-        //println!("\nParse errors:");
-        for err in doc.dom.errors.iter() {
-            //println!("    {}", err);
-        }
-    }
+    file!();
 }
