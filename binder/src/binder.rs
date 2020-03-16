@@ -1,4 +1,4 @@
-use crate::encoding;
+//use crate::encoding;
 use crate::html;
 
 use http_req::request;
@@ -71,8 +71,8 @@ fn main1() {
 
     if !doc.dom.errors.is_empty() {
         //println!("\nParse errors:");
-        for err in doc.dom.errors.iter() {
-            //println!("    {}", err);
-        }
+        //for err in doc.dom.errors.iter() {
+        //println!("    {}", err);
+        //}
     }
 }
