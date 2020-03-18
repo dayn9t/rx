@@ -5,3 +5,7 @@ authors = ["dayn9t <dayn9t@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+rx = { path = "../rx" }
+serde = "*"
+serde_json = "*"
+serde_derive = "*"

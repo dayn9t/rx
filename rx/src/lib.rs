@@ -1,3 +1,10 @@
+#[macro_use]
+mod macros;
+
+pub mod fs;
+
+pub mod text;
+
 #[cfg(test)]
 mod tests {
     #[test]

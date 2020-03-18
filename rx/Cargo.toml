@@ -5,3 +5,8 @@ authors = ["dayn9t <dayn9t@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
+encoding_rs = "*"
+uuid = { version = "0.5", features = ["serde", "v5"] }

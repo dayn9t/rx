@@ -2,8 +2,8 @@
 mod interface;
 pub use self::interface::*;
 
-pub mod dirdb;
-pub mod leveldb;
+pub mod dirdb;;
+pub mod leveldb
 
 
 #[test]
