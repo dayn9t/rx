@@ -1,6 +1,6 @@
-pub use self::dirdb::*;
-pub use self::table::*;
-pub use self::variant::*;
+pub use dirdb::*;
+pub use table::*;
+pub use variant::*;
 
 mod dirdb;
 mod table;

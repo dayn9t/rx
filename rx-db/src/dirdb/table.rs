@@ -2,73 +2,118 @@ use super::dirdb::DirDb;
 use crate::interface::*;
 use rx::{fs, text::*};
 use std::fs::{remove_file, File};
+use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
-pub struct DirTable<T> {
+//#[derive(Size)]
+pub struct DirTable<T: Sized> {
+    name: String,
     path: PathBuf,
-    // data: T,
-    data: Vec<T>,
+    _p: PhantomData<T>,
 }
 
-impl<T: Clone + Serialize + DeserializeOwned> DirTable<T> {
-    // 打开表
-    pub fn open<S: AsRef<str>>(db: &DirDb, name: S) -> Result<Self> {
-        let p = PathBuf::from(db.path.join(Path::new(name.as_ref())));
-        match fs::ensure_dir_exist(&p) {
-            // let v = T;
-            Ok(_) => Ok(DirTable {
-                path: p,
-                data: vec![],
-            }),
-            Err(err) => Err(err),
-        }
+impl<T> DirTable<T> {
+    /// 打开表
+    pub fn open<S>(db: &DirDb, name: S) -> Result<Self>
+        where
+            S: AsRef<str>,
+    {
+        let path = fs::join(&db.path(), &name.as_ref());
+        let ok = fs::ensure_dir_exist(&path)?;
+
+        Ok(DirTable::<T> {
+            name: name.as_ref().into(),
+            path,
+            _p: PhantomData::<T>,
+        })
+    }
+
+    /// 数据库名称
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    /// 数据库名称
+    pub fn path(&self) -> &Path {
+        self.path.as_path()
     }
 
     /// 全路径
-    fn full_path(&self, id: Id) -> PathBuf {
+    fn full_path(&self, id: usize) -> PathBuf {
         self.path.join(format!("{}", id))
     }
 }
 
-impl<T: Clone + Serialize + DeserializeOwned> Table<T> for DirTable<T> {
-    // 获取表名
+impl<T: Sized + Clone + Serialize + DeserializeOwned> Table for DirTable<T> {
+    type Record = T;
+
+    type Id = usize;
+
+    //type Filter = dyn Fn(&Self::Record) -> bool;
+
     fn name(&self) -> String {
         // self.path.file_name().unwrap().into_string().unwrap()
         self.path.file_name().unwrap().to_str().unwrap().to_string()
     }
 
-    // 判断记录是否存在
-    fn exist(&self, id: Id) -> bool {
+    fn exist(&self, id: Self::Id) -> bool {
         self.full_path(id).exists()
     }
 
-    // 查找记录
-    fn find(&self, id: Id) -> Option<Record<T>> {
-        let r: Result<Record<T>> = load_json(&self.full_path(id));
-        //r.into()
-        None
+    fn get(&self, id: Self::Id) -> Option<Self::Record> {
+        let r = load_json(&self.full_path(id));
+        r.ok()
     }
 
-    // 查询记录集
-    fn query(&self, min_id: Id, limit: usize, filter: &Filter<T>) -> Records<T> {
-        vec![]
-    }
-
-    /// 添加记录
-    fn add(&mut self, data: &T) -> Id {
+    fn add(&mut self, record: Self::Record) -> Self::Id {
         0
     }
 
-    /// 更新记录
-    fn update(&mut self, id: Id, data: &T) {
+    fn update(&mut self, id: Self::Id, record: Self::Record) {
         File::create(&self.full_path(id));
         // let mut f = try!(File::create("foo.txt"));
         // try!(f.write_all(b"Hello, world!"));
     }
 
-    /// 删除记录(幂等)
-    fn remove(&mut self, id: Id) {
+    fn remove(&mut self, id: Self::Id) {
         remove_file(self.full_path(id));
+    }
+
+    fn find(
+        &self,
+        min_id: Self::Id,
+        limit: usize,
+        filter: &dyn Fn(&Self::Record) -> bool,
+    ) -> Vec<Self::Record> {
+        let mut rs = Vec::new();
+        let ids = self.find_id(min_id, limit, filter);
+        for id in ids {
+            rs.push(self.get(id).unwrap());
+        }
+        rs
+    }
+
+    fn find_id(
+        &self,
+        min_id: Self::Id,
+        limit: usize,
+        filter: &dyn Fn(&Self::Record) -> bool,
+    ) -> Vec<Self::Id> {
+        Vec::new()
+    }
+
+    fn find_pair(
+        &self,
+        min_id: Self::Id,
+        limit: usize,
+        filter: &dyn Fn(&Self::Record) -> bool,
+    ) -> Vec<(Self::Id, Self::Record)> {
+        let mut rs = Vec::new();
+        let ids = self.find_id(min_id, limit, filter);
+        for id in ids {
+            rs.push((id, self.get(id).unwrap()));
+        }
+        rs
     }
 }
 
@@ -102,4 +147,19 @@ mod tests {
         let db = DirDb::open("db");
         // let students = db.open_table<Student>("student");
     }*/
+}
+
+#[test]
+fn it_works() {
+    #[derive(Clone, Serialize, Deserialize)]
+    struct Student {
+        number: i32,
+        name: String,
+    }
+    let s1 = Student {
+        number: 1,
+        name: "John".to_string(),
+    };
+
+    //let rs1 = Record { id: 100, data: s1 };
 }

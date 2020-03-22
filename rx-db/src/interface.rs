@@ -1,58 +1,63 @@
 use rx::text::*;
 use std::io;
 
-// pub struct Error {
-// pub repr: String,
-// }
-//
-// pub enum Repr {
-// Os(i32), /*    Simple(ErrorKind),
-//    Custom(Box<Custom>), */
-// }
-//
-// pub type Result<T> = result::Result<T, Error>;
-//
+/// 数据库结果
 pub type Result<T> = io::Result<T>;
 
-pub type Id = u64;
-
-// 记录
-#[derive(Serialize, Deserialize, PartialEq)]
-pub struct Record<T> {
-    pub id: Id,
-    // pub creation: SystemTime,
-    // pub modification: SystemTime,
-    pub data: T,
-}
-
-/// 记录集合
-pub type Records<T> = Vec<Record<T>>;
-
-/// 记录过滤器
-pub type Filter<T> = Fn(&Record<T>) -> bool;
 
 /// 数据库表
-pub trait Table<T: Clone + DeserializeOwned + Serialize> {
+pub trait Table {
+    /// 记录类型
+    type Record;
+
+    /// ID类型
+    type Id: Copy;
+
+    /// 过滤条件类型
+    //type Filter: ?Sized; //: Default = Fn(&Self::Record) -> bool;
+    //type Filter: ?Sized;
+
     /// 获取表名
     fn name(&self) -> String;
 
     /// 判断记录是否存在
-    fn exist(&self, id: Id) -> bool;
+    fn exist(&self, id: Self::Id) -> bool;
 
-    /// 查找记录
-    fn find(&self, id: Id) -> Option<Record<T>>;
-
-    /// 查询记录集
-    fn query(&self, min_id: Id, limit: usize, filter: &Filter<T>) -> Records<T>;
+    /// 获取记录
+    fn get(&self, id: Self::Id) -> Option<Self::Record>;
 
     /// 添加记录
-    fn add(&mut self, data: &T) -> Id;
+    fn add(&mut self, record: Self::Record) -> Self::Id;
 
     /// 更新记录
-    fn update(&mut self, id: Id, data: &T);
+    fn update(&mut self, id: Self::Id, record: Self::Record);
 
     /// 删除记录(幂等)
-    fn remove(&mut self, id: Id);
+    fn remove(&mut self, id: Self::Id);
+
+    /// 查询记录集
+    fn find(
+        &self,
+        min_id: Self::Id,
+        limit: usize,
+        filter: &dyn Fn(&Self::Record) -> bool,
+    ) -> Vec<Self::Record>;
+
+    /// 查询Id集
+    fn find_id(
+        &self,
+        min_id: Self::Id,
+        limit: usize,
+        filter: &dyn Fn(&Self::Record) -> bool,
+    ) -> Vec<Self::Id>;
+
+    /// 查询K/V对
+    fn find_pair(
+        &self,
+        min_id: Self::Id,
+        limit: usize,
+        filter: &dyn Fn(&Self::Record) -> bool,
+    ) -> Vec<(Self::Id, Self::Record)>;
 }
 
 /// 数据库变量
@@ -73,10 +78,12 @@ pub trait Variant<T: DeserializeOwned + Serialize> {
     fn set(&self, data: &T);
 }
 
+/*
+
 // 数据库
 pub trait Db {
     // 打开表
-    fn open_table<T, S>(&mut self, s: S) -> Box<Table<T>>
+    fn open_table<T, S>(&mut self, s: S) -> Box<dyn Table<T>>
     where
         T: Clone + DeserializeOwned + Serialize,
         S: AsRef<str>;
@@ -85,7 +92,7 @@ pub trait Db {
     fn remove_table<S: AsRef<str>>(&mut self, s: S);
 
     // 打开变量
-    fn open_variant<T>(&mut self) -> Variant<T>
+    fn open_variant<T>(&mut self) -> dyn Variant<T>
     where
         T: DeserializeOwned + Serialize;
 
@@ -94,3 +101,4 @@ pub trait Db {
     where
         S: AsRef<str>;
 }
+*/

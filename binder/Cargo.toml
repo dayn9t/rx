@@ -19,3 +19,6 @@ regex = "*"
 serde = "*"
 serde_json = "*"
 serde_derive = "*"
+
+rx = { path = "../rx" }
+rx-db = { path = "../rx-db" }

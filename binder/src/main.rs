@@ -7,6 +7,7 @@ extern crate serde_derive;
 use std::path::Path;
 
 mod binder;
+mod book_shelf;
 mod encoding;
 mod html;
 
@@ -35,10 +36,22 @@ fn main() {
     .get_matches();
 
     let root = Path::new("~/repo/binder");
+    let mut shelf = book_shelf::BookShelf::load(root).unwrap();
 
-    //let files = fs::read_dir(root);
-
-    //TODO: 命令行解析，数据库
-
-    file!();
+    if let Some(matches) = matches.subcommand_matches("list") {
+        shelf.list();
+    }
+    if let Some(matches) = matches.subcommand_matches("add") {
+        let url = matches.value_of("URL").unwrap();
+        let name = matches.value_of("BOOK");
+        shelf.add(&url, &name);
+    }
+    if let Some(matches) = matches.subcommand_matches("remove") {
+        let name = matches.value_of("BOOK").unwrap();
+        shelf.remove(&name);
+    }
+    if let Some(matches) = matches.subcommand_matches("update") {
+        let name = matches.value_of("BOOK");
+        shelf.update(&name);
+    }
 }

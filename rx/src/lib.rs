@@ -1,8 +1,11 @@
 #[macro_use]
 mod macros;
 
-pub mod fs;
+#[macro_use]
+extern crate serde_derive;
 
+pub mod fs;
+pub mod id;
 pub mod text;
 
 #[cfg(test)]
