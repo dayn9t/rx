@@ -4,7 +4,6 @@ use std::io;
 /// 数据库结果
 pub type Result<T> = io::Result<T>;
 
-
 /// 数据库表
 pub trait Table {
     /// 记录类型

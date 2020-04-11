@@ -15,8 +15,8 @@ pub struct DirTable<T: Sized> {
 impl<T> DirTable<T> {
     /// 打开表
     pub fn open<S>(db: &DirDb, name: S) -> Result<Self>
-        where
-            S: AsRef<str>,
+    where
+        S: AsRef<str>,
     {
         let path = fs::join(&db.path(), &name.as_ref());
         let ok = fs::ensure_dir_exist(&path)?;
