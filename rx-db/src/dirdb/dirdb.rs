@@ -5,29 +5,34 @@ use rx::text::*;
 use std::path::{Path, PathBuf};
 
 pub struct DirDb {
-    name: String,
     path: PathBuf,
 }
 
 impl DirDb {
+
     /// 打开数据库
-    pub fn open<P, S>(path: &P, name: &S) -> Result<Self>
-    where
-        P: AsRef<Path>,
-        S: AsRef<str>,
+    pub fn open<P>(path: &P) -> Result<Self>
+        where
+            P: AsRef<Path>,
+    {
+        let ok = fs::ensure_dir_exist(&path)?;
+        Ok(DirDb { path: path.to_owned() })
+    }
+
+
+    /// 打开数据库
+    pub fn open_name<P, S>(path: &P, name: &S) -> Result<Self>
+        where
+            P: AsRef<Path>,
+            S: AsRef<str>,
     {
         let path = fs::join(&path, &name.as_ref());
-        let ok = fs::ensure_dir_exist(&path)?;
-
-        Ok(DirDb {
-            name: name.as_ref().into(),
-            path,
-        })
+        open_dir(path)
     }
 
     /// 数据库名称
     pub fn name(&self) -> String {
-        self.name.clone()
+        self.path.file_name().to_owned().unwrap()
     }
 
     /// 数据库名称
@@ -37,9 +42,9 @@ impl DirDb {
 
     /// 打开表
     fn open_table<T, S>(&mut self, table_name: S) -> Result<DirTable<T>>
-    where
-        T: Clone + DeserializeOwned + Serialize,
-        S: AsRef<str>,
+        where
+            T: Clone + DeserializeOwned + Serialize,
+            S: AsRef<str>,
     {
         DirTable::open(self, table_name)
     }

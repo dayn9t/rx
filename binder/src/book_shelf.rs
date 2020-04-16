@@ -1,11 +1,7 @@
 use rx::fs;
 use rx_db::*;
 use std::path::*;
-
-/// 章节信息
-struct ChapterInfo {
-    url: String,
-}
+use std::collections::HashMap;
 
 /// 图书信息
 #[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -14,9 +10,25 @@ struct BookInfo {
     name: String,
 }
 
+
+/// 章节信息
+struct ChapterInfo {
+    title: String,
+    url: String,
+}
+
+
+/// 目录，存整个文件里
+struct CatalogInfo
+{
+    entries: Vec<ChapterInfo>,
+}
+
+/// 书架信息
 pub struct BookShelf {
     db: DirDb,
     book_tab: DirTable<BookInfo>,
+    catalog_tab: DirTable<CatalogInfo>,
     //path: PathBuf,
 }
 
@@ -26,11 +38,15 @@ impl BookShelf {
         let db = DirDb::open(&path, &"db")?;
 
         let book_tab = DirTable::open(&db, "book")?;
+        let catalog_tab = DirTable::open(&db, "calalog");
+
+
+        //TODO: 加载
 
         Ok(BookShelf {
             db,
             book_tab,
-            //path: path.to_owned(),
+            catalog_tab,
         })
     }
 
@@ -65,5 +81,9 @@ impl BookShelf {
     /// 更新
     pub fn update(&mut self, name: &Option<&str>) {
         println!("update: {:?}", name);
+        let rs = self.book_tab.find_pair(0, 0, &|_r| true);
+        for (id, r) in rs {
+            println!("#{} {} {}", id, r.name, r.url);
+        }
     }
 }
