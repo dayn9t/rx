@@ -7,7 +7,6 @@ use html5ever::tendril::TendrilSink;
 
 use crate::encoding::gbk_to_utf8;
 
-
 /// HTML文档
 pub struct Document {
     pub dom: RcDom,

@@ -1,9 +1,10 @@
 #[macro_use]
 extern crate clap;
-extern crate html5ever;
+
 #[macro_use]
 extern crate serde_derive;
 
+use rx::fs;
 use std::path::Path;
 
 mod binder;
@@ -35,8 +36,8 @@ fn main() {
     )
     .get_matches();
 
-    let root = Path::new("~/repo/binder");
-    let mut shelf = book_shelf::BookShelf::load(root).unwrap();
+    let root = fs::config_dir_of("binder");
+    let mut shelf = book_shelf::BookShelf::load(&root).unwrap();
 
     if let Some(matches) = matches.subcommand_matches("list") {
         shelf.list();

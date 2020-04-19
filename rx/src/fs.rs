@@ -1,3 +1,4 @@
+use dirs;
 use std::ffi::OsStr;
 use std::fs::{self, DirEntry};
 use std::io;
@@ -12,6 +13,14 @@ where
     let mut p = p1.as_ref().to_owned();
     p.push(p2.as_ref());
     p
+}
+
+/// 配置目录
+pub fn config_dir_of<S>(name: S) -> PathBuf
+where
+    S: AsRef<str>,
+{
+    join(&dirs::config_dir().unwrap(), &name.as_ref())
 }
 
 /// 确保目录存在
