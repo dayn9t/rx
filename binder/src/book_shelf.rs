@@ -36,8 +36,8 @@ impl BookShelf {
 
         println!("path: {:?}", path);
 
-        let book_tab = DirTable::open(&db, "book")?;
-        let catalog_tab = DirTable::open(&db, "calalog")?;
+        let book_tab = DirTable::open(&db, &"book")?;
+        let catalog_tab = DirTable::open(&db, &"calalog")?;
 
         Ok(BookShelf {
             db,
@@ -49,7 +49,7 @@ impl BookShelf {
     /// 列表
     pub fn list(&self) {
         println!("list all1");
-        let rs = self.book_tab.find_pair(0, 0, &|_r| true);
+        let rs = self.book_tab.find_pair(0, 0, &|_r| true).unwrap();
         for (id, r) in rs {
             println!("#{} {} {}", id, r.name, r.url);
         }
@@ -62,14 +62,14 @@ impl BookShelf {
             url: url.to_string(),
             name: name.unwrap().to_string(),
         };
-        self.book_tab.add(book);
+        self.book_tab.add(book).unwrap();
     }
 
     /// 删除
     pub fn remove(&mut self, name: &str) {
-        let rs = self.book_tab.find_id(0, 10, &|r| r.name == name);
+        let rs = self.book_tab.find_id(0, 10, &|r| r.name == name).unwrap();
         if let Some(id) = rs.get(0) {
-            self.book_tab.remove(*id);
+            self.book_tab.remove(*id).unwrap();
         }
         println!("remove: {}", name);
     }
@@ -77,7 +77,7 @@ impl BookShelf {
     /// 更新
     pub fn update(&mut self, name: &Option<&str>) {
         println!("update: {:?}", name);
-        let rs = self.book_tab.find_pair(0, 0, &|_r| true);
+        let rs = self.book_tab.find_pair(0, 0, &|_r| true).unwrap();
         for (id, r) in rs {
             println!("#{} {} {}", id, r.name, r.url);
         }

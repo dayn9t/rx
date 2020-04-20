@@ -4,6 +4,14 @@ use std::fs::{self, DirEntry};
 use std::io;
 pub use std::path::{Path, PathBuf};
 
+/// 获取文件名
+pub fn file_name<P>(p: &P) -> &str
+where
+    P: AsRef<Path>,
+{
+    p.as_ref().file_name().unwrap().to_str().unwrap()
+}
+
 /// 路径连接
 pub fn join<P1, P2>(p1: &P1, p2: &P2) -> PathBuf
 where
@@ -39,6 +47,19 @@ where
             io::ErrorKind::AlreadyExists,
             "path not a dir!",
         ))
+    }
+}
+
+/// 删除路径（文件/目录）
+pub fn remove<P>(path: &P) -> io::Result<()>
+where
+    P: AsRef<Path>,
+{
+    let path = path.as_ref();
+    if path.is_dir() {
+        fs::remove_dir_all(path)
+    } else {
+        fs::remove_file(path)
     }
 }
 

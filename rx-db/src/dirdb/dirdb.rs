@@ -1,5 +1,6 @@
 use super::table::*;
 use crate::interface::*;
+use crate::DirVarient;
 use rx::fs;
 use rx::text::*;
 use std::path::{Path, PathBuf};
@@ -35,18 +36,61 @@ impl DirDb {
         self.path.file_name().unwrap().to_str().unwrap().to_owned()
     }
 
-    /// 数据库名称
+    /// 数据库路径
     pub fn path(&self) -> &Path {
         self.path.as_path()
     }
 
-    /// 打开表
-    fn open_table<T, S>(&mut self, table_name: S) -> Result<DirTable<T>>
+    /// 打开数据库变量
+    fn open_varient<T, S>(&mut self, name: S) -> Result<DirVarient<T>>
     where
         T: Clone + DeserializeOwned + Serialize,
         S: AsRef<str>,
     {
-        DirTable::open(self, table_name)
+        DirVarient::open(self, name)
+    }
+
+    /// 数据库变量路径
+    pub fn varient_path<S>(&self, name: S) -> PathBuf
+    where
+        S: AsRef<str>,
+    {
+        let mut path = fs::join(&self.path(), &name.as_ref());
+        path.set_extension("json");
+        path
+    }
+
+    /// 删除数据库变量
+    pub fn remove_varient<S>(&self, name: S) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
+        fs::remove(&self.varient_path(name))
+    }
+
+    /// 打开数据库表
+    fn open_table<T, S>(&mut self, name: &S) -> Result<DirTable<T>>
+    where
+        T: Clone + DeserializeOwned + Serialize,
+        S: AsRef<str>,
+    {
+        DirTable::open(self, name)
+    }
+
+    /// 数据库表路径
+    pub fn table_path<S>(&self, name: S) -> PathBuf
+    where
+        S: AsRef<str>,
+    {
+        fs::join(&self.path(), &name.as_ref())
+    }
+
+    /// 删除数据库表
+    pub fn remove_table<S>(&self, name: S) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
+        fs::remove(&self.table_path(name))
     }
 }
 

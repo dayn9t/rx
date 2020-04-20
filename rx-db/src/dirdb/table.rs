@@ -1,36 +1,32 @@
-use super::dirdb::DirDb;
-use crate::interface::*;
-use rx::{fs, text::*};
 use std::fs::{remove_file, File};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
+use rx::{fs, text::*};
+
+use crate::interface::*;
+
+use super::dirdb::DirDb;
+
 //#[derive(Size)]
-pub struct DirTable<T: Sized> {
-    name: String,
+pub struct DirTable<T> {
     path: PathBuf,
     _p: PhantomData<T>,
 }
 
 impl<T> DirTable<T> {
     /// 打开表
-    pub fn open<S>(db: &DirDb, name: S) -> Result<Self>
+    pub fn open<S>(db: &DirDb, name: &S) -> Result<Self>
     where
         S: AsRef<str>,
     {
-        let path = fs::join(&db.path(), &name.as_ref());
+        let path = db.table_path(name);
         let ok = fs::ensure_dir_exist(&path)?;
 
         Ok(DirTable::<T> {
-            name: name.as_ref().into(),
             path,
             _p: PhantomData::<T>,
         })
-    }
-
-    /// 数据库名称
-    pub fn name(&self) -> String {
-        self.name.clone()
     }
 
     /// 数据库名称
@@ -40,43 +36,42 @@ impl<T> DirTable<T> {
 
     /// 全路径
     fn full_path(&self, id: usize) -> PathBuf {
-        self.path.join(format!("{}", id))
+        self.path.join(format!("{}.json", id))
     }
 }
 
-impl<T: Sized + Clone + Serialize + DeserializeOwned> Table for DirTable<T> {
+impl<T: Serialize + DeserializeOwned> Table for DirTable<T> {
     type Record = T;
 
     type Id = usize;
 
     //type Filter = dyn Fn(&Self::Record) -> bool;
 
-    fn name(&self) -> String {
-        // self.path.file_name().unwrap().into_string().unwrap()
-        self.path.file_name().unwrap().to_str().unwrap().to_string()
+    fn name(&self) -> &str {
+        fs::file_name(&self.path)
     }
 
     fn exist(&self, id: Self::Id) -> bool {
         self.full_path(id).exists()
     }
 
-    fn get(&self, id: Self::Id) -> Option<Self::Record> {
-        let r = load_json(&self.full_path(id));
-        r.ok()
+    fn get(&self, id: Self::Id) -> Result<Self::Record> {
+        load_json(&self.full_path(id))
     }
 
-    fn add(&mut self, record: Self::Record) -> Self::Id {
-        0
+    fn add(&mut self, record: Self::Record) -> Result<Self::Id> {
+        Ok(0)
     }
 
-    fn update(&mut self, id: Self::Id, record: Self::Record) {
+    fn update(&mut self, id: Self::Id, record: Self::Record) -> Result<()> {
         File::create(&self.full_path(id));
         // let mut f = try!(File::create("foo.txt"));
         // try!(f.write_all(b"Hello, world!"));
+        Ok(())
     }
 
-    fn remove(&mut self, id: Self::Id) {
-        remove_file(self.full_path(id));
+    fn remove(&mut self, id: Self::Id) -> Result<()> {
+        remove_file(self.full_path(id))
     }
 
     fn find(
@@ -84,13 +79,13 @@ impl<T: Sized + Clone + Serialize + DeserializeOwned> Table for DirTable<T> {
         min_id: Self::Id,
         limit: usize,
         filter: &dyn Fn(&Self::Record) -> bool,
-    ) -> Vec<Self::Record> {
+    ) -> Result<Vec<Self::Record>> {
         let mut rs = Vec::new();
-        let ids = self.find_id(min_id, limit, filter);
+        let ids = self.find_id(min_id, limit, filter)?;
         for id in ids {
-            rs.push(self.get(id).unwrap());
+            rs.push(self.get(id)?);
         }
-        rs
+        Ok(rs)
     }
 
     fn find_id(
@@ -98,8 +93,9 @@ impl<T: Sized + Clone + Serialize + DeserializeOwned> Table for DirTable<T> {
         min_id: Self::Id,
         limit: usize,
         filter: &dyn Fn(&Self::Record) -> bool,
-    ) -> Vec<Self::Id> {
-        Vec::new()
+    ) -> Result<Vec<Self::Id>> {
+        let ids = Vec::new();
+        Ok(ids)
     }
 
     fn find_pair(
@@ -107,59 +103,41 @@ impl<T: Sized + Clone + Serialize + DeserializeOwned> Table for DirTable<T> {
         min_id: Self::Id,
         limit: usize,
         filter: &dyn Fn(&Self::Record) -> bool,
-    ) -> Vec<(Self::Id, Self::Record)> {
+    ) -> Result<Vec<(Self::Id, Self::Record)>> {
         let mut rs = Vec::new();
-        let ids = self.find_id(min_id, limit, filter);
+        let ids = self.find_id(min_id, limit, filter)?;
         for id in ids {
-            rs.push((id, self.get(id).unwrap()));
+            rs.push((id, self.get(id)?));
         }
-        rs
+        Ok(rs)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    /*
-    extern crate test;
-    use self::Animal::*;
-    use self::test::Bencher;
-    use {Encodable, Decodable};
+    use super::*;
 
-
-    #[derive(RustcDecodable, Eq, PartialEq, Debug)]
-    struct OptionData {
-        opt: Option<usize>,
-    }
-
-    #[test]
-    fn test_decode_option_none() {
-        let s = "{}";
-        let obj: OptionData = super::decode(s).unwrap();
-        assert_eq!(obj, OptionData { opt: None });
-    }
-    #[test]
-    fn it_works() {
-        struct Student {
-            number: i32,
-            name: String,
-        }
-
-        let db = DirDb::open("db");
-        // let students = db.open_table<Student>("student");
-    }*/
-}
-
-#[test]
-fn it_works() {
     #[derive(Clone, Serialize, Deserialize)]
     struct Student {
         number: i32,
         name: String,
     }
-    let s1 = Student {
-        number: 1,
-        name: "John".to_string(),
-    };
 
-    //let rs1 = Record { id: 100, data: s1 };
+    #[test]
+    fn it_works() {
+        let db = DirDb::open(&"/tmp/test/dirdb1").unwrap();
+        let mut student_tab = DirTable::open(&db, &"student").unwrap();
+
+        let s1 = Student {
+            number: 1,
+            name: "John".to_string(),
+        };
+        let s2 = Student {
+            number: 2,
+            name: "Jack".to_string(),
+        };
+
+        student_tab.add(s1);
+        student_tab.add(s2);
+    }
 }

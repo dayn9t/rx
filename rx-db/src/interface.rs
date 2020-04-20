@@ -2,7 +2,7 @@ use rx::text::*;
 use std::io;
 
 /// 数据库结果
-pub type Result<T> = io::Result<T>;
+pub use io::Result;
 
 /// 数据库表
 pub trait Table {
@@ -17,22 +17,22 @@ pub trait Table {
     //type Filter: ?Sized;
 
     /// 获取表名
-    fn name(&self) -> String;
+    fn name(&self) -> &str;
 
     /// 判断记录是否存在
     fn exist(&self, id: Self::Id) -> bool;
 
     /// 获取记录
-    fn get(&self, id: Self::Id) -> Option<Self::Record>;
+    fn get(&self, id: Self::Id) -> Result<Self::Record>;
 
     /// 添加记录
-    fn add(&mut self, record: Self::Record) -> Self::Id;
+    fn add(&mut self, record: Self::Record) -> Result<Self::Id>;
 
     /// 更新记录
-    fn update(&mut self, id: Self::Id, record: Self::Record);
+    fn update(&mut self, id: Self::Id, record: Self::Record) -> Result<()>;
 
     /// 删除记录(幂等)
-    fn remove(&mut self, id: Self::Id);
+    fn remove(&mut self, id: Self::Id) -> Result<()>;
 
     /// 查询记录集
     fn find(
@@ -40,7 +40,7 @@ pub trait Table {
         min_id: Self::Id,
         limit: usize,
         filter: &dyn Fn(&Self::Record) -> bool,
-    ) -> Vec<Self::Record>;
+    ) -> Result<Vec<Self::Record>>;
 
     /// 查询Id集
     fn find_id(
@@ -48,7 +48,7 @@ pub trait Table {
         min_id: Self::Id,
         limit: usize,
         filter: &dyn Fn(&Self::Record) -> bool,
-    ) -> Vec<Self::Id>;
+    ) -> Result<Vec<Self::Id>>;
 
     /// 查询K/V对
     fn find_pair(
@@ -56,25 +56,35 @@ pub trait Table {
         min_id: Self::Id,
         limit: usize,
         filter: &dyn Fn(&Self::Record) -> bool,
-    ) -> Vec<(Self::Id, Self::Record)>;
+    ) -> Result<Vec<(Self::Id, Self::Record)>>;
 }
 
 /// 数据库变量
-pub trait Variant<T: DeserializeOwned + Serialize> {
+pub trait Variant {
+    /// 记录类型
+    type Record: Default;
+
     /// 获取变量名
-    fn name(&self) -> String;
+    fn name(&self) -> &str;
 
     /// 判断变量是否存在
     fn exist(&self) -> bool;
 
     /// 获取变量值
-    fn get(&self) -> Option<T>;
+    fn get(&self) -> Result<Self::Record>;
 
     /// 获取变量值/缺省值
-    fn get_or(&self, v: &T) -> T;
+    fn get_or(&self, record: Self::Record) -> Self::Record {
+        self.get().unwrap_or(record)
+    }
+
+    /// 获取变量值/缺省值
+    fn get_or_default(&self) -> Self::Record {
+        self.get_or(Self::Record::default())
+    }
 
     /// 设置变量值
-    fn set(&self, data: &T);
+    fn set(&mut self, record: &Self::Record) -> Result<()>;
 }
 
 /*
