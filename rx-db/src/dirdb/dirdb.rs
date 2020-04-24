@@ -1,6 +1,7 @@
 use super::table::*;
+use super::variant::*;
 use crate::interface::*;
-use crate::DirVarient;
+
 use rx::fs;
 use rx::text::*;
 use std::path::{Path, PathBuf};
@@ -32,8 +33,8 @@ impl DirDb {
     }
 
     /// 数据库名称
-    pub fn name(&self) -> String {
-        self.path.file_name().unwrap().to_str().unwrap().to_owned()
+    pub fn name(&self) -> &str {
+        self.path.file_name().unwrap().to_str().unwrap()
     }
 
     /// 数据库路径
@@ -94,7 +95,14 @@ impl DirDb {
     }
 }
 
-#[test]
-fn it_works() {
-    //let db = DirDb::open("db");
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn db_works() {
+        let db = DirDb::open(&"/tmp/test/dirdb1").unwrap();
+
+        assert_eq!(db.name(), "dirdb1");
+    }
 }

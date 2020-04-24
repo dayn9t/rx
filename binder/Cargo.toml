@@ -22,3 +22,4 @@ serde_derive = "*"
 
 rx = { path = "../rx" }
 rx-db = { path = "../rx-db" }
+rx-web = { path = "../rx-web" }

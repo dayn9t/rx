@@ -1,3 +1,5 @@
+/*
+
 //use crate::encoding;
 use crate::html;
 
@@ -6,6 +8,9 @@ use http_req::request;
 use http::uri::Builder;
 use http::uri::Uri;
 use serde_json::to_string_pretty as to_json;
+
+
+
 
 fn main1() {
     let url = "http://116.228.67.70:30080/";
@@ -76,3 +81,4 @@ fn main1() {
         //}
     }
 }
+*/

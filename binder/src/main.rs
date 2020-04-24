@@ -5,12 +5,9 @@ extern crate clap;
 extern crate serde_derive;
 
 use rx::fs;
-use std::path::Path;
 
 mod binder;
 mod book_shelf;
-mod encoding;
-mod html;
 
 fn main() {
     let matches = clap_app!(binder =>

@@ -5,3 +5,15 @@ authors = ["dayn9t <dayn9t@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+http_req = "*"
+http = "*"
+html5ever = "*"
+
+encoding_rs = "*"
+regex = "*"
+
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
+
+rx = { path = "../rx" }

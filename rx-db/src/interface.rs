@@ -1,8 +1,7 @@
-use rx::text::*;
-use std::io;
+//use std::io;
 
 /// 数据库结果
-pub use io::Result;
+pub use std::io::Result;
 
 /// 数据库表
 pub trait Table {
@@ -10,7 +9,7 @@ pub trait Table {
     type Record;
 
     /// ID类型
-    type Id: Copy;
+    type Id: Default + Copy;
 
     /// 过滤条件类型
     //type Filter: ?Sized; //: Default = Fn(&Self::Record) -> bool;
@@ -26,13 +25,13 @@ pub trait Table {
     fn get(&self, id: Self::Id) -> Result<Self::Record>;
 
     /// 添加记录
-    fn add(&mut self, record: Self::Record) -> Result<Self::Id>;
+    fn post(&mut self, record: &Self::Record) -> Result<Self::Id>;
 
     /// 更新记录
-    fn update(&mut self, id: Self::Id, record: Self::Record) -> Result<()>;
+    fn put(&mut self, id: Self::Id, record: &Self::Record) -> Result<()>;
 
     /// 删除记录(幂等)
-    fn remove(&mut self, id: Self::Id) -> Result<()>;
+    fn delete(&mut self, id: Self::Id) -> Result<()>;
 
     /// 查询记录集
     fn find(
@@ -42,21 +41,24 @@ pub trait Table {
         filter: &dyn Fn(&Self::Record) -> bool,
     ) -> Result<Vec<Self::Record>>;
 
-    /// 查询Id集
-    fn find_id(
-        &self,
-        min_id: Self::Id,
-        limit: usize,
-        filter: &dyn Fn(&Self::Record) -> bool,
-    ) -> Result<Vec<Self::Id>>;
+    /// 查询记录集
+    fn find_all(&self) -> Result<Vec<Self::Record>> {
+        self.find(Self::Id::default(), usize::max_value(), &|_| true)
+    }
 
     /// 查询K/V对
-    fn find_pair(
+    fn find_pairs(
         &self,
         min_id: Self::Id,
         limit: usize,
         filter: &dyn Fn(&Self::Record) -> bool,
     ) -> Result<Vec<(Self::Id, Self::Record)>>;
+
+    /// 查询Id集
+    fn find_ids(&self, min_id: Self::Id) -> Result<Vec<Self::Id>>;
+
+    /// 获取下一个ID
+    fn next_id(&self) -> Result<Self::Id>;
 }
 
 /// 数据库变量
