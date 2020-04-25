@@ -1,12 +1,10 @@
 #[macro_use]
 extern crate clap;
-
 #[macro_use]
 extern crate serde_derive;
 
 use rx::fs;
 
-mod binder;
 mod book_shelf;
 
 fn main() {

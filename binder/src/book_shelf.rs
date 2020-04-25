@@ -37,7 +37,6 @@ impl CatalogInfo {
 
 /// 书架信息
 pub struct BookShelf {
-    db: DirDb,
     book_tab: DirTable<BookInfo>,
     catalog_tab: DirTable<CatalogInfo>,
     //path: PathBuf,
@@ -54,7 +53,6 @@ impl BookShelf {
         let catalog_tab = DirTable::open(&db, &"calalog")?;
 
         Ok(BookShelf {
-            db,
             book_tab,
             catalog_tab,
         })
