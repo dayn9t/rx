@@ -10,6 +10,12 @@ use crate::html;
 //pub use std::io::Result;
 
 #[derive(Default, Clone, Serialize)]
+pub struct Link {
+    pub text: String,
+    pub url: String,
+}
+
+#[derive(Default, Clone, Serialize)]
 pub struct Node {
     pub name: String,
     pub attrs: HashMap<String, String>,
@@ -36,6 +42,23 @@ impl Node {
         self.text.iter().map(|s| s.len()).sum()
     }
 
+    /// 判断节点是否为链接
+    pub fn is_link(&self) -> bool {
+        self.name == "a" && self.text_len() > 0 && self.attrs.contains_key("href")
+    }
+
+    /// 判断节点是否为链接
+    pub fn get_link(&self) -> Option<Link> {
+        if self.is_link() {
+            Some(Link {
+                text: self.text.first().unwrap().clone(),
+                url: self.attrs.get("href").unwrap().clone(),
+            })
+        } else {
+            None
+        }
+    }
+
     /// 查找第一个满足条件的节点
     pub fn find_first<Cond>(&self, fun: &Cond) -> Option<Node>
     where
@@ -51,6 +74,11 @@ impl Node {
             }
         });
         first
+    }
+
+    /// 查找第一个链接节点
+    pub fn find_first_link(&self) -> Option<Node> {
+        self.find_first(&|node| node.is_link())
     }
 
     /// 查找全部满足条件的节点
@@ -92,6 +120,18 @@ impl Node {
     /// 查找最多有子节点的的节点
     pub fn find_max_children(&self) -> Option<Node> {
         self.find_max(&|node: &Node| node.children.len())
+    }
+
+    /// 查找最大链接列表
+    pub fn find_max_links(&self) -> Vec<Link> {
+        let mut vec = Vec::new();
+        let node = self.find_max_children().unwrap();
+        for child in node.children {
+            if let Some(node) = child.find_first_link() {
+                vec.push(node.get_link().unwrap());
+            }
+        }
+        vec
     }
 
     /// 获取h1

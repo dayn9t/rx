@@ -17,7 +17,7 @@ fn main() {
     let url_tx = "https://www.biquge.biz/28_28641/";
     let url_tx1 = "https://www.biquge.biz/28_28641/12089871.html";
 
-    let url = url_gy;
+    let url = url_gy1;
 
     let root = Node::pull(url).unwrap();
 
@@ -30,6 +30,8 @@ fn main() {
         to_json(&text_node).unwrap()
     );
 
-    let parent_node = root.find_max_children().unwrap();
-    println!("\nparent_node: {} ", to_json(&parent_node).unwrap());
+    let links = root.find_max_links();
+    println!("\nlins: {} ", to_json(&links).unwrap());
+    //let parent_node = root.find_max_children().unwrap();
+    //println!("\nparent_node: {} ", to_json(&parent_node).unwrap());
 }
