@@ -23,15 +23,11 @@ fn main() {
 
     println!("Title: {}", root.find_title().unwrap());
 
-    let text_node = root.find_max_text().unwrap();
-    println!(
-        "\ntext_node: {} {}",
-        text_node.text_len(),
-        to_json(&text_node).unwrap()
-    );
+    let text_node = root.find_max_text();
+    println!("\ntext: {}", to_json(&text_node).unwrap());
 
     let links = root.find_max_links();
-    println!("\nlins: {} ", to_json(&links).unwrap());
+    println!("\nlinks: {} ", to_json(&links).unwrap());
     //let parent_node = root.find_max_children().unwrap();
     //println!("\nparent_node: {} ", to_json(&parent_node).unwrap());
 }

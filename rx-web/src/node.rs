@@ -113,8 +113,9 @@ impl Node {
     }
 
     /// 查找最大文本的节点
-    pub fn find_max_text(&self) -> Option<Node> {
-        self.find_max(&|node: &Node| node.text_len())
+    pub fn find_max_text(&self) -> Vec<String> {
+        let node = self.find_max(&|node: &Node| node.text_len()).unwrap();
+        node.text
     }
 
     /// 查找最多有子节点的的节点
