@@ -8,9 +8,8 @@ use http_req::request;
 use crate::html;
 
 //pub use std::io::Result;
-
-#[derive(Default, Clone, Serialize)]
-pub struct Link {
+#[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct LinkInfo {
     pub text: String,
     pub url: String,
 }
@@ -48,9 +47,9 @@ impl Node {
     }
 
     /// 判断节点是否为链接
-    pub fn get_link(&self) -> Option<Link> {
+    pub fn get_link(&self) -> Option<LinkInfo> {
         if self.is_link() {
-            Some(Link {
+            Some(LinkInfo {
                 text: self.text.first().unwrap().clone(),
                 url: self.attrs.get("href").unwrap().clone(),
             })
@@ -124,7 +123,7 @@ impl Node {
     }
 
     /// 查找最大链接列表
-    pub fn find_max_links(&self) -> Vec<Link> {
+    pub fn find_max_links(&self) -> Vec<LinkInfo> {
         let mut vec = Vec::new();
         let node = self.find_max_children().unwrap();
         for child in node.children {

@@ -14,6 +14,7 @@ fn main() {
         (about: "Book binder，bind scattered pages into a book")
         (@subcommand list =>
             (about: "List all books")
+            (@arg BOOK: "The book to be updated")
         )
         (@subcommand add =>
             (about: "Add a new book")
@@ -35,7 +36,8 @@ fn main() {
     let mut shelf = book_shelf::BookShelf::load(&root).unwrap();
 
     if let Some(matches) = matches.subcommand_matches("list") {
-        shelf.list();
+        let name = matches.value_of("BOOK");
+        shelf.list(&name);
     }
     if let Some(matches) = matches.subcommand_matches("add") {
         let url = matches.value_of("URL").unwrap();

@@ -1,7 +1,8 @@
 use dirs;
 use std::ffi::OsStr;
+pub use std::fs::File;
 use std::fs::{self, DirEntry};
-pub use std::io::{Error, ErrorKind, Result};
+pub use std::io::*;
 pub use std::path::{Path, PathBuf};
 
 /// 获取文件名
@@ -161,6 +162,21 @@ where
         }
     })?;
     Ok(names)
+}
+
+/// 合并目录内所有文件到一个文件
+pub fn combine_files_in(src_dir: &Path, dst_file: &Path, ext: &str) -> Result<()> {
+    let mut dst_file = File::open(dst_file)?;
+    let mut files = files_in(&src_dir, &ext);
+    files.sort();
+
+    for file in files {
+        let mut file = File::open(file)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        dst_file.write_all(&buf)?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]

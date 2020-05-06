@@ -4,6 +4,7 @@ mod macros;
 #[macro_use]
 extern crate serde_derive;
 
+pub mod algo;
 pub mod fs;
 pub mod id;
 pub mod text;

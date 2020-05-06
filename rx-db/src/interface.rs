@@ -6,7 +6,7 @@ pub use std::io::Result;
 /// 数据库表
 pub trait Table {
     /// 记录类型
-    type Record;
+    type Record: Default;
 
     /// ID类型
     type Id: Default + Copy;
@@ -23,6 +23,16 @@ pub trait Table {
 
     /// 获取记录
     fn get(&self, id: Self::Id) -> Result<Self::Record>;
+
+    /// 获取变量值/缺省值
+    fn get_or(&self, id: Self::Id, record: Self::Record) -> Self::Record {
+        self.get(id).unwrap_or(record)
+    }
+
+    /// 获取变量值/缺省值
+    fn get_or_default(&self, id: Self::Id) -> Self::Record {
+        self.get_or(id, Self::Record::default())
+    }
 
     /// 添加记录
     fn post(&mut self, record: &Self::Record) -> Result<Self::Id>;

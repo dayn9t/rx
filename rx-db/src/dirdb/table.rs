@@ -37,7 +37,7 @@ impl<T> DirTable<T> {
     }
 }
 
-impl<T: Serialize + DeserializeOwned> Table for DirTable<T> {
+impl<T: Default + Serialize + DeserializeOwned> Table for DirTable<T> {
     type Record = T;
 
     type Id = usize;
