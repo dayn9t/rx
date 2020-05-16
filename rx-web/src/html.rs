@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 pub use std::io::Result;
 
 use html5ever::parse_document;

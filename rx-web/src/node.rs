@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
-use html5ever::rcdom::{Handle, NodeData, RcDom};
-use http::uri::Builder;
-use http::uri::Uri;
+use html5ever::rcdom::{Handle, NodeData};
 use http_req::request;
 
 use crate::html;
@@ -26,7 +24,7 @@ impl Node {
     /// 拉取网页创建节点树
     pub fn pull(url: &str) -> Option<Node> {
         let mut data = Vec::new();
-        let resp = request::get(url, &mut data).ok()?;
+        let _resp = request::get(url, &mut data).ok()?;
 
         //println!("res: {}", res.headers());
         //println!("Status: {} {}", res.status_code(), res.reason());

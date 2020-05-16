@@ -1,6 +1,6 @@
 use super::table::*;
 use super::variant::*;
-use crate::interface::*;
+//use crate::interface::*;
 
 use rx::fs;
 use rx::text::*;
@@ -16,7 +16,7 @@ impl DirDb {
     where
         P: AsRef<Path>,
     {
-        let ok = fs::ensure_dir_exist(&path)?;
+        fs::ensure_dir_exist(&path)?;
         Ok(DirDb {
             path: path.as_ref().to_owned(),
         })

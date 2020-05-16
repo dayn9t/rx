@@ -47,7 +47,7 @@ where
 {
     let p = PathBuf::from(path.as_ref());
     if !p.exists() {
-        let e = fs::create_dir_all(&p);
+        fs::create_dir_all(&p)?;
     }
     if p.is_dir() {
         Ok(())
@@ -97,7 +97,7 @@ where
 }
 
 /// 判断路径是有有扩展名
-pub fn has_extension<S>(dir_entry: &DirEntry, ext: &S) -> bool
+pub fn has_extension<S>(_dir_entry: &DirEntry, _ext: &S) -> bool
 where
     S: AsRef<str>,
 {
@@ -190,7 +190,7 @@ mod tests {
 
         let p1 = PathBuf::from("/usr/bin");
         let p2 = join(&s1, &s2);
-        let p3 = join(&"/usr", &"bin");
+        let _p3 = join(&"/usr", &"bin");
         let p3 = join(&s1, &"bin");
 
         assert_eq!(p1, p2);

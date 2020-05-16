@@ -1,7 +1,6 @@
 use http::uri::Builder;
 use http::uri::Uri;
 use http_req::request;
-use serde_json::to_string_pretty as to_json;
 
 fn main() {
     let url = "http://116.228.67.70:30080/";

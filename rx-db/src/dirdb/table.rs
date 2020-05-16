@@ -18,7 +18,7 @@ impl<T> DirTable<T> {
         S: AsRef<str>,
     {
         let path = db.table_path(name);
-        let ok = fs::ensure_dir_exist(&path)?;
+        fs::ensure_dir_exist(&path)?;
 
         Ok(DirTable::<T> {
             path,
@@ -147,7 +147,7 @@ mod tests {
     fn tab_works() {
         let name = "student";
         let db = DirDb::open(&"/tmp/test/dirdb1").unwrap();
-        db.remove_table(name);
+        db.remove_table(name).unwrap();
 
         let mut tab = DirTable::open(&db, &"student").unwrap();
         assert_eq!(tab.find_ids(0).unwrap().is_empty(), true);
