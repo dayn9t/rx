@@ -136,12 +136,7 @@ impl<T: Default + Serialize + DeserializeOwned> Table for DirTable<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-    struct Student {
-        number: i32,
-        name: String,
-    }
+    use crate::test::tests::*;
 
     #[test]
     fn tab_works() {
@@ -152,18 +147,9 @@ mod tests {
         let mut tab = DirTable::open(&db, &"student").unwrap();
         assert_eq!(tab.find_ids(0).unwrap().is_empty(), true);
 
-        let s1 = Student {
-            number: 1,
-            name: "John".to_string(),
-        };
-        let s2 = Student {
-            number: 2,
-            name: "Jack".to_string(),
-        };
-        let s3 = Student {
-            number: 3,
-            name: "Jack".to_string(),
-        };
+        let s1 = { Student::new(1, "Jack") };
+        let s2 = { Student::new(2, "John") };
+        let s3 = { Student::new(3, "Joel") };
 
         let id1 = tab.post(&s1).unwrap();
         assert_eq!(tab.get(id1).unwrap(), s1);

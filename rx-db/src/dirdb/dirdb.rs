@@ -1,6 +1,5 @@
 use super::table::*;
 use super::variant::*;
-//use crate::interface::*;
 
 use rx::fs;
 use rx::text::*;
@@ -70,7 +69,7 @@ impl DirDb {
     }
 
     /// 打开数据库表
-    fn open_table<T, S>(&mut self, name: &S) -> Result<DirTable<T>>
+    pub fn open_table<T, S>(&mut self, name: &S) -> Result<DirTable<T>>
     where
         T: Clone + DeserializeOwned + Serialize,
         S: AsRef<str>,
@@ -98,11 +97,23 @@ impl DirDb {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::interface::*;
+    use crate::test::tests::*;
 
     #[test]
     fn db_works() {
-        let db = DirDb::open(&"/tmp/test/dirdb1").unwrap();
+        let s1 = { Student::new(1, "Jack") };
+        let s2 = { Student::new(2, "John") };
+        let _s3 = { Student::new(3, "Joel") };
+
+        let mut db = DirDb::open(&"/tmp/test/dirdb1").unwrap();
 
         assert_eq!(db.name(), "dirdb1");
+
+        let mut var = db.open_varient(&"var").unwrap();
+        var.set(&s1).unwrap();
+
+        let mut tab = db.open_table(&"student").unwrap();
+        tab.put(1, &s2).unwrap();
     }
 }

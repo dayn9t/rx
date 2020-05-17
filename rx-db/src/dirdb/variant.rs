@@ -50,12 +50,7 @@ impl<T: Default + Serialize + DeserializeOwned> Variant for DirVarient<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[derive(Default, Debug, PartialEq, Serialize, Deserialize)]
-    struct Student {
-        number: i32,
-        name: String,
-    }
+    use crate::test::tests::*;
 
     #[test]
     fn var_works() {
@@ -64,14 +59,10 @@ mod tests {
         db.remove_varient(name).unwrap();
         let mut var = DirVarient::open(&db, name).unwrap();
 
-        let s1 = Student {
-            number: 1,
-            name: "John".to_string(),
-        };
-        let s2 = Student {
-            number: 2,
-            name: "Jack".to_string(),
-        };
+        let s1 = { Student::new(1, "Jack") };
+        let s2 = { Student::new(2, "John") };
+        let _s3 = { Student::new(3, "Joel") };
+
         assert_eq!(var.get_or_default(), Student::default());
 
         var.set(&s1).unwrap();

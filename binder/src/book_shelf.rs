@@ -48,14 +48,14 @@ pub struct BookShelf {
 impl BookShelf {
     /// 加载
     pub fn load(path: &Path) -> Result<BookShelf> {
-        let db = DirDb::open(&path)?;
+        let mut db = DirDb::open(&path)?;
 
         println!("path: {:?}", path);
         Ok(BookShelf {
-            book_tab: DirTable::open(&db, &"book")?,
-            catalog_tab: DirTable::open(&db, &"calalog")?,
-            page_dir: fs::join(&path, &"page"),
-            text_dir: fs::join(&path, &"text"),
+            book_tab: db.open_table(&"book")?,
+            catalog_tab: db.open_table(&"calalog")?,
+            page_dir: path.join("page"),
+            text_dir: path.join("text"),
         })
     }
 
