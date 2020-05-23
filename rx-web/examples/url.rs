@@ -1,6 +1,5 @@
 use http::uri::Builder;
 use http::uri::Uri;
-use http_req::request;
 
 fn main() {
     let url = "http://116.228.67.70:30080/";
