@@ -17,7 +17,7 @@ pub struct Node {
     pub name: String,
     pub attrs: HashMap<String, String>,
     pub text: Vec<String>,
-    pub children: Vec<Box<Node>>,
+    pub children: Vec<Node>,
 }
 
 impl Node {
@@ -29,7 +29,7 @@ impl Node {
         //println!("res: {}", res.headers());
         //println!("Status: {} {}", res.status_code(), res.reason());
 
-        let doc = html::Document::parse(&mut &data[..]).ok()?;
+        let doc = html::Document::parse(&data[..]).ok()?;
         let root = build_from(&doc.dom.document);
         Some(root)
     }
@@ -200,7 +200,7 @@ fn build_from(handle: &Handle) -> Node {
         }
         if is_node {
             let child_node = build_from(child);
-            node.children.push(Box::new(child_node));
+            node.children.push(child_node);
         }
     }
     node

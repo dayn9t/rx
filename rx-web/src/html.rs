@@ -14,7 +14,6 @@ pub struct Document {
 impl Document {
     /// 解析数据产生文档对象
     pub fn parse(data: &[u8]) -> Result<Document> {
-
         let mut dom = parse_document(RcDom::default(), Default::default())
             .from_utf8()
             .read_from(&mut data.clone())?;

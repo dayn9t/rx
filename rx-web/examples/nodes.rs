@@ -13,7 +13,7 @@ fn main() {
     let url_tx = "https://www.biquge.biz/28_28641/";
     let url_tx1 = "https://www.biquge.biz/28_28641/12089871.html";
 
-    let url = url_gy1;
+    let url = url_gy;
 
     let root = Node::pull(url).unwrap();
 
