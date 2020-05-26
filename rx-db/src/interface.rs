@@ -64,6 +64,11 @@ pub trait Table {
         filter: &dyn Fn(&Self::Record) -> bool,
     ) -> Result<Vec<(Self::Id, Self::Record)>>;
 
+    /// 查询K/V对
+    fn find_all_pairs(&self) -> Result<Vec<(Self::Id, Self::Record)>> {
+        self.find_pairs(Self::Id::default(), usize::max_value(), &|_| true)
+    }
+
     /// 查询Id集
     fn find_ids(&self, min_id: Self::Id) -> Result<Vec<Self::Id>>;
 

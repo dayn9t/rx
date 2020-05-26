@@ -50,7 +50,6 @@ impl BookShelf {
     pub fn load(path: &Path) -> Result<BookShelf> {
         let mut db = DirDb::open(&path)?;
 
-        println!("path: {:?}", path);
         Ok(BookShelf {
             book_tab: db.open_table(&"book")?,
             catalog_tab: db.open_table(&"calalog")?,
@@ -61,8 +60,8 @@ impl BookShelf {
 
     /// 列表
     pub fn list(&self, _name: &Option<&str>) {
-        println!("list all1");
-        let rs = self.book_tab.find_pairs(0, 0, &|_r| true).unwrap();
+        //println!("list all1");
+        let rs = self.book_tab.find_all_pairs().unwrap();
         for (id, r) in rs {
             println!("#{} {} {}", id, r.title, r.url);
         }
@@ -73,7 +72,7 @@ impl BookShelf {
         println!("add: {} {:?}", url, name);
         let book = BookInfo {
             url: url.to_string(),
-            title: name.unwrap().to_string(),
+            title: name.unwrap_or("").to_string(),
         };
         self.book_tab.post(&book).unwrap();
     }
@@ -82,7 +81,7 @@ impl BookShelf {
     pub fn remove(&mut self, name: &str) {
         let rs = self
             .book_tab
-            .find_pairs(0, 10, &|r| r.title == name)
+            .find_pairs(0, 10, &|r| r.title == name.to_string())
             .unwrap();
         if let Some(&(id, _)) = rs.get(0) {
             self.book_tab.delete(id).unwrap();
