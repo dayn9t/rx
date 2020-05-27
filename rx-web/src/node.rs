@@ -2,14 +2,23 @@ use std::collections::HashMap;
 
 use html5ever::rcdom::{Handle, NodeData};
 use http_req::request;
+use serde_derive::{Deserialize, Serialize};
 
 use crate::html;
+use crate::url;
 
 //pub use std::io::Result;
 #[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct LinkInfo {
     pub text: String,
     pub url: String,
+}
+
+impl LinkInfo {
+    /// 补全URL
+    pub fn complete_by(&mut self, page_url: &str) {
+        self.url = url::complete(&self.url, page_url);
+    }
 }
 
 #[derive(Default, Clone, Serialize)]

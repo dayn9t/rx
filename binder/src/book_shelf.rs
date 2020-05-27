@@ -5,6 +5,8 @@ use std::path::*;
 use rx::{algo, fs};
 use rx_db::*;
 use rx_web::node::*;
+use std::thread;
+use std::time::Duration;
 
 /// 图书信息
 #[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -32,7 +34,12 @@ impl CatalogInfo {
     pub fn pull(url: &str) -> Option<CatalogInfo> {
         let root = Node::pull(url)?;
         let title = root.find_title()?;
-        let chapters = root.find_max_links();
+        let mut chapters = root.find_max_links();
+
+        for link in &mut chapters {
+            link.complete_by(url);
+        }
+
         Some(CatalogInfo { title, chapters })
     }
 }
@@ -63,7 +70,7 @@ impl BookShelf {
         //println!("list all1");
         let rs = self.book_tab.find_all_pairs().unwrap();
         for (id, r) in rs {
-            println!("#{} {} {}", id, r.title, r.url);
+            println!("#{} {}\t{}", id, r.title, r.url);
         }
     }
 
@@ -78,22 +85,26 @@ impl BookShelf {
     }
 
     /// 删除
-    pub fn remove(&mut self, name: &str) {
-        let rs = self
-            .book_tab
-            .find_pairs(0, 10, &|r| r.title == name.to_string())
-            .unwrap();
-        if let Some(&(id, _)) = rs.get(0) {
-            self.book_tab.delete(id).unwrap();
+    pub fn remove(&mut self, id: &str) {
+        if let Ok(id) = id.parse::<usize>() {
+            if let Ok(book) = self.book_tab.get(id) {
+                println!("remove: #{} {}", id, book.title);
+                self.book_tab.delete(id).unwrap();
+                return;
+            }
         }
-        println!("remove: {}", name);
+        println!("Invalid book ID: {}", id);
     }
 
     /// 更新
-    pub fn update(&mut self, name: &Option<&str>) {
-        println!("update: {:?}", name);
-        let rs = self.book_tab.find_pairs(0, 0, &|_r| true).unwrap();
-        for (id, book) in rs {
+    pub fn update(&mut self, title: &Option<&str>) {
+        let books = if let Some(title) = title {
+            self.book_tab
+                .find_pairs(0, usize::max_value(), &|r| &r.title == title)
+        } else {
+            self.book_tab.find_all_pairs()
+        };
+        for (id, book) in books.unwrap() {
             self.update_book(id, book);
         }
     }
@@ -112,7 +123,7 @@ impl BookShelf {
             if !indexes.is_empty() {
                 for i in indexes {
                     let chapter = new.chapters.get(i).unwrap();
-                    self.save_chapter(chapter, i, book_id);
+                    self.save_chapter(chapter, i + 1, book_id);
                 }
                 self.catalog_tab.put(book_id, &new).unwrap();
                 self.bind_pages(&book.title, book_id);
@@ -129,15 +140,19 @@ impl BookShelf {
         let file = self
             .page_dir
             .join(format!("{}/{:04}.txt", book_id, chapter_id));
+        fs::make_parent(&file).ok()?;
         let mut file = File::create(file).unwrap();
 
-        let title = format!("\n第{}章 {}\n\n", chapter_id + 1, link.text);
+        println!("\t第{}章 {} ... ", chapter_id, link.text);
+        let title = format!("\n第{}章 {}\n\n", chapter_id, link.text);
         file.write_all(title.as_bytes()).unwrap();
 
         for s in text {
             let paragraph = format!("\t{}\n\n", s);
             file.write_all(paragraph.as_bytes()).unwrap();
         }
+        println!("OK");
+        thread::sleep(Duration::from_secs(1));
         Some(())
     }
 

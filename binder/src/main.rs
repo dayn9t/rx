@@ -13,21 +13,21 @@ fn main() {
         (author: "J. <dayn9t@gmail.com>")
         (about: "Book binder，bind scattered pages into a book")
         (@subcommand list =>
-            (about: "List all books")
-            (@arg BOOK: "The book to be updated")
+            (about: "List books")
+            (@arg TITLE: "The book title to be ")
         )
         (@subcommand add =>
             (about: "Add a new book")
             (@arg URL: +required "URL of pages to be bound")
-            (@arg BOOK: "Sets a custom name for the new book")
+            (@arg TITLE: "Sets a custom title for the new book")
         )
         (@subcommand remove =>
-            (about: "Remove a book")
-            (@arg BOOK: +required "The book to be removed")
+            (about: "Remove a book by ID")
+            (@arg ID: +required "The book to be removed")
         )
         (@subcommand update =>
             (about: "Update book(s)")
-            (@arg BOOK: "The book to be updated")
+            (@arg TITLE: "The book to be updated")
         )
     )
     .get_matches();
@@ -36,20 +36,20 @@ fn main() {
     let mut shelf = book_shelf::BookShelf::load(&root).unwrap();
 
     if let Some(matches) = matches.subcommand_matches("list") {
-        let name = matches.value_of("BOOK");
+        let name = matches.value_of("TITLE");
         shelf.list(&name);
     }
     if let Some(matches) = matches.subcommand_matches("add") {
         let url = matches.value_of("URL").unwrap();
-        let name = matches.value_of("BOOK");
-        shelf.add(&url, &name);
+        let title = matches.value_of("TITLE");
+        shelf.add(&url, &title);
     }
     if let Some(matches) = matches.subcommand_matches("remove") {
-        let name = matches.value_of("BOOK").unwrap();
-        shelf.remove(&name);
+        let id = matches.value_of("ID").unwrap();
+        shelf.remove(id);
     }
     if let Some(matches) = matches.subcommand_matches("update") {
-        let name = matches.value_of("BOOK");
+        let name = matches.value_of("TITLE");
         shelf.update(&name);
     }
 }

@@ -40,12 +40,25 @@ where
     join(&dirs::config_dir().unwrap(), &name.as_ref())
 }
 
+/// 创建上级目录
+pub fn make_parent<P>(path: &P) -> Result<()>
+where
+    P: AsRef<Path>,
+{
+    if let Some(parent) = path.as_ref().parent() {
+        fs::create_dir_all(parent)?;
+        Ok(())
+    } else {
+        Err(Error::new(ErrorKind::NotFound, "parent not found"))
+    }
+}
+
 /// 确保目录存在
 pub fn ensure_dir_exist<P>(path: &P) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    let p = PathBuf::from(path.as_ref());
+    let p = path.as_ref();
     if !p.exists() {
         fs::create_dir_all(&p)?;
     }
@@ -204,5 +217,14 @@ mod tests {
         let stem = file_stem(&f1);
         assert_eq!(name, "a.json");
         assert_eq!(stem, "a");
+    }
+
+    #[test]
+    fn make_parent_works() {
+        let p = "/etc/passwd";
+        assert_eq!(make_parent(&p).is_ok(), true);
+
+        let p = "/etc/passwd/abc";
+        assert_eq!(make_parent(&p).is_ok(), false);
     }
 }
