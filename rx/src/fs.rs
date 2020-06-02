@@ -179,7 +179,8 @@ where
 
 /// 合并目录内所有文件到一个文件
 pub fn combine_files_in(src_dir: &Path, dst_file: &Path, ext: &str) -> Result<()> {
-    let mut dst_file = File::open(dst_file)?;
+    make_parent(&dst_file)?;
+    let mut dst_file = File::create(dst_file)?;
     let mut files = files_in(&src_dir, &ext);
     files.sort();
 

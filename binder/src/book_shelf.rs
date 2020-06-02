@@ -135,6 +135,7 @@ impl BookShelf {
 
     // 拉取/保存正文
     fn save_chapter(&mut self, link: &LinkInfo, chapter_id: usize, book_id: usize) -> Option<()> {
+        print!("\t+{} {} ...          ", chapter_id, link.text);
         let root = Node::pull(&link.url)?;
         let text = root.find_max_text();
         let file = self
@@ -143,7 +144,6 @@ impl BookShelf {
         fs::make_parent(&file).ok()?;
         let mut file = File::create(file).unwrap();
 
-        println!("\t第{}章 {} ... ", chapter_id, link.text);
         let title = format!("\n第{}章 {}\n\n", chapter_id, link.text);
         file.write_all(title.as_bytes()).unwrap();
 
