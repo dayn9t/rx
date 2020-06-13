@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-src=/home/jiang/rs/rx/target/release
+p=/home/jiang/rs/rx
+
+src=${p}/target/release
 dst=/usr/local/bin
-sudo cp ${src}/dwh-api ${dst}
+sudo cp ${src}/binder ${dst}
 
-src=/home/jiang/rs/dwh/bin/
-sudo cp ${src}/dwh*.sh ${dst}
+src=${p}/bin
+sudo cp ${src}/*.sh ${dst}
 
-ls -l ${dst} | grep dwh-
+ls -l ${dst} | egrep "rx-|binder"
