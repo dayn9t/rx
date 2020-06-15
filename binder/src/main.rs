@@ -29,27 +29,46 @@ fn main() {
             (about: "Update book(s)")
             (@arg TITLE: "The book to be updated")
         )
+        (@subcommand dir =>
+            (about: "List directory contents of a book")
+            (@arg ID: +required "The book ID")
+        )
+        (@subcommand bind =>
+            (about: "Bind a book")
+            (@arg ID: +required "The book to be bound")
+            (@arg CHAPTER: "The start chapter ID")
+        )
     )
     .get_matches();
 
     let root = fs::config_dir_of("binder");
     let mut shelf = book_shelf::BookShelf::load(&root).unwrap();
 
-    if let Some(matches) = matches.subcommand_matches("list") {
+    let r = if let Some(matches) = matches.subcommand_matches("list") {
         let name = matches.value_of("TITLE");
-        shelf.list(&name);
-    }
-    if let Some(matches) = matches.subcommand_matches("add") {
+        shelf.list(&name)
+    } else if let Some(matches) = matches.subcommand_matches("add") {
         let url = matches.value_of("URL").unwrap();
         let title = matches.value_of("TITLE");
-        shelf.add(&url, &title);
-    }
-    if let Some(matches) = matches.subcommand_matches("remove") {
+        shelf.add(&url, &title)
+    } else if let Some(matches) = matches.subcommand_matches("remove") {
         let id = matches.value_of("ID").unwrap();
-        shelf.remove(id);
-    }
-    if let Some(matches) = matches.subcommand_matches("update") {
+        shelf.remove(id)
+    } else if let Some(matches) = matches.subcommand_matches("update") {
         let name = matches.value_of("TITLE");
-        shelf.update(&name);
+        shelf.update(&name)
+    } else if let Some(matches) = matches.subcommand_matches("dir") {
+        let id = matches.value_of("ID").unwrap();
+        shelf.dir(id)
+    } else if let Some(matches) = matches.subcommand_matches("bind") {
+        let id = matches.value_of("ID").unwrap();
+        let chapter_id = matches.value_of("CHAPTER");
+        shelf.bind(id, chapter_id)
+    } else {
+        Ok(())
+    };
+
+    if let Err(e) = r {
+        println!("ERR: {}", e);
     }
 }

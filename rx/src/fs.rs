@@ -193,6 +193,20 @@ pub fn combine_files_in(src_dir: &Path, dst_file: &Path, ext: &str) -> Result<()
     Ok(())
 }
 
+/// 合并文件集合到一个文件
+pub fn combine_files(src_files: &Vec<PathBuf>, dst_file: &Path) -> Result<()> {
+    make_parent(&dst_file)?;
+    let mut dst_file = File::create(dst_file)?;
+
+    for file in src_files {
+        let mut file = File::open(file)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        dst_file.write_all(&buf)?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

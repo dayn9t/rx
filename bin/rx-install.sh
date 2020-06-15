@@ -9,4 +9,4 @@ sudo cp ${src}/binder ${dst}
 src=${p}/bin
 sudo cp ${src}/*.sh ${dst}
 
-ls -l ${dst} | egrep "rx-|binder"
+ls -l ${dst} | grep -E "rx-|binder"

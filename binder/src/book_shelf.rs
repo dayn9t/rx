@@ -13,6 +13,7 @@ use std::time::Duration;
 struct BookInfo {
     title: String,
     url: String,
+    unbound_chapter_id: usize,
 }
 
 /// 章节信息
@@ -52,6 +53,12 @@ pub struct BookShelf {
     text_dir: PathBuf,
 }
 
+/// 命令执行结果
+pub type CmdResult = core::result::Result<(), &'static str>;
+
+static INVALID_BOOK: &'static str = "Invalid book ID";
+static INVALID_CHAPTER: &'static str = "Invalid chapter ID";
+
 impl BookShelf {
     /// 加载
     pub fn load(path: &Path) -> Result<BookShelf> {
@@ -66,38 +73,41 @@ impl BookShelf {
     }
 
     /// 列表
-    pub fn list(&self, _name: &Option<&str>) {
+    pub fn list(&self, _name: &Option<&str>) -> CmdResult {
         //println!("list all1");
         let rs = self.book_tab.find_all_pairs().unwrap();
         for (id, r) in rs {
             println!("#{} {}\t{}", id, r.title, r.url);
         }
+        Ok(())
     }
 
     /// 添加
-    pub fn add(&mut self, url: &str, name: &Option<&str>) {
+    pub fn add(&mut self, url: &str, name: &Option<&str>) -> CmdResult {
         println!("add: {} {:?}", url, name);
         let book = BookInfo {
             url: url.to_string(),
             title: name.unwrap_or("").to_string(),
+            unbound_chapter_id: 1,
         };
         self.book_tab.post(&book).unwrap();
+        Ok(())
     }
 
     /// 删除
-    pub fn remove(&mut self, id: &str) {
-        if let Ok(id) = id.parse::<usize>() {
+    pub fn remove(&mut self, id: &str) -> CmdResult {
+        if let Ok(id) = id.parse() {
             if let Ok(book) = self.book_tab.get(id) {
                 println!("remove: #{} {}", id, book.title);
                 self.book_tab.delete(id).unwrap();
-                return;
+                return Ok(());
             }
         }
-        println!("Invalid book ID: {}", id);
+        Err(INVALID_BOOK)
     }
 
     /// 更新
-    pub fn update(&mut self, title: &Option<&str>) {
+    pub fn update(&mut self, title: &Option<&str>) -> CmdResult {
         let books = if let Some(title) = title {
             self.book_tab
                 .find_pairs(0, usize::max_value(), &|r| &r.title == title)
@@ -107,6 +117,7 @@ impl BookShelf {
         for (id, book) in books.unwrap() {
             self.update_book(id, book);
         }
+        Ok(())
     }
 
     // 更新一本书
@@ -126,7 +137,6 @@ impl BookShelf {
                     self.save_chapter(chapter, i + 1, book_id);
                 }
                 self.catalog_tab.put(book_id, &new).unwrap();
-                self.bind_pages(&book.title, book_id);
             }
         } else {
             println!("Fail");
@@ -138,9 +148,8 @@ impl BookShelf {
         print!("\t+{} {} ...          ", chapter_id, link.text);
         let root = Node::pull(&link.url)?;
         let text = root.find_max_text();
-        let file = self
-            .page_dir
-            .join(format!("{}/{:04}.txt", book_id, chapter_id));
+
+        let file = self.chapter_file(book_id, chapter_id);
         fs::make_parent(&file).ok()?;
         let mut file = File::create(file).unwrap();
 
@@ -156,10 +165,53 @@ impl BookShelf {
         Some(())
     }
 
-    // 装订
-    fn bind_pages(&self, title: &str, book_id: usize) {
-        let page_dir = self.page_dir.join(format!("{}", book_id));
-        let book_file = self.text_dir.join(format!("{}.txt", title));
-        fs::combine_files_in(&page_dir, &book_file, "txt").unwrap();
+    /// 列出目录
+    pub fn dir(&self, book_id: &str) -> CmdResult {
+        if let Ok(id) = book_id.parse::<usize>() {
+            if let Ok(book) = self.catalog_tab.get(id) {
+                for (id, link) in book.chapters.iter().enumerate() {
+                    print!("\t+{} {} ...          ", id, link.text);
+                }
+                return Ok(());
+            }
+        }
+        Err(INVALID_BOOK)
+    }
+
+    /// 装订
+    pub fn bind(&mut self, book_id: &str, chapter_id: Option<&str>) -> CmdResult {
+        if let Ok(book_id) = book_id.parse() {
+            if let Ok(mut book) = self.book_tab.get(book_id) {
+                println!("binding book: {}. {}", book_id, book.title);
+                let catalog = self.catalog_tab.get(book_id).unwrap();
+
+                let start_id = if let Some(s) = chapter_id {
+                    s.parse().map_err(|_e| INVALID_CHAPTER)?
+                } else {
+                    book.unbound_chapter_id
+                }
+                .max(1);
+                book.unbound_chapter_id = catalog.chapters.len() + 1;
+                let mut files = Vec::new();
+                for id in start_id..book.unbound_chapter_id {
+                    files.push(self.chapter_file(book_id, id))
+                }
+                fs::combine_files(&files, &self.book_file(&book.title)).unwrap();
+                self.book_tab.put(book_id, &book).unwrap();
+                return Ok(());
+            }
+        }
+        Err(INVALID_BOOK)
+    }
+
+    // 获取章节文件
+    fn chapter_file(&self, book_id: usize, chapter_id: usize) -> PathBuf {
+        self.page_dir
+            .join(format!("{}/{:04}.txt", book_id, chapter_id))
+    }
+
+    // 获取书文件
+    fn book_file(&self, title: &str) -> PathBuf {
+        self.text_dir.join(format!("{}.txt", title))
     }
 }
