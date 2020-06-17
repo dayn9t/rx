@@ -1,19 +1,31 @@
 use std::fs::File;
 use std::io::Write;
 use std::path::*;
+use std::thread;
+use std::time::Duration;
 
 use rx::{algo, fs};
 use rx_db::*;
 use rx_web::node::*;
-use std::thread;
-use std::time::Duration;
 
 /// 图书信息
 #[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
 struct BookInfo {
     title: String,
     url: String,
-    unbound_chapter_id: usize,
+    chapter_start: usize,
+}
+
+impl BookInfo {
+    /// 未装订章节起始ID
+    pub fn chapter_start(&self) -> usize {
+        self.chapter_start.max(1)
+    }
+
+    /// 相似
+    pub fn like(&self, title: &str) -> bool {
+        self.title.find(title).is_some()
+    }
 }
 
 /// 章节信息
@@ -43,6 +55,16 @@ impl CatalogInfo {
 
         Some(CatalogInfo { title, chapters })
     }
+
+    /// 未装订章节结束ID
+    pub fn chapter_end(&self) -> usize {
+        self.chapters.len() + 1
+    }
+
+    /// 未装订章节结束ID
+    pub fn total_chapter(&self) -> usize {
+        self.chapters.len()
+    }
 }
 
 /// 书架信息
@@ -66,7 +88,7 @@ impl BookShelf {
 
         Ok(BookShelf {
             book_tab: db.open_table(&"book")?,
-            catalog_tab: db.open_table(&"calalog")?,
+            catalog_tab: db.open_table(&"catalog")?,
             page_dir: path.join("page"),
             text_dir: path.join("text"),
         })
@@ -76,8 +98,19 @@ impl BookShelf {
     pub fn list(&self, _name: &Option<&str>) -> CmdResult {
         //println!("list all1");
         let rs = self.book_tab.find_all_pairs().unwrap();
-        for (id, r) in rs {
-            println!("#{} {}\t{}", id, r.title, r.url);
+        for (id, book) in rs {
+            let (unbound, total) = if let Ok(catalog) = self.catalog_tab.get(id) {
+                (
+                    catalog.chapter_end() - book.chapter_start(),
+                    catalog.total_chapter(),
+                )
+            } else {
+                (0, 0)
+            };
+            println!(
+                "#{:02} {}({}/{})\t{}",
+                id, book.title, unbound, total, book.url
+            );
         }
         Ok(())
     }
@@ -88,7 +121,7 @@ impl BookShelf {
         let book = BookInfo {
             url: url.to_string(),
             title: name.unwrap_or("").to_string(),
-            unbound_chapter_id: 1,
+            chapter_start: 1,
         };
         self.book_tab.post(&book).unwrap();
         Ok(())
@@ -110,7 +143,7 @@ impl BookShelf {
     pub fn update(&mut self, title: &Option<&str>) -> CmdResult {
         let books = if let Some(title) = title {
             self.book_tab
-                .find_pairs(0, usize::max_value(), &|r| &r.title == title)
+                .find_pairs(0, usize::max_value(), &|r| r.like(title))
         } else {
             self.book_tab.find_all_pairs()
         };
@@ -145,7 +178,7 @@ impl BookShelf {
 
     // 拉取/保存正文
     fn save_chapter(&mut self, link: &LinkInfo, chapter_id: usize, book_id: usize) -> Option<()> {
-        print!("\t+{} {} ...          ", chapter_id, link.text);
+        print!("    {}. {} ...          ", chapter_id, link.text);
         let root = Node::pull(&link.url)?;
         let text = root.find_max_text();
 
@@ -170,7 +203,7 @@ impl BookShelf {
         if let Ok(id) = book_id.parse::<usize>() {
             if let Ok(book) = self.catalog_tab.get(id) {
                 for (id, link) in book.chapters.iter().enumerate() {
-                    print!("\t+{} {} ...          ", id, link.text);
+                    print_chapter(id, &link.text);
                 }
                 return Ok(());
             }
@@ -185,18 +218,20 @@ impl BookShelf {
                 println!("binding book: {}. {}", book_id, book.title);
                 let catalog = self.catalog_tab.get(book_id).unwrap();
 
-                let start_id = if let Some(s) = chapter_id {
-                    s.parse().map_err(|_e| INVALID_CHAPTER)?
+                let chapter_start = if let Some(s) = chapter_id {
+                    s.parse::<usize>().map_err(|_e| INVALID_CHAPTER)?.max(1)
                 } else {
-                    book.unbound_chapter_id
-                }
-                .max(1);
-                book.unbound_chapter_id = catalog.chapters.len() + 1;
+                    book.chapter_start()
+                };
+
                 let mut files = Vec::new();
-                for id in start_id..book.unbound_chapter_id {
+                for id in chapter_start..catalog.chapter_end() {
+                    let title = &catalog.chapters.get(id - 1).unwrap().text;
+                    print_chapter(id, &title);
                     files.push(self.chapter_file(book_id, id))
                 }
                 fs::combine_files(&files, &self.book_file(&book.title)).unwrap();
+                book.chapter_start = catalog.chapter_end();
                 self.book_tab.put(book_id, &book).unwrap();
                 return Ok(());
             }
@@ -214,4 +249,9 @@ impl BookShelf {
     fn book_file(&self, title: &str) -> PathBuf {
         self.text_dir.join(format!("{}.txt", title))
     }
+}
+
+// 打印章节条目
+fn print_chapter(id: usize, title: &str) {
+    println!("    {}. {}", id, title);
 }

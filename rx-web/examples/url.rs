@@ -13,7 +13,10 @@ fn main() {
     let url_tx = "https://www.biquge.biz/28_28641/";
     let url_tx1 = "https://www.biquge.biz/28_28641/12089871.html";
 
-    let url = url_gy;
+    let url_dw = "https://www.qianqianxs.com/10/10361/";
+    let url_dw1 = "https://www.qianqianxs.com/10/10361/12346671.html";
+
+    let url = url_dw;
     let uri = url.parse::<Uri>().unwrap();
 
     let u = Builder::new()

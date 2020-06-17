@@ -2,6 +2,9 @@
 
 p=/home/jiang/rs/rx
 
+cd ${p}
+cargo build --release
+
 src=${p}/target/release
 dst=/usr/local/bin
 sudo cp ${src}/binder ${dst}

@@ -33,10 +33,9 @@ impl Node {
     /// 拉取网页创建节点树
     pub fn pull(url: &str) -> Option<Node> {
         let mut data = Vec::new();
-        let _resp = request::get(url, &mut data).ok()?;
-
-        //println!("res: {}", res.headers());
-        //println!("Status: {} {}", res.status_code(), res.reason());
+        let resp = request::get(url, &mut data).ok()?;
+        println!("res: {}", resp.headers());
+        println!("Status: {} {}", resp.status_code(), resp.reason());
 
         let doc = html::Document::parse(&data[..]).ok()?;
         let root = build_from(&doc.dom.document);
