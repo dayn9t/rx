@@ -186,7 +186,7 @@ impl BookShelf {
         fs::make_parent(&file).ok()?;
         let mut file = File::create(file).unwrap();
 
-        let title = format!("\n第{}章 {}\n\n", chapter_id, link.text);
+        let title = format!("第{}章 {}\n\n", chapter_id, link.text);
         file.write_all(title.as_bytes()).unwrap();
 
         for s in text {
@@ -202,8 +202,8 @@ impl BookShelf {
     pub fn dir(&self, book_id: &str) -> CmdResult {
         if let Ok(id) = book_id.parse::<usize>() {
             if let Ok(book) = self.catalog_tab.get(id) {
-                for (id, link) in book.chapters.iter().enumerate() {
-                    print_chapter(id, &link.text);
+                for (index, link) in book.chapters.iter().enumerate() {
+                    print_chapter(index + 1, &link.text);
                 }
                 return Ok(());
             }
