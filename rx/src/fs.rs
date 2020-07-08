@@ -13,12 +13,28 @@ where
     p.as_ref().file_name().unwrap().to_str().unwrap()
 }
 
+/// 获取文件名
+pub fn file_name_owned<P>(p: &P) -> String
+where
+    P: AsRef<Path>,
+{
+    file_name(p).to_string()
+}
+
 /// 获取主干文件名(去掉扩展名)
 pub fn file_stem<P>(p: &P) -> &str
 where
     P: AsRef<Path>,
 {
     p.as_ref().file_stem().unwrap().to_str().unwrap()
+}
+
+/// 获取主干文件名(去掉扩展名)
+pub fn file_stem_owned<P>(p: &P) -> String
+where
+    P: AsRef<Path>,
+{
+    file_stem(p).to_string()
 }
 
 /// 路径连接
@@ -37,7 +53,7 @@ pub fn config_dir_of<S>(name: S) -> PathBuf
 where
     S: AsRef<str>,
 {
-    join(&dirs::config_dir().unwrap(), &name.as_ref())
+    dirs::config_dir().unwrap().join(&name.as_ref())
 }
 
 /// 创建上级目录
@@ -99,12 +115,12 @@ pub fn visit_dirs(dir: &Path, cb: &dyn Fn(&DirEntry)) -> Result<()> {
 }
 
 /// 遍历目录
-pub fn visit_dir<P>(dir: &P, cb: &mut dyn FnMut(&DirEntry)) -> Result<()>
+pub fn visit_dir<P>(dir: &P, cb: &mut dyn FnMut(&Path)) -> Result<()>
 where
     P: AsRef<Path>,
 {
     for entry in fs::read_dir(dir)? {
-        cb(&entry?);
+        cb(&entry?.path());
     }
     Ok(())
 }
@@ -117,28 +133,34 @@ where
     false
 }
 
+/// 获取目录中的目录
+pub fn dirs_in<P>(dir: &P) -> Result<Vec<PathBuf>>
+where
+    P: AsRef<Path>,
+{
+    let mut vec = Vec::new();
+    visit_dir(dir, &mut |p: &Path| {
+        if p.is_dir() {
+            vec.push(p.to_owned());
+        }
+    })?;
+    Ok(vec)
+}
+
 /// 获取目录中文件
-pub fn files_in<P, S>(dir: &P, ext: &S) -> Vec<PathBuf>
+pub fn files_in<P, S>(dir: &P, ext: &S) -> Result<Vec<PathBuf>>
 where
     P: AsRef<Path>,
     S: AsRef<str>,
 {
-    let mut files = Vec::new();
     let ext = Some(OsStr::new(ext.as_ref()));
-
-    match fs::read_dir(dir) {
-        Ok(v) => {
-            for entry in v {
-                let entry = entry.unwrap();
-                let path = entry.path();
-                if path.is_file() && path.extension() == ext {
-                    files.push(path);
-                }
-            }
-            files
+    let mut vec = Vec::new();
+    visit_dir(dir, &mut |p: &Path| {
+        if p.is_file() && p.extension() == ext {
+            vec.push(p.to_owned());
         }
-        Err(_) => files,
-    }
+    })?;
+    Ok(vec)
 }
 
 /// 获取目录中文件名
@@ -147,16 +169,9 @@ where
     P: AsRef<Path>,
     S: AsRef<str>,
 {
-    let mut names = Vec::new();
-    let ext = Some(OsStr::new(ext.as_ref()));
-
-    visit_dir(dir, &mut |e: &DirEntry| {
-        let path = e.path();
-        if path.is_file() && path.extension() == ext {
-            names.push(file_name(&path).to_string());
-        }
-    })?;
-    Ok(names)
+    let v = files_in(dir, ext)?;
+    let v: Vec<_> = v.iter().map(|p| file_name_owned(p)).collect();
+    Ok(v)
 }
 
 /// 获取目录中文件名主干(去掉扩展名)
@@ -165,32 +180,16 @@ where
     P: AsRef<Path>,
     S: AsRef<str>,
 {
-    let mut names = Vec::new();
-    let ext = Some(OsStr::new(ext.as_ref()));
-
-    visit_dir(dir, &mut |e: &DirEntry| {
-        let path = e.path();
-        if path.is_file() && path.extension() == ext {
-            names.push(file_stem(&path).to_string());
-        }
-    })?;
-    Ok(names)
+    let v = files_in(dir, ext)?;
+    let v: Vec<_> = v.iter().map(|p| file_stem_owned(p)).collect();
+    Ok(v)
 }
 
 /// 合并目录内所有文件到一个文件
 pub fn combine_files_in(src_dir: &Path, dst_file: &Path, ext: &str) -> Result<()> {
-    make_parent(&dst_file)?;
-    let mut dst_file = File::create(dst_file)?;
-    let mut files = files_in(&src_dir, &ext);
+    let mut files = files_in(&src_dir, &ext)?;
     files.sort();
-
-    for file in files {
-        let mut file = File::open(file)?;
-        let mut buf = Vec::new();
-        file.read_to_end(&mut buf)?;
-        dst_file.write_all(&buf)?;
-    }
-    Ok(())
+    combine_files(&files, dst_file)
 }
 
 /// 合并文件集合到一个文件

@@ -85,7 +85,6 @@ impl BookShelf {
     /// 加载
     pub fn load(path: &Path) -> Result<BookShelf> {
         let mut db = DirDb::open(&path)?;
-
         Ok(BookShelf {
             book_tab: db.open_table(&"book")?,
             catalog_tab: db.open_table(&"catalog")?,

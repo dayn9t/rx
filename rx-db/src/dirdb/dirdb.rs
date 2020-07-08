@@ -42,7 +42,7 @@ impl DirDb {
     }
 
     /// 打开数据库变量
-    fn open_varient<T, S>(&mut self, name: S) -> Result<DirVarient<T>>
+    pub fn open_varient<T, S>(&mut self, name: S) -> Result<DirVarient<T>>
     where
         T: Clone + DeserializeOwned + Serialize,
         S: AsRef<str>,
