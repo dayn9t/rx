@@ -1,6 +1,7 @@
 use super::table::*;
 use super::variant::*;
 
+use crate::Variant;
 use rx::fs;
 use rx::text::*;
 use std::path::{Path, PathBuf};
@@ -44,10 +45,19 @@ impl DirDb {
     /// 打开数据库变量
     pub fn open_varient<T, S>(&mut self, name: S) -> Result<DirVarient<T>>
     where
-        T: Clone + DeserializeOwned + Serialize,
+        T: Default + DeserializeOwned + Serialize,
         S: AsRef<str>,
     {
         DirVarient::open(self, name)
+    }
+
+    /// 加载数据库变量
+    pub fn load_varient<T, S>(&mut self, name: S) -> Result<T>
+    where
+        T: Default + DeserializeOwned + Serialize,
+        S: AsRef<str>,
+    {
+        DirVarient::open(self, name)?.get()
     }
 
     /// 数据库变量路径

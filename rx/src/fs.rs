@@ -147,6 +147,11 @@ where
     Ok(vec)
 }
 
+/// 查找MTP设备目录
+pub fn mtp_dirs() -> Result<Vec<PathBuf>> {
+    dirs_in(&"/run/user/1000/gvfs")
+}
+
 /// 获取目录中文件
 pub fn files_in<P, S>(dir: &P, ext: &S) -> Result<Vec<PathBuf>>
 where

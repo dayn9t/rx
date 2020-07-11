@@ -1,6 +1,8 @@
+use std::fs::copy;
 use std::fs::File;
 use std::io::Write;
 use std::path::*;
+use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
@@ -67,12 +69,19 @@ impl CatalogInfo {
     }
 }
 
+/// 书架配置信息
+#[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct BookShelfCfg {
+    storage_path: String,
+}
+
 /// 书架信息
 pub struct BookShelf {
     book_tab: DirTable<BookInfo>,
     catalog_tab: DirTable<CatalogInfo>,
     page_dir: PathBuf,
     text_dir: PathBuf,
+    cfg: BookShelfCfg,
 }
 
 /// 命令执行结果
@@ -80,6 +89,9 @@ pub type CmdResult = core::result::Result<(), &'static str>;
 
 static INVALID_BOOK: &'static str = "Invalid book ID";
 static INVALID_CHAPTER: &'static str = "Invalid chapter ID";
+static STORAGE_NOT_FOUND: &'static str = "Storage not found";
+static TOO_MANY_STORAGE: &'static str = "Too many storage";
+static FAILED_TO_COPY_THE_BOOK_FILE: &'static str = "Failed to copy the book file";
 
 impl BookShelf {
     /// 加载
@@ -90,6 +102,7 @@ impl BookShelf {
             catalog_tab: db.open_table(&"catalog")?,
             page_dir: path.join("page"),
             text_dir: path.join("text"),
+            cfg: db.load_varient("config")?,
         })
     }
 
@@ -229,13 +242,41 @@ impl BookShelf {
                     print_chapter(id, &title);
                     files.push(self.chapter_file(book_id, id))
                 }
-                fs::combine_files(&files, &self.book_file(&book.title)).unwrap();
+                let book_file = self.book_file(&book.title);
+                fs::combine_files(&files, &book_file).unwrap();
                 book.chapter_start = catalog.chapter_end();
                 self.book_tab.put(book_id, &book).unwrap();
-                return Ok(());
+
+                return self.copy_file(&book_file);
             }
         }
         Err(INVALID_BOOK)
+    }
+
+    // 复制装订文件
+    fn copy_file(&self, book_file: &Path) -> CmdResult {
+        let dirs = fs::mtp_dirs().unwrap();
+        match dirs.len() {
+            0 => Err(STORAGE_NOT_FOUND),
+            1 => {
+                let dst = dirs
+                    .get(0)
+                    .unwrap()
+                    .join(&self.cfg.storage_path)
+                    .join(book_file.file_name().unwrap());
+
+                //TODO: fs::copy无效
+                //println!("src: {:?}", &book_file);
+                //println!("dst: {:?}", &dst);
+                //copy(book_file, &dst).map_err(|_| FAILED_TO_COPY_THE_BOOK_FILE)?;
+                //copy(book_file, &dst).unwrap();
+
+                Command::new("cp").arg(book_file).arg(dst).output().unwrap();
+
+                Ok(())
+            }
+            _ => Err(TOO_MANY_STORAGE),
+        }
     }
 
     // 获取章节文件
