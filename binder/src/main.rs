@@ -9,7 +9,7 @@ mod book_shelf;
 
 fn main() {
     let matches = clap_app!(binder =>
-        (version: "0.1")
+        (version: "0.2")
         (author: "J. <dayn9t@gmail.com>")
         (about: "Book binder，bind scattered pages into a book")
         (@subcommand list =>

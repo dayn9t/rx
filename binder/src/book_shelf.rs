@@ -1,4 +1,4 @@
-use std::fs::copy;
+//use std::fs::copy;
 use std::fs::File;
 use std::io::Write;
 use std::path::*;
@@ -91,7 +91,7 @@ static INVALID_BOOK: &'static str = "Invalid book ID";
 static INVALID_CHAPTER: &'static str = "Invalid chapter ID";
 static STORAGE_NOT_FOUND: &'static str = "Storage not found";
 static TOO_MANY_STORAGE: &'static str = "Too many storage";
-static FAILED_TO_COPY_THE_BOOK_FILE: &'static str = "Failed to copy the book file";
+//static FAILED_TO_COPY_THE_BOOK_FILE: &'static str = "Failed to copy the book file";
 
 impl BookShelf {
     /// 加载
@@ -241,6 +241,9 @@ impl BookShelf {
                     let title = &catalog.chapters.get(id - 1).unwrap().text;
                     print_chapter(id, &title);
                     files.push(self.chapter_file(book_id, id))
+                }
+                if files.is_empty() {
+                    return Ok(());
                 }
                 let book_file = self.book_file(&book.title);
                 fs::combine_files(&files, &book_file).unwrap();
