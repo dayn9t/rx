@@ -5,6 +5,7 @@ authors = ["dayn9t <dayn9t@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+curl = "*"
 http_req = "*"
 http = "*"
 html5ever = "*"

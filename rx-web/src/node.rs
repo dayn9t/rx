@@ -5,6 +5,7 @@ use http_req::request;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::html;
+use crate::req::RequestCfg;
 use crate::url;
 
 //pub use std::io::Result;
@@ -31,7 +32,7 @@ pub struct Node {
 
 impl Node {
     /// 拉取网页创建节点树
-    pub fn pull(url: &str) -> Option<Node> {
+    pub fn pull(url: &str, cfg: &RequestCfg) -> Option<Node> {
         let mut data = Vec::new();
         //let resp =
         request::get(url, &mut data).ok()?;

@@ -6,9 +6,12 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
+use colored::*;
+
 use rx::{algo, fs};
 use rx_db::*;
 use rx_web::node::*;
+use rx_web::req::RequestCfg;
 
 /// 图书信息
 #[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -46,8 +49,8 @@ struct CatalogInfo {
 
 impl CatalogInfo {
     /// 从URL拉取目录信息
-    pub fn pull(url: &str) -> Option<CatalogInfo> {
-        let root = Node::pull(url)?;
+    pub fn pull(url: &str, cfg: &RequestCfg) -> Option<CatalogInfo> {
+        let root = Node::pull(url, cfg)?;
         let title = root.find_title()?;
         let mut chapters = root.find_max_links();
 
@@ -69,10 +72,17 @@ impl CatalogInfo {
     }
 }
 
+/// 存储配置信息
+#[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct StorageCfg {
+    path: String,
+}
+
 /// 书架配置信息
 #[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct BookShelfCfg {
-    storage_path: String,
+    request: RequestCfg,
+    storage: StorageCfg,
 }
 
 /// 书架信息
@@ -119,10 +129,12 @@ impl BookShelf {
             } else {
                 (0, 0)
             };
-            println!(
-                "#{:02} {}({}/{})\t{}",
-                id, book.title, unbound, total, book.url
-            );
+            let title = if unbound > 0 {
+                book.title.green()
+            } else {
+                book.title.normal()
+            };
+            println!("#{:02} {}({}/{})\t{}", id, title, unbound, total, book.url);
         }
         Ok(())
     }
@@ -168,7 +180,7 @@ impl BookShelf {
     // 更新一本书
     fn update_book(&mut self, book_id: usize, mut book: BookInfo) {
         print!("#{} {} {} ... ", book_id, book.title, book.url);
-        if let Some(new) = CatalogInfo::pull(&book.url) {
+        if let Some(new) = CatalogInfo::pull(&book.url, &self.cfg.request) {
             if book.title.is_empty() {
                 book.title = new.title.clone();
                 self.book_tab.put(book_id, &book).unwrap();
@@ -191,7 +203,7 @@ impl BookShelf {
     // 拉取/保存正文
     fn save_chapter(&mut self, link: &LinkInfo, chapter_id: usize, book_id: usize) -> Option<()> {
         print!("    {}. {} ...          ", chapter_id, link.text);
-        let root = Node::pull(&link.url)?;
+        let root = Node::pull(&link.url, &self.cfg.request)?;
         let text = root.find_max_text();
 
         let file = self.chapter_file(book_id, chapter_id);
@@ -247,10 +259,11 @@ impl BookShelf {
                 }
                 let book_file = self.book_file(&book.title);
                 fs::combine_files(&files, &book_file).unwrap();
+                self.copy_file(&book_file)?;
+
                 book.chapter_start = catalog.chapter_end();
                 self.book_tab.put(book_id, &book).unwrap();
-
-                return self.copy_file(&book_file);
+                return Ok(());
             }
         }
         Err(INVALID_BOOK)
@@ -265,7 +278,7 @@ impl BookShelf {
                 let dst = dirs
                     .get(0)
                     .unwrap()
-                    .join(&self.cfg.storage_path)
+                    .join(&self.cfg.storage.path)
                     .join(book_file.file_name().unwrap());
 
                 //TODO: fs::copy无效
