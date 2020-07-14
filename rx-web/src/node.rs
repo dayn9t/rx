@@ -1,12 +1,10 @@
 use std::collections::HashMap;
 
 use html5ever::rcdom::{Handle, NodeData};
-use http_req::request;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::html;
-use crate::req::RequestCfg;
-use crate::url;
+use crate::req::{self, RequestCfg};
+use crate::{html, url};
 
 //pub use std::io::Result;
 #[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -35,7 +33,7 @@ impl Node {
     pub fn pull(url: &str, cfg: &RequestCfg) -> Option<Node> {
         let mut data = Vec::new();
         //let resp =
-        request::get(url, &mut data).ok()?;
+        req::get(url, &mut data, cfg).ok()?;
         //println!("res: {}", resp.headers());
         //println!("Status: {} {}", resp.status_code(), resp.reason());
 
