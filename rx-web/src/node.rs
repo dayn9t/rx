@@ -16,6 +16,7 @@ pub struct LinkInfo {
 impl LinkInfo {
     /// 补全URL
     pub fn complete_by(&mut self, page_url: &str) {
+        //println!("url: {}, {}", &self.url, page_url);
         self.url = url::complete(&self.url, page_url);
     }
 }

@@ -17,10 +17,17 @@ fn main() {
     let url_dw = "https://www.qianqianxs.com/10/10361/";
     let url_dw1 = "https://www.qianqianxs.com/10/10361/12346671.html";
 
-    let url = url_dw;
-    let cfg = RequestCfg::default();
-    let root = Node::pull(url, &cfg).unwrap();
+    let url_xh = "https://www.ranwena.com/files/article/88/88687/";
+    let url_xh1 = "https://www.ranwena.com/files/article/88/88687/21948376.html";
 
+    let url = url_xh1;
+    let mut cfg = RequestCfg::default();
+    cfg.headers.insert(
+        "User-Agent".to_string(),
+        "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; SV1)".to_string(),
+    );
+
+    let root = Node::pull(url, &cfg).unwrap();
     println!("Title: {}", root.find_title().unwrap());
 
     let text_node = root.find_max_text();

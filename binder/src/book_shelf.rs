@@ -54,10 +54,10 @@ impl CatalogInfo {
         let title = root.find_title()?;
         let mut chapters = root.find_max_links();
 
+        //println!("chapters: {}", serde_json::to_string_pretty(&chapters).unwrap());
         for link in &mut chapters {
             link.complete_by(url);
         }
-
         Some(CatalogInfo { title, chapters })
     }
 

@@ -13,9 +13,6 @@ pub fn http_get(url: &str, writer: &mut Vec<u8>) {
         "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; SV1)".to_string(),
     );
 
-    let s = to_string_pretty(&cfg).unwrap();
-    println!("Headers: {}", s);
-
     let resp = req::get(url, writer, &cfg).unwrap();
 
     println!("Status: {} {}", resp.status_code(), resp.reason());

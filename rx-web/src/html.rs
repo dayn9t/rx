@@ -4,7 +4,7 @@ use html5ever::parse_document;
 use html5ever::rcdom::{Handle, NodeData, RcDom};
 use html5ever::tendril::TendrilSink;
 
-use rx::text::gbk_to_utf8;
+use rx::text;
 
 /// HTML文档
 pub struct Document {
@@ -14,18 +14,16 @@ pub struct Document {
 impl Document {
     /// 解析数据产生文档对象
     pub fn parse(data: &[u8]) -> Result<Document> {
-        let mut dom = parse_document(RcDom::default(), Default::default())
-            .from_utf8()
-            .read_from(&mut data.clone())?;
-
-        if let Some(charset) = find_charset(&dom.document) {
-            if charset == "GBK" {
-                let gbk_data = gbk_to_utf8(data).unwrap();
-                dom = parse_document(RcDom::default(), Default::default())
-                    .from_utf8()
-                    .read_from(&mut &gbk_data[..])?;
-            }
-        }
+        let dom = if text::find_gbk(data) {
+            let gbk_data = text::gbk_to_utf8(data).unwrap();
+            parse_document(RcDom::default(), Default::default())
+                .from_utf8()
+                .read_from(&mut &gbk_data[..])?
+        } else {
+            parse_document(RcDom::default(), Default::default())
+                .from_utf8()
+                .read_from(&mut data.clone())?
+        };
         Ok(Document { dom })
     }
 
@@ -44,6 +42,8 @@ where
         return false;
     }
     let node_name = path.first().unwrap();
+    println!("visit_attrs nodes: {:?}", path);
+    println!("visit_attrs node: {}", node_name);
 
     match node.data {
         NodeData::Document if *node_name == "" => {}
@@ -52,7 +52,7 @@ where
             ref attrs,
             ..
         } => {
-            //println!("name.local: {}", name.local);
+            println!("name.local: {}", name.local);
             if node_name != &name.local.to_string() {
                 return false;
             }
@@ -87,14 +87,21 @@ fn find_charset(handle: &Handle) -> Option<String> {
     let re = regex::Regex::new(r"charset=(\w+)").unwrap();
     let mut charset = None;
     visit_attrs(handle, &path[..], &mut |name: &str, value: &str| {
-        if name != "content" {
-            return false;
-        }
-        if let Some(cap) = re.captures(&value) {
-            charset = Some(cap.get(1).unwrap().as_str().to_uppercase());
-            true
-        } else {
-            false
+        println!("find_charset: {}  {}", name, value);
+        match name {
+            "charset" => {
+                charset = Some(value.to_string());
+                true
+            }
+            "content" => {
+                if let Some(cap) = re.captures(&value) {
+                    charset = Some(cap.get(1).unwrap().as_str().to_uppercase());
+                    true
+                } else {
+                    false
+                }
+            }
+            _ => false,
         }
     });
     charset
