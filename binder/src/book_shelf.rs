@@ -7,11 +7,13 @@ use std::thread;
 use std::time::Duration;
 
 use colored::*;
+use http::uri::Uri;
 
 use rx::{algo, fs};
 use rx_db::*;
 use rx_web::node::*;
 use rx_web::req::RequestCfg;
+use std::collections::HashSet;
 
 /// 图书信息
 #[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -286,9 +288,7 @@ impl BookShelf {
                 //println!("dst: {:?}", &dst);
                 //copy(book_file, &dst).map_err(|_| FAILED_TO_COPY_THE_BOOK_FILE)?;
                 //copy(book_file, &dst).unwrap();
-
                 Command::new("cp").arg(book_file).arg(dst).output().unwrap();
-
                 Ok(())
             }
             _ => Err(TOO_MANY_STORAGE),
@@ -304,6 +304,20 @@ impl BookShelf {
     // 获取书文件
     fn book_file(&self, title: &str) -> PathBuf {
         self.text_dir.join(format!("{}.txt", title))
+    }
+
+    /// 主机列表
+    pub fn hosts(&self) -> CmdResult {
+        let books = self.book_tab.find_all().unwrap();
+        let mut set = HashSet::new();
+        for book in &books {
+            let uri: Uri = book.url.parse().unwrap();
+            set.insert(uri.host().unwrap().to_string());
+        }
+        for (i, host) in set.iter().enumerate() {
+            println!("    {}. {}", i, host);
+        }
+        Ok(())
     }
 }
 
