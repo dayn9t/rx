@@ -3,9 +3,8 @@ use std::path::PathBuf;
 
 use rx::text::*;
 
-use crate::interface::*;
-
 use super::dirdb::DirDb;
+use crate::interface::*;
 
 pub struct DirVarient<T> {
     name: String,
@@ -49,8 +48,9 @@ impl<T: Default + Serialize + DeserializeOwned> Variant for DirVarient<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::test::tests::*;
+
+    use super::*;
 
     #[test]
     fn var_works() {

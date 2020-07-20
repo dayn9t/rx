@@ -1,5 +1,3 @@
-//use std::io;
-
 /// 数据库结果
 pub use std::io::Result;
 
