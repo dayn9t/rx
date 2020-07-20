@@ -40,7 +40,6 @@ fn main() {
         )
         (@subcommand hosts =>
             (about: "List hosts")
-            (@arg ID: +required "List the hosts")
         )
     )
     .get_matches();
@@ -68,7 +67,7 @@ fn main() {
         let id = matches.value_of("ID").unwrap();
         let chapter_id = matches.value_of("CHAPTER");
         shelf.bind(id, chapter_id)
-    } else if let Some(matches) = matches.subcommand_matches("hosts") {
+    } else if let Some(_matches) = matches.subcommand_matches("hosts") {
         shelf.hosts()
     } else {
         Ok(())

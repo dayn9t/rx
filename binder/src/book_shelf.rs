@@ -136,7 +136,7 @@ impl BookShelf {
             } else {
                 book.title.normal()
             };
-            println!("#{:02} {}({}/{})\t{}", id, title, unbound, total, book.url);
+            println!("[{:02}] {}({}/{})\t{}", id, title, unbound, total, book.url);
         }
         Ok(())
     }
@@ -315,7 +315,7 @@ impl BookShelf {
             set.insert(uri.host().unwrap().to_string());
         }
         for (i, host) in set.iter().enumerate() {
-            println!("    {}. {}", i, host);
+            println!("[{:02}] {}", i + 1, host);
         }
         Ok(())
     }
