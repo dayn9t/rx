@@ -6,7 +6,6 @@ use serde_derive::{Deserialize, Serialize};
 use crate::req::{self, RequestCfg};
 use crate::{html, url};
 
-//pub use std::io::Result;
 #[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct LinkInfo {
     pub text: String,
