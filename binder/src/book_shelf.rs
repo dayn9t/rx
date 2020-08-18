@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 //use std::fs::copy;
 use std::fs::File;
 use std::io::Write;
@@ -309,13 +309,18 @@ impl BookShelf {
     /// 主机列表
     pub fn hosts(&self) -> CmdResult {
         let books = self.book_tab.find_all().unwrap();
-        let mut set = HashSet::new();
+        let mut map = HashMap::new();
         for book in &books {
             let uri: Uri = book.url.parse().unwrap();
-            set.insert(uri.host().unwrap().to_string());
+            let host = uri.host().unwrap().to_string();
+            let counter = map.entry(host).or_insert(0);
+            *counter += 1;
         }
-        for (i, host) in set.iter().enumerate() {
-            println!("[{:02}] {}", i + 1, host);
+        let mut vec: Vec<_> = map.iter().collect();
+        vec.sort_by_key(|(_k, v)| -*v);
+
+        for (i, (host, counter)) in vec.iter().enumerate() {
+            println!("[{:02}] {} ({})", i + 1, host, counter);
         }
         Ok(())
     }
