@@ -283,10 +283,7 @@ impl BookShelf {
                     .join(&self.cfg.storage.path)
                     .join(book_file.file_name().unwrap());
 
-                //TODO: fs::copy无效
-                //println!("src: {:?}", &book_file);
-                //println!("dst: {:?}", &dst);
-                //copy(book_file, &dst).map_err(|_| FAILED_TO_COPY_THE_BOOK_FILE)?;
+                //TODO: fs::copy往手机上复制失败
                 //copy(book_file, &dst).unwrap();
                 Command::new("cp").arg(book_file).arg(dst).output().unwrap();
                 Ok(())
