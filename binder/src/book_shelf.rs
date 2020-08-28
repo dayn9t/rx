@@ -181,7 +181,7 @@ impl BookShelf {
 
     // 更新一本书
     fn update_book(&mut self, book_id: usize, mut book: BookInfo) {
-        print!("#{} {} {} ... ", book_id, book.title, book.url);
+        print!("[{:02}] {}\t{} ... ", book_id, book.title, book.url);
         if let Some(new) = CatalogInfo::pull(&book.url, &self.cfg.request) {
             if book.title.is_empty() {
                 book.title = new.title.clone();
