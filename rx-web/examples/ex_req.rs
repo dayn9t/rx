@@ -1,10 +1,10 @@
 use rx_web::req;
 
 use curl::easy::Easy;
-use std::collections::HashMap;
+//use std::collections::HashMap;
 use std::io::{stdout, Write};
 
-use serde_json::to_string_pretty;
+//use serde_json::to_string_pretty;
 
 pub fn http_get(url: &str, writer: &mut Vec<u8>) {
     let mut cfg = req::RequestCfg::default();
@@ -18,7 +18,7 @@ pub fn http_get(url: &str, writer: &mut Vec<u8>) {
     println!("Status: {} {}", resp.status_code(), resp.reason());
 }
 
-fn curl_test(url: &str, dst: &mut Vec<u8>) {
+fn curl_test(url: &str, _dst: &mut Vec<u8>) {
     let mut easy = Easy::new();
     easy.url(url).unwrap();
     easy.write_function(|data| {
@@ -32,7 +32,7 @@ fn curl_test(url: &str, dst: &mut Vec<u8>) {
 }
 
 fn main() {
-    let url = "http://116.228.67.70:30080/";
+    let _url = "http://116.228.67.70:30080/";
 
     //let url_tx = "http://shushan.zhangyue.net/book/83780/#directory"; //铁血残明
     //let url_tx1 = "http://shushan.zhangyue.net/book/83780/13023184"; //铁血残明

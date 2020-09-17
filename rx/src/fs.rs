@@ -99,7 +99,7 @@ where
 }
 
 /// 遍历目录访问文件
-pub fn visit_dirs(dir: &Path, cb: &dyn Fn(&DirEntry)) -> Result<()> {
+pub fn visit_dirs(dir: &Path, cb: &dyn Fn(&Path)) -> Result<()> {
     if dir.is_dir() {
         for entry in fs::read_dir(dir)? {
             let entry = entry?;
@@ -107,7 +107,7 @@ pub fn visit_dirs(dir: &Path, cb: &dyn Fn(&DirEntry)) -> Result<()> {
             if path.is_dir() {
                 visit_dirs(&path, cb)?;
             } else {
-                cb(&entry);
+                cb(&entry.path());
             }
         }
     }
@@ -150,6 +150,34 @@ where
 /// 查找MTP设备目录
 pub fn mtp_dirs() -> Result<Vec<PathBuf>> {
     dirs_in(&"/run/user/1000/gvfs")
+}
+
+/// 查找第一个目录(广度优先)
+pub fn find_first_dir<P, S>(dir: &P, dir_name: &S) -> Result<PathBuf>
+where
+    P: AsRef<Path>,
+    S: AsRef<str>,
+{
+    let mut dirs = Vec::new();
+
+    for entry in fs::read_dir(dir.as_ref())? {
+        let p = entry?.path();
+        if p.is_dir() {
+            if file_name(&p) == dir_name.as_ref() {
+                return Ok(p);
+            } else {
+                dirs.push(p);
+            }
+        }
+    }
+
+    for dir in dirs {
+        let r = find_first_dir(&dir, dir_name);
+        if r.is_ok() {
+            return r;
+        }
+    }
+    Err(Error::from(ErrorKind::NotFound))
 }
 
 /// 获取目录中文件

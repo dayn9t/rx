@@ -4,8 +4,8 @@ use std::fs::File;
 use std::io::Write;
 use std::path::*;
 use std::process::Command;
-use std::thread;
 use std::time::Duration;
+use std::{io, thread};
 
 use colored::*;
 use http::uri::Uri;
@@ -285,7 +285,11 @@ impl BookShelf {
 
                 //TODO: fs::copy往手机上复制失败
                 //copy(book_file, &dst).unwrap();
-                Command::new("cp").arg(book_file).arg(dst).output().unwrap();
+                let output = Command::new("cp").arg(book_file).arg(dst).output().unwrap();
+                println!("status: {}", output.status);
+                io::stdout().write_all(&output.stdout).unwrap();
+                io::stderr().write_all(&output.stderr).unwrap();
+
                 Ok(())
             }
             _ => Err(TOO_MANY_STORAGE),

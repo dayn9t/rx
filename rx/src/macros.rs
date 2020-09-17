@@ -24,6 +24,5 @@ mod tests {
     #[test]
     fn test_decode_option_none() {
         //let e: Result<i32, String> = Err(1);
-
     }
 }
