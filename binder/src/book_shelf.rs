@@ -274,6 +274,7 @@ impl BookShelf {
     // 复制装订文件
     fn copy_file(&self, book_file: &Path) -> CmdResult {
         let dirs = fs::mtp_dirs().unwrap();
+        //TODO: find_first_dir 查找图书目录
         match dirs.len() {
             0 => Err(STORAGE_NOT_FOUND),
             1 => {
