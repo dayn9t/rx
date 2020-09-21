@@ -1,9 +1,10 @@
-use dirs;
 use std::ffi::OsStr;
 pub use std::fs::File;
 use std::fs::{self, DirEntry};
 pub use std::io::*;
 pub use std::path::{Path, PathBuf};
+
+use dirs;
 
 /// 获取文件名
 pub fn file_name<P>(p: &P) -> &str

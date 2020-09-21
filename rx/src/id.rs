@@ -2,6 +2,8 @@ use std::fmt::{self, Display, LowerHex};
 use std::marker::PhantomData;
 use std::usize;
 
+use serde_derive::{Deserialize, Serialize};
+
 ///强类型Id
 #[derive(Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Id<C, T = usize>(T, PhantomData<C>);
