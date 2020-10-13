@@ -1,11 +1,11 @@
 use std::collections::HashMap;
+use std::{io, thread};
 //use std::fs::copy;
 use std::fs::File;
 use std::io::Write;
 use std::path::*;
 use std::process::Command;
 use std::time::Duration;
-use std::{io, thread};
 
 use colored::*;
 use http::uri::Uri;
@@ -89,6 +89,7 @@ pub struct BookShelfCfg {
 
 /// 书架信息
 pub struct BookShelf {
+    root: PathBuf,
     book_tab: DirTable<BookInfo>,
     catalog_tab: DirTable<CatalogInfo>,
     page_dir: PathBuf,
@@ -110,6 +111,7 @@ impl BookShelf {
     pub fn load(path: &Path) -> Result<BookShelf> {
         let mut db = DirDb::open(&path)?;
         Ok(BookShelf {
+            root: path.to_owned(),
             book_tab: db.open_table(&"book")?,
             catalog_tab: db.open_table(&"catalog")?,
             page_dir: path.join("page"),
@@ -144,22 +146,24 @@ impl BookShelf {
     /// 添加
     pub fn add(&mut self, url: &str, name: &Option<&str>) -> CmdResult {
         println!("add: {} {:?}", url, name);
+        self.git_pull()?;
         let book = BookInfo {
             url: url.to_string(),
             title: name.unwrap_or("").to_string(),
             chapter_start: 1,
         };
         self.book_tab.post(&book).unwrap();
-        Ok(())
+        self.git_push()
     }
 
     /// 删除
     pub fn remove(&mut self, id: &str) -> CmdResult {
         if let Ok(id) = id.parse() {
+            self.git_pull()?;
             if let Ok(book) = self.book_tab.get(id) {
                 println!("remove: #{} {}", id, book.title);
                 self.book_tab.delete(id).unwrap();
-                return Ok(());
+                return self.git_push();
             }
         }
         Err(INVALID_BOOK)
@@ -240,6 +244,7 @@ impl BookShelf {
     /// 装订
     pub fn bind(&mut self, book_id: &str, chapter_id: Option<&str>) -> CmdResult {
         if let Ok(book_id) = book_id.parse() {
+            self.git_pull()?;
             if let Ok(mut book) = self.book_tab.get(book_id) {
                 println!("binding book: {}. {}", book_id, book.title);
                 let catalog = self.catalog_tab.get(book_id).unwrap();
@@ -265,7 +270,7 @@ impl BookShelf {
 
                 book.chapter_start = catalog.chapter_end();
                 self.book_tab.put(book_id, &book).unwrap();
-                return Ok(());
+                return self.git_push();
             }
         }
         Err(INVALID_BOOK)
@@ -324,6 +329,34 @@ impl BookShelf {
         for (i, (host, counter)) in vec.iter().enumerate() {
             println!("[{:02}] {} ({})", i + 1, host, counter);
         }
+        Ok(())
+    }
+
+    // 拉取数据
+    fn git_pull(&self) -> CmdResult {
+        let output = Command::new("git")
+            .arg("-C")
+            .arg(self.root.clone())
+            .arg("pull")
+            .output()
+            .unwrap();
+        println!("pull status: {}", output.status);
+        io::stdout().write_all(&output.stdout).unwrap();
+        io::stderr().write_all(&output.stderr).unwrap();
+
+        Ok(())
+    }
+
+    // 提交数据
+    fn git_push(&self) -> CmdResult {
+        let output = Command::new("gac1.sh")
+            .arg(self.root.clone())
+            .output()
+            .unwrap();
+        println!("status: {}", output.status);
+        io::stdout().write_all(&output.stdout).unwrap();
+        io::stderr().write_all(&output.stderr).unwrap();
+
         Ok(())
     }
 }
