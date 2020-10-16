@@ -192,7 +192,16 @@ impl BookShelf {
                 self.book_tab.put(book_id, &book).unwrap();
             }
             println!("OK");
-            let old = self.catalog_tab.get_or_default(book_id);
+            let mut old = self.catalog_tab.get_or_default(book_id);
+            // 不检查并且标记那些缺失的章节
+            for (i, link) in old.chapters.iter_mut().enumerate() {
+                let chapter_id = i + 1;
+                let file = self.chapter_file(book_id, chapter_id);
+                if !file.exists() {
+                    link.text.clear();
+                }
+            }
+
             let indexes = algo::diff(&new.chapters[..], &old.chapters[..]);
             if !indexes.is_empty() {
                 for i in indexes {
