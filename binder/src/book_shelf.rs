@@ -127,7 +127,7 @@ impl BookShelf {
         for (id, book) in rs {
             let (unbound, total) = if let Ok(catalog) = self.catalog_tab.get(id) {
                 (
-                    catalog.chapter_end() - book.chapter_start(),
+                    catalog.chapter_end().saturating_sub(book.chapter_start()),
                     catalog.total_chapter(),
                 )
             } else {
