@@ -24,6 +24,11 @@ impl<T: Ord> RangeIndex<T> {
         self.elems.len()
     }
 
+    /// 定位索引(下标)区间
+    pub fn locate(&self, value_range: &Range<T>) -> Range<usize> {
+        algo::locate_range(&self.elems[..], &value_range)
+    }
+
     /// 追加条目，用户保证数据有序
     pub fn push(&mut self, elem: T) {
         if let Some(e) = self.elems.last() {
@@ -32,10 +37,11 @@ impl<T: Ord> RangeIndex<T> {
         self.elems.push(elem);
     }
 
-    /// 定位索引(下标)区间
-    pub fn locate(&self, value_range: &Range<T>) -> Range<usize> {
-        algo::locate_range(&self.elems[..], &value_range)
+    /// 清除数据
+    pub fn clear(&mut self) {
+        self.elems.clear();
     }
+
 }
 
 #[cfg(test)]
