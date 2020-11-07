@@ -41,7 +41,6 @@ impl<T: Ord> RangeIndex<T> {
     pub fn clear(&mut self) {
         self.elems.clear();
     }
-
 }
 
 #[cfg(test)]
