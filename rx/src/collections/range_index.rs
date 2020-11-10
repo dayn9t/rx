@@ -24,6 +24,11 @@ impl<T: Ord> RangeIndex<T> {
         self.elems.len()
     }
 
+    /// 判定否为空
+    pub fn is_empty(&self) -> bool {
+        self.elems.is_empty()
+    }
+
     /// 定位索引(下标)区间
     pub fn locate(&self, value_range: &Range<T>) -> Range<usize> {
         algo::locate_range(&self.elems[..], &value_range)
