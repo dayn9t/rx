@@ -218,6 +218,7 @@ impl BookShelf {
     // 拉取/保存正文
     fn save_chapter(&mut self, link: &LinkInfo, chapter_id: usize, book_id: usize) -> Option<()> {
         print!("    {}. {} ...          ", chapter_id, link.text);
+        //print!("    {}. {} {}...          ", chapter_id, link.text, link.url);
         let root = Node::pull(&link.url, &self.cfg.request)?;
         let text = root.find_max_text();
 
