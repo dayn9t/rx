@@ -5,3 +5,4 @@ pub use top_queue::*;
 mod range_index;
 mod top_multi_map;
 mod top_queue;
+pub mod id_map;
