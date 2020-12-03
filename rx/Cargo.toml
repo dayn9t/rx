@@ -10,6 +10,9 @@ serde_json = "*"
 serde_derive = "*"
 
 encoding_rs = "*"
-uuid = { version = "0.5", features = ["serde", "v5"] }
+
+uuid = { version = "0.6", features = ["serde", "v5"] }
+chrono = { version = "*", features = ["serde"] }
 
 dirs = "*"
+

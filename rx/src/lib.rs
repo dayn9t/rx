@@ -6,6 +6,7 @@ pub mod collections;
 pub mod fs;
 pub mod id;
 pub mod text;
+pub mod time;
 
 #[cfg(test)]
 mod tests {
