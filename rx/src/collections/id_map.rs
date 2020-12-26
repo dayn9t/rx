@@ -195,7 +195,7 @@ impl<R: IdRecord> IdMap<R> {
     }
 
     /// 加载记录
-    pub fn load<A>(&mut self, archive: &mut A) -> usize
+    pub fn load<A>(&mut self, archive: &A) -> usize
     where
         A: IdInArchive<R>,
     {
