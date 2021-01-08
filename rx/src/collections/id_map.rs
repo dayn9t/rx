@@ -90,6 +90,16 @@ impl<R: IdRecord> IdMap<R> {
         }
     }
 
+    /// 获取第一个记录
+    pub fn first(&self) -> Option<&R> {
+        self.records.first()
+    }
+    
+    /// 获取最后记录
+    pub fn last(&self) -> Option<&R> {
+        self.records.last()
+    }
+
     /// 查找索引位置记录
     pub fn at(&self, index: IdIndex) -> Option<&R> {
         self.records.get(index as usize)
