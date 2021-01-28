@@ -1,4 +1,5 @@
 use std::ops::Sub;
+use std::fmt;
 
 use chrono::format::strftime::StrftimeItems;
 use chrono::prelude::Local;
@@ -45,6 +46,13 @@ impl Timestamp {
     pub fn sub_sat(&self, v: u32) -> Self {
         Self(if self.0 > v { self.0 - v } else { 0 })
     }
+
+
+    /// 转换成: DateTime
+    pub fn to_datetime(&self) -> DateTime
+    {
+        self.to_owned().into()
+    }
 }
 
 impl Sub for Timestamp {
@@ -67,10 +75,16 @@ impl Into<DateTime> for Timestamp {
     }
 }
 
+impl fmt::Display for Timestamp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_datetime().to_string())
+    }
+}
+
 impl Serialize for Timestamp {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         let dt: DateTime = self.clone().into();
         dt.serialize(serializer)
@@ -79,8 +93,8 @@ impl Serialize for Timestamp {
 
 impl<'de> Deserialize<'de> for Timestamp {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         let dt = DateTime::deserialize(deserializer);
         dt.map(|v| Timestamp::from(v))
@@ -110,15 +124,35 @@ let time = DateTime::from_timestamp(1557506652, 0);
 println!("time: {}", to_json(&time).unwrap());
 */
 
-/// 本地字符串（不含有毫秒）
-pub fn local_time_str() -> String {
-    let fmt = StrftimeItems::new("%Y-%m-%d %H:%M:%S").clone();
-    let dt = Local::now().naive_local();
+/// 时间转换本地字符串（不含有毫秒）
+pub fn to_local_str(dt: DateTime) -> String {
+    let fmt = StrftimeItems::new("%Y-%m-%d %H:%M:%S");
     format!("{}", dt.format_with_items(fmt))
+}
+
+/// 获取当前时间本地字符串（不含有毫秒）
+pub fn now() -> DateTime {
+    Local::now().naive_local()
+}
+
+/// 获取当前时间本地字符串（不含有毫秒）
+pub fn local_time_str() -> String {
+    to_local_str(now())
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
+    #[test]
+    fn test_timestamp() {
+        let s = "2000-01-01 00:00:00";
+        let t = Timestamp::parse_from_common_str(s).unwrap();
+        assert_eq!(t.to_string(), s);
+        println!("{}", t);
+    }
+
+
     #[test]
     fn test_local_time_str() {
         //let r1 = 1..5;

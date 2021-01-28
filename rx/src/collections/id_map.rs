@@ -94,7 +94,7 @@ impl<R: IdRecord> IdMap<R> {
     pub fn first(&self) -> Option<&R> {
         self.records.first()
     }
-    
+
     /// 获取最后记录
     pub fn last(&self) -> Option<&R> {
         self.records.last()
