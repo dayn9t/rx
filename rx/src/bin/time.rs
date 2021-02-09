@@ -1,6 +1,5 @@
 use rx::time::*;
 
-
 fn main() {
     println!("local_time_str: {}", local_time_str());
 

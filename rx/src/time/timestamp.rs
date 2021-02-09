@@ -1,5 +1,5 @@
-use std::ops::Sub;
 use std::fmt;
+use std::ops::Sub;
 
 use chrono::format::strftime::StrftimeItems;
 use chrono::prelude::Local;
@@ -47,10 +47,8 @@ impl Timestamp {
         Self(if self.0 > v { self.0 - v } else { 0 })
     }
 
-
     /// 转换成: DateTime
-    pub fn to_datetime(&self) -> DateTime
-    {
+    pub fn to_datetime(&self) -> DateTime {
         self.to_owned().into()
     }
 }
@@ -83,8 +81,8 @@ impl fmt::Display for Timestamp {
 
 impl Serialize for Timestamp {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         let dt: DateTime = self.clone().into();
         dt.serialize(serializer)
@@ -93,8 +91,8 @@ impl Serialize for Timestamp {
 
 impl<'de> Deserialize<'de> for Timestamp {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         let dt = DateTime::deserialize(deserializer);
         dt.map(|v| Timestamp::from(v))
@@ -151,7 +149,6 @@ mod tests {
         assert_eq!(t.to_string(), s);
         println!("{}", t);
     }
-
 
     #[test]
     fn test_local_time_str() {
