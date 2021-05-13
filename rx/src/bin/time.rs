@@ -16,7 +16,14 @@ fn main() {
 
     println!("DateTime: {}", dt.to_string());
 
-    let now: DateTime = now();
+    let now1: DateTime = now();
 
-    println!("Now: {}", now.to_string());
+    println!("Now: {}", now1.to_string());
+
+    let t1 = now();
+    let t2 = now();
+    let d: Duration = t2 - t1;
+
+    println!("D: {}", d);
+    //let
 }

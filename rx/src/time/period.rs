@@ -4,6 +4,7 @@ use std::cmp;
 use serde_derive::Serialize;
 
 use super::timestamp::*;
+use super::types::*;
 
 /// 时间段
 #[derive(PartialEq, Copy, Clone, Default, Serialize)]

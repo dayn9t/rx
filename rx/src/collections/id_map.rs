@@ -1,4 +1,4 @@
-use std::collections::BTreeMap as Map;
+use std::collections::{BTreeMap as Map, BTreeSet};
 use std::ops::Range;
 pub use std::ops::{Deref, DerefMut};
 
@@ -41,12 +41,6 @@ pub trait IdOutArchive<R: IdRecord> {
     fn update(&mut self, i: IdIndex, record: &R);
 }
 
-// 记录修改操作
-enum Operation {
-    Update,
-    Insert,
-}
-
 /// ID搜索表
 #[derive(Default)]
 pub struct IdMap<R: IdRecord> {
@@ -56,8 +50,11 @@ pub struct IdMap<R: IdRecord> {
     // ID查找表
     id_map: Map<R::Id, IdIndex>,
 
-    // 被修改的记录操作集合
-    operations: Vec<(IdIndex, Operation)>,
+    // 插入记录操作集合
+    op_insert: BTreeSet<IdIndex>,
+
+    // 更新记录操作集合
+    op_update: BTreeSet<IdIndex>,
 }
 
 impl<R: IdRecord> IdMap<R> {
@@ -193,13 +190,14 @@ impl<R: IdRecord> IdMap<R> {
         let id = record.get_id();
         if let Some(idx) = self.id_map.get(&id) {
             let r = self.records.get_mut(*idx as usize).unwrap();
-            if r.update(record) {
-                self.operations.push((*idx, Operation::Update));
+            if r.update(record) && !self.op_insert.contains(idx) {
+                // 操作不存在时才需要插入，否则都是重复，如果要支持删除操作，这里要修改
+                self.op_update.insert(*idx);
             }
             *idx
         } else {
             let idx = self.append(record);
-            self.operations.push((idx, Operation::Insert));
+            self.op_insert.insert(idx);
             idx
         }
     }
@@ -220,15 +218,19 @@ impl<R: IdRecord> IdMap<R> {
     where
         A: IdOutArchive<R>,
     {
-        for (i, a) in &self.operations {
+        let len = self.op_insert.len() + self.op_update.len();
+
+        for i in &self.op_insert {
             let r = self.at(*i).unwrap();
-            match a {
-                Operation::Update => archive.update(*i, r),
-                Operation::Insert => archive.insert(*i, r),
-            }
+            archive.insert(*i, r);
         }
-        let len = self.operations.len();
-        self.operations.clear();
+        self.op_insert.clear();
+
+        for i in &self.op_update {
+            let r = self.at(*i).unwrap();
+            archive.update(*i, r);
+        }
+        self.op_update.clear();
         len
     }
 }

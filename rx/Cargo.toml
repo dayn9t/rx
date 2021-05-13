@@ -13,6 +13,7 @@ encoding_rs = "*"
 
 uuid = { version = "0.6", features = ["serde", "v5"] }
 chrono = { version = "*", features = ["serde"] }
+time = "*"
 
 dirs = "*"
 

@@ -1,10 +1,9 @@
 use std::fmt;
 use std::ops::Sub;
 
-use chrono::format::strftime::StrftimeItems;
-use chrono::prelude::Local;
-pub use chrono::{NaiveDateTime as DateTime, ParseResult};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+use super::types::*;
 
 /// 时间戳
 #[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Default)]
@@ -108,6 +107,19 @@ pub fn timestamp_or(time: &Option<DateTime>, v: Timestamp) -> Timestamp {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_timestamp() {
+        let s = "2000-01-01 00:00:00";
+        let t = Timestamp::parse_from_common_str(s).unwrap();
+        assert_eq!(t.to_string(), s);
+        println!("{}", t);
+    }
+}
+
 /*
 let ts = Timestamp::new(1557506652);
 
@@ -121,38 +133,3 @@ let time = DateTime::from_timestamp(1557506652, 0);
 
 println!("time: {}", to_json(&time).unwrap());
 */
-
-/// 时间转换本地字符串（不含有毫秒）
-pub fn to_local_str(dt: DateTime) -> String {
-    let fmt = StrftimeItems::new("%Y-%m-%d %H:%M:%S");
-    format!("{}", dt.format_with_items(fmt))
-}
-
-/// 获取当前时间本地字符串（不含有毫秒）
-pub fn now() -> DateTime {
-    Local::now().naive_local()
-}
-
-/// 获取当前时间本地字符串（不含有毫秒）
-pub fn local_time_str() -> String {
-    to_local_str(now())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_timestamp() {
-        let s = "2000-01-01 00:00:00";
-        let t = Timestamp::parse_from_common_str(s).unwrap();
-        assert_eq!(t.to_string(), s);
-        println!("{}", t);
-    }
-
-    #[test]
-    fn test_local_time_str() {
-        //let r1 = 1..5;
-        //assert_eq!(v.binary_search(&6), Ok(16));
-    }
-}
