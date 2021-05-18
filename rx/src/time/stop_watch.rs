@@ -27,7 +27,7 @@ impl StopWatch {
 
     ///停止计时
     pub fn stop(&mut self) -> f64 {
-        if !self.started() {
+        if !self.has_started() {
             return 0.0;
         };
         let d = secs_since_epoch() - self.start;
@@ -42,7 +42,7 @@ impl StopWatch {
     }
 
     ///是否已经启动
-    pub fn started(&self) -> bool {
+    pub fn has_started(&self) -> bool {
         self.started
     }
 
