@@ -1,7 +1,7 @@
 use super::fun::*;
 
 /// 秒表
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct StopWatch {
     started: bool,
     elapsed: f64,
@@ -10,6 +10,11 @@ pub struct StopWatch {
 }
 
 impl StopWatch {
+    /// 创建新秒表
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     ///启动计时，总时间累计
     pub fn start(&mut self) {
         if !self.started {

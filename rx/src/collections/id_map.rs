@@ -2,6 +2,8 @@ use std::collections::{BTreeMap as Map, BTreeSet};
 use std::ops::Range;
 pub use std::ops::{Deref, DerefMut};
 
+use crate::time::StopWatch;
+
 /// ID记录数组内索引
 pub type IdIndex = u32;
 
@@ -220,16 +222,26 @@ impl<R: IdRecord> IdMap<R> {
     {
         let len = self.op_insert.len() + self.op_update.len();
 
+        let mut sw = StopWatch::new();
+
         for i in &self.op_insert {
             let r = self.at(*i).unwrap();
+            sw.start();
             archive.insert(*i, r);
+            sw.stop();
         }
         self.op_insert.clear();
 
+        println!("{:?}", sw);
+        let mut sw = StopWatch::new();
+
         for i in &self.op_update {
             let r = self.at(*i).unwrap();
+            sw.start();
             archive.update(*i, r);
+            sw.stop();
         }
+        println!("{:?}", sw);
         self.op_update.clear();
         len
     }
