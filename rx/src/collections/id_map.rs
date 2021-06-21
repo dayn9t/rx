@@ -232,7 +232,7 @@ impl<R: IdRecord> IdMap<R> {
         }
         self.op_insert.clear();
 
-        println!("{:?}", sw);
+        println!("insert: {:?}", sw);
         let mut sw = StopWatch::new();
 
         for i in &self.op_update {
@@ -241,7 +241,7 @@ impl<R: IdRecord> IdMap<R> {
             archive.update(*i, r);
             sw.stop();
         }
-        println!("{:?}", sw);
+        println!("update: {:?}", sw);
         self.op_update.clear();
         len
     }
