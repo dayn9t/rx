@@ -1,11 +1,13 @@
+use std::fmt;
+
 use super::fun::*;
 
 /// 秒表
 #[derive(Default, Debug)]
 pub struct StopWatch {
     started: bool,
-    elapsed: f64,
-    start: f64,
+    elapsed: i64,
+    start: i64,
     count: usize,
 }
 
@@ -19,7 +21,7 @@ impl StopWatch {
     pub fn start(&mut self) {
         if !self.started {
             self.count += 1;
-            self.start = secs_since_epoch();
+            self.start = nsecs_since_epoch();
             self.started = true;
         }
     }
@@ -35,10 +37,10 @@ impl StopWatch {
         if !self.has_started() {
             return 0.0;
         };
-        let d = secs_since_epoch() - self.start;
+        let d = nsecs_since_epoch() - self.start;
         self.elapsed += d;
         self.started = false;
-        return d;
+        d as f64 / 1_000_000_000.0
     }
 
     ///复位
@@ -51,9 +53,9 @@ impl StopWatch {
         self.started
     }
 
-    ///流逝的时间
+    ///流逝的总时间
     pub fn elapsed(&self) -> f64 {
-        self.elapsed
+        self.elapsed as f64 / 1_000_000_000.0
     }
 
     ///计数次数
@@ -61,13 +63,20 @@ impl StopWatch {
         self.count
     }
 
-    ///平均时间
+    ///流逝的平均时间
     pub fn average(&self) -> f64 {
-        self.elapsed / self.count as f64
+        self.elapsed() / self.count as f64
     }
+}
 
-    ///获取描述字符串
-    pub fn to_string(&self) -> String {
-        String::new()
+impl fmt::Display for StopWatch {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "elapsed: {} count: {} average: {}",
+            self.elapsed(),
+            self.count(),
+            self.average()
+        )
     }
 }
