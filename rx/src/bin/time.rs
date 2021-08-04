@@ -1,6 +1,10 @@
 use rx::time::*;
 
 fn main() {
+    for i in (0..100).step_by(16) {
+        println!("{}", i);
+    }
+
     println!("local_time_str: {}", local_time_str());
 
     let s = "2000-01-01 00:00:00";

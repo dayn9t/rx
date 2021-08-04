@@ -39,6 +39,9 @@ pub trait IdOutArchive<R: IdRecord> {
     /// 插入记录
     fn insert(&mut self, i: IdIndex, record: &R);
 
+    /// 插入记录
+    fn insert_all(&mut self, records: Vec<(IdIndex, &R)>);
+
     /// 更新记录
     fn update(&mut self, i: IdIndex, record: &R);
 }
@@ -217,6 +220,43 @@ impl<R: IdRecord> IdMap<R> {
 
     /// 保存修改
     pub fn save<A>(&mut self, archive: &mut A) -> usize
+    where
+        A: IdOutArchive<R>,
+    {
+        let len = self.op_insert.len() + self.op_update.len();
+
+        let mut v = Vec::with_capacity(self.op_insert.len());
+        for i in &self.op_insert {
+            let r = self.at(*i).unwrap();
+            v.push((*i, r));
+        }
+
+        let mut sw = StopWatch::new();
+        sw.start();
+        let step = 1024 * 8;
+        for start in (0..v.len()).step_by(step) {
+            let end = v.len().min(start + step);
+            archive.insert_all(v[start..end].to_vec());
+        }
+        sw.stop();
+        self.op_insert.clear();
+
+        println!("insert: {}", sw);
+        let mut sw = StopWatch::new();
+
+        for i in &self.op_update {
+            let r = self.at(*i).unwrap();
+            sw.start();
+            archive.update(*i, r);
+            sw.stop();
+        }
+        println!("update: {}", sw);
+        self.op_update.clear();
+        len
+    }
+
+    /// 保存修改
+    pub fn save1<A>(&mut self, archive: &mut A) -> usize
     where
         A: IdOutArchive<R>,
     {
