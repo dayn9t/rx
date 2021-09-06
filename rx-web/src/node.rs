@@ -9,14 +9,16 @@ use crate::{html, url};
 #[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct LinkInfo {
     pub text: String,
-    pub url: String,
+    pub url: Option<String>,
 }
 
 impl LinkInfo {
     /// 补全URL
     pub fn complete_by(&mut self, page_url: &str) {
-        //println!("url: {}, {}", &self.url, page_url);
-        self.url = url::complete(&self.url, page_url);
+        //println!("url: {:?}, {}", &self.url, page_url);
+        if let Some(u) = self.url.as_ref() {
+            self.url = url::complete(&u, page_url)
+        }
     }
 }
 
@@ -57,7 +59,7 @@ impl Node {
         if self.is_link() {
             Some(LinkInfo {
                 text: self.text.first().unwrap().clone(),
-                url: self.attrs.get("href").unwrap().clone(),
+                url: self.attrs.get("href").cloned(),
             })
         } else {
             None

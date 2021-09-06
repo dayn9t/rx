@@ -6,23 +6,23 @@ pub fn stem(url: &str) -> &str {
     &url[..p]
 }
 
-pub fn complete(url: &str, page_url: &str) -> String {
+pub fn complete(url: &str, page_url: &str) -> Option<String> {
     if url.starts_with("http") {
         // 全路径
-        url.to_string()
+        Some(url.to_string())
     } else if url.starts_with("/") {
         // 站内全路径
-        let uri = page_url.parse::<Uri>().unwrap();
+        let uri = page_url.parse::<Uri>().ok()?;
         let uri = Builder::new()
-            .authority(uri.authority_part().unwrap().as_str())
-            .scheme(uri.scheme_str().unwrap())
+            .authority(uri.authority_part()?.as_str())
+            .scheme(uri.scheme_str()?)
             .path_and_query(url)
             .build()
-            .unwrap();
-        uri.to_string()
+            .ok()?;
+        Some(uri.to_string())
     } else {
         // 页面相对路径
-        stem(page_url).to_string() + url
+        Some(stem(page_url).to_string() + url)
     }
 }
 
@@ -42,16 +42,16 @@ mod tests {
         let full = "https://www.biquge.biz/d/a.html";
 
         let url = "/d/a.html";
-        assert_eq!(full, &complete(url, page));
+        assert_eq!(full, &complete(url, page).unwrap());
 
         let url = "a.html";
-        assert_eq!(full, &complete(url, page));
+        assert_eq!(full, &complete(url, page).unwrap());
 
         let url = full;
-        assert_eq!(full, &complete(url, page));
+        assert_eq!(full, &complete(url, page).unwrap());
 
         let page = "https://www.biquge.biz/d/index.html";
         let url = "a.html";
-        assert_eq!(full, &complete(url, page));
+        assert_eq!(full, &complete(url, page).unwrap());
     }
 }

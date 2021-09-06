@@ -219,23 +219,28 @@ impl BookShelf {
     fn save_chapter(&mut self, link: &LinkInfo, chapter_id: usize, book_id: usize) -> Option<()> {
         print!("    {}. {} ...          ", chapter_id, link.text);
         //print!("    {}. {} {}...          ", chapter_id, link.text, link.url);
-        let root = Node::pull(&link.url, &self.cfg.request)?;
-        let text = root.find_max_text();
+        if let Some(url) = link.url.as_ref() {
+            let root = Node::pull(url, &self.cfg.request)?;
+            let text = root.find_max_text();
 
-        let file = self.chapter_file(book_id, chapter_id);
-        fs::make_parent(&file).ok()?;
-        let mut file = File::create(file).unwrap();
+            let file = self.chapter_file(book_id, chapter_id);
+            fs::make_parent(&file).ok()?;
+            let mut file = File::create(file).unwrap();
 
-        let title = format!("第{}章 {}\n\n", chapter_id, link.text);
-        file.write_all(title.as_bytes()).unwrap();
+            let title = format!("第{}章 {}\n\n", chapter_id, link.text);
+            file.write_all(title.as_bytes()).unwrap();
 
-        for s in text {
-            let paragraph = format!("\t{}\n\n", s);
-            file.write_all(paragraph.as_bytes()).unwrap();
+            for s in text {
+                let paragraph = format!("\t{}\n\n", s);
+                file.write_all(paragraph.as_bytes()).unwrap();
+            }
+            println!("OK");
+            thread::sleep(Duration::from_secs(1));
+            Some(())
+        } else {
+            println!("Err");
+            None
         }
-        println!("OK");
-        thread::sleep(Duration::from_secs(1));
-        Some(())
     }
 
     /// 列出目录
