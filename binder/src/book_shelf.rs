@@ -8,6 +8,7 @@ use std::process::Command;
 use std::time::Duration;
 
 use colored::*;
+use leg::*;
 use http::uri::Uri;
 
 use rx::{algo, fs};
@@ -191,9 +192,19 @@ impl BookShelf {
                 book.title = new.title.clone();
                 self.book_tab.put(book_id, &book).unwrap();
             }
-            println!("OK");
+
             let mut old = self.catalog_tab.get_or_default(book_id);
-            // 不检查并且标记那些缺失的章节
+
+            println!("OK");
+
+            let diff = new.chapters.len() as i64 - old.chapters.len() as i64;
+            if diff < 0{
+                let msg = format!("The number of chapters has been reduced by {}", -diff);
+                warn(&msg, None, None);
+            }
+
+
+            // 检查并且标记那些缺失的章节
             for (i, link) in old.chapters.iter_mut().enumerate() {
                 let chapter_id = i + 1;
                 let file = self.chapter_file(book_id, chapter_id);

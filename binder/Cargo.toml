@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 clap = "*"
 colored = "*"
+leg = "*"
 
 http_req = "*"
 http = "*"
