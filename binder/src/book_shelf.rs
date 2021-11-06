@@ -21,6 +21,7 @@ use rx_web::req::RequestCfg;
 struct BookInfo {
     title: String,
     url: String,
+    tag: String,
     chapter_start: usize,
 }
 
@@ -122,10 +123,14 @@ impl BookShelf {
     }
 
     /// 列表
-    pub fn list(&self, _name: &Option<&str>) -> CmdResult {
-        //println!("list all1");
+    pub fn list(&self, tag: &Option<&str>) -> CmdResult {
+        let tag = tag.unwrap_or("new").to_string();
+        //println!("list {:?}", tag);
         let rs = self.book_tab.find_all_pairs().unwrap();
         for (id, book) in rs {
+            if book.tag != tag {
+                continue;
+            }
             let (unbound, total) = if let Ok(catalog) = self.catalog_tab.get(id) {
                 (
                     catalog.chapter_end().saturating_sub(book.chapter_start()),
@@ -150,6 +155,7 @@ impl BookShelf {
         self.git_pull()?;
         let book = BookInfo {
             url: url.to_string(),
+            tag: "new".to_string(),
             title: name.unwrap_or("").to_string(),
             chapter_start: 1,
         };
@@ -184,6 +190,21 @@ impl BookShelf {
         Ok(())
     }
 
+    /// 更新
+    pub fn tag(&mut self, book_id: &str, new_tag: &str) -> CmdResult {
+        if let Ok(book_id) = book_id.parse() {
+            self.git_pull()?;
+            if let Ok(mut book) = self.book_tab.get(book_id) {
+                println!("tagging book: {}. {}", book_id, book.title);
+                book.tag = new_tag.to_string();
+                self.book_tab.put(book_id, &book).unwrap();
+
+                return self.git_push();
+            }
+        }
+        Err(INVALID_BOOK)
+    }
+
     // 更新一本书
     fn update_book(&mut self, book_id: usize, mut book: BookInfo) {
         print!("[{:02}] {}\t{} ... ", book_id, book.title, book.url);
@@ -198,7 +219,7 @@ impl BookShelf {
             println!("OK");
 
             let diff = new.chapters.len() as i64 - old.chapters.len() as i64;
-            if diff < 0{
+            if diff < 0 {
                 let msg = format!("The number of chapters has been reduced by {}", -diff);
                 warn(&msg, None, None);
             }

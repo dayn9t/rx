@@ -14,7 +14,7 @@ fn main() {
         (about: "Book binder，bind scattered pages into a book")
         (@subcommand list =>
             (about: "List books")
-            (@arg TITLE: "The book title to be ")
+            (@arg TAG: "The book tag to be list")
         )
         (@subcommand add =>
             (about: "Add a new book")
@@ -28,6 +28,11 @@ fn main() {
         (@subcommand update =>
             (about: "Update book(s)")
             (@arg TITLE: "The book to be updated")
+        )
+        (@subcommand tag =>
+            (about: "Tag a book")
+            (@arg ID: +required "The book to be tagged")
+            (@arg TAG: +required "The new tag")
         )
         (@subcommand dir =>
             (about: "List directory contents of a book")
@@ -48,8 +53,8 @@ fn main() {
     let mut shelf = book_shelf::BookShelf::load(&root).unwrap();
 
     let r = if let Some(matches) = matches.subcommand_matches("list") {
-        let name = matches.value_of("TITLE");
-        shelf.list(&name)
+        let tag = matches.value_of("TAG");
+        shelf.list(&tag)
     } else if let Some(matches) = matches.subcommand_matches("add") {
         let url = matches.value_of("URL").unwrap();
         let title = matches.value_of("TITLE");
@@ -60,6 +65,10 @@ fn main() {
     } else if let Some(matches) = matches.subcommand_matches("update") {
         let name = matches.value_of("TITLE");
         shelf.update(&name)
+    } else if let Some(matches) = matches.subcommand_matches("tag") {
+        let id = matches.value_of("ID").unwrap();
+        let tag = matches.value_of("TAG").unwrap();
+        shelf.tag(id, tag)
     } else if let Some(matches) = matches.subcommand_matches("dir") {
         let id = matches.value_of("ID").unwrap();
         shelf.dir(id)
