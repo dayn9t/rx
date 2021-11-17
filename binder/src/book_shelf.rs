@@ -193,13 +193,11 @@ impl BookShelf {
     /// 更新
     pub fn tag(&mut self, book_id: &str, new_tag: &str) -> CmdResult {
         if let Ok(book_id) = book_id.parse() {
-            self.git_pull()?;
             if let Ok(mut book) = self.book_tab.get(book_id) {
                 println!("tagging book: {}. {}", book_id, book.title);
                 book.tag = new_tag.to_string();
                 self.book_tab.put(book_id, &book).unwrap();
-
-                return self.git_push();
+                return Ok(());
             }
         }
         Err(INVALID_BOOK)
