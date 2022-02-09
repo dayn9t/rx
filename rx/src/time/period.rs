@@ -29,7 +29,7 @@ impl Period {
     }
 
     /// 创建时间段 - 根据时间
-    pub fn from_datetime(start: DateTime, end: DateTime) -> Period {
+    pub fn from_datetime(start: NaiveDateTime, end: NaiveDateTime) -> Period {
         Period {
             start: Timestamp::from(start),
             end: Timestamp::from(end),
@@ -37,7 +37,7 @@ impl Period {
     }
 
     /// 创建时间段 - 根据可选时间
-    pub fn option_datetime(start: &Option<DateTime>, end: &Option<DateTime>) -> Period {
+    pub fn option_datetime(start: &Option<NaiveDateTime>, end: &Option<NaiveDateTime>) -> Period {
         let start = timestamp_or(&start, Timestamp::min_value());
         let end = timestamp_or(&end, Timestamp::max_value());
 
@@ -117,7 +117,7 @@ let ts1: Timestamp = serde_json::from_str(&s).unwrap();
 println!("time: {}", to_json(&ts).unwrap());
 println!("time1: {}", to_json(&ts1).unwrap());
 
-let time = DateTime::from_timestamp(1557506652, 0);
+let time = NaiveDateTime::from_timestamp(1557506652, 0);
 
 println!("time: {}", to_json(&time).unwrap());
 */

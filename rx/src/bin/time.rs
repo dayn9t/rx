@@ -16,11 +16,11 @@ fn main() {
 
     println!("Timestamp: {}", ts);
 
-    let dt: DateTime = ts.into();
+    let dt: NaiveDateTime = ts.into();
 
     println!("DateTime: {}", dt.to_string());
 
-    let now1: DateTime = now();
+    let now1: NaiveDateTime = now();
 
     println!("Now: {}", now1.to_string());
 

@@ -13,19 +13,24 @@ pub fn nsecs_since_epoch() -> i64 {
 }
 
 /// 时间转换本地字符串（不含有毫秒）
-pub fn to_local_str(dt: DateTime) -> String {
+pub fn to_local_str(dt: NaiveDateTime) -> String {
     let fmt = StrftimeItems::new("%Y-%m-%d %H:%M:%S");
     format!("{}", dt.format_with_items(fmt))
 }
 
 /// 获取当前时间本地字符串（不含有毫秒）
-pub fn now() -> DateTime {
+pub fn now() -> NaiveDateTime {
     Local::now().naive_local()
 }
 
 /// 获取当前时间本地字符串（不含有毫秒）
 pub fn local_time_str() -> String {
     to_local_str(now())
+}
+
+/// UTC时间转本地Naive时间
+pub fn naive_local(dt: UtcDateTime) -> NaiveDateTime {
+    dt.with_timezone(&Local).naive_local()
 }
 
 #[cfg(test)]

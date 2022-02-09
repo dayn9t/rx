@@ -8,8 +8,8 @@ use std::process::Command;
 use std::time::Duration;
 
 use colored::*;
-use leg::*;
 use http::uri::Uri;
+use leg::*;
 
 use rx::{algo, fs};
 use rx_db::*;
@@ -221,7 +221,6 @@ impl BookShelf {
                 let msg = format!("The number of chapters has been reduced by {}", -diff);
                 warn(&msg, None, None);
             }
-
 
             // 检查并且标记那些缺失的章节
             for (i, link) in old.chapters.iter_mut().enumerate() {

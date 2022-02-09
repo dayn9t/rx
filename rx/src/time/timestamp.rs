@@ -17,7 +17,7 @@ impl Timestamp {
 
     /// 从字符串解析
     pub fn parse_from_str(s: &str, fmt: &str) -> ParseResult<Timestamp> {
-        let dt = DateTime::parse_from_str(s, fmt)?;
+        let dt = NaiveDateTime::parse_from_str(s, fmt)?;
         Ok(Timestamp::from(dt))
     }
 
@@ -46,8 +46,8 @@ impl Timestamp {
         Self(if self.0 > v { self.0 - v } else { 0 })
     }
 
-    /// 转换成: DateTime
-    pub fn to_datetime(&self) -> DateTime {
+    /// 转换成: NaiveDateTime
+    pub fn to_datetime(&self) -> NaiveDateTime {
         self.to_owned().into()
     }
 }
@@ -60,15 +60,15 @@ impl Sub for Timestamp {
     }
 }
 
-impl From<DateTime> for Timestamp {
-    fn from(dt: DateTime) -> Self {
+impl From<NaiveDateTime> for Timestamp {
+    fn from(dt: NaiveDateTime) -> Self {
         Timestamp(dt.timestamp() as u32)
     }
 }
 
-impl Into<DateTime> for Timestamp {
-    fn into(self) -> DateTime {
-        DateTime::from_timestamp(self.0 as i64, 0)
+impl Into<NaiveDateTime> for Timestamp {
+    fn into(self) -> NaiveDateTime {
+        NaiveDateTime::from_timestamp(self.0 as i64, 0)
     }
 }
 
@@ -83,7 +83,7 @@ impl Serialize for Timestamp {
     where
         S: Serializer,
     {
-        let dt: DateTime = self.clone().into();
+        let dt: NaiveDateTime = self.clone().into();
         dt.serialize(serializer)
     }
 }
@@ -93,13 +93,13 @@ impl<'de> Deserialize<'de> for Timestamp {
     where
         D: Deserializer<'de>,
     {
-        let dt = DateTime::deserialize(deserializer);
+        let dt = NaiveDateTime::deserialize(deserializer);
         dt.map(|v| Timestamp::from(v))
     }
 }
 
 /// 日期时间转换成时间戳
-pub fn timestamp_or(time: &Option<DateTime>, v: Timestamp) -> Timestamp {
+pub fn timestamp_or(time: &Option<NaiveDateTime>, v: Timestamp) -> Timestamp {
     if let Some(t) = time {
         Timestamp::from(t.to_owned())
     } else {
@@ -129,7 +129,7 @@ let ts1: Timestamp = serde_json::from_str(&s).unwrap();
 println!("time: {}", to_json(&ts).unwrap());
 println!("time1: {}", to_json(&ts1).unwrap());
 
-let time = DateTime::from_timestamp(1557506652, 0);
+let time = NaiveDateTime::from_timestamp(1557506652, 0);
 
 println!("time: {}", to_json(&time).unwrap());
 */
