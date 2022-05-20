@@ -9,3 +9,4 @@ rx = { path = "../rx" }
 serde = "*"
 serde_json = "*"
 serde_derive = "*"
+redis = "*"

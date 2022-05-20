@@ -7,6 +7,8 @@ pub use serde::de::DeserializeOwned;
 pub use serde::{Deserialize, Serialize};
 pub use serde_json::to_string_pretty as to_json;
 
+pub use serde_json::from_str;
+
 /// 从JSON文件加载类型
 pub fn load_json<T, P>(path: P) -> Result<T>
 where

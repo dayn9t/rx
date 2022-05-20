@@ -110,7 +110,7 @@ static TOO_MANY_STORAGE: &'static str = "Too many storage";
 
 impl BookShelf {
     /// 加载
-    pub fn load(path: &Path) -> Result<BookShelf> {
+    pub fn load(path: &Path) -> IoResult<BookShelf> {
         let mut db = DirDb::open(&path)?;
         Ok(BookShelf {
             root: path.to_owned(),
@@ -118,12 +118,12 @@ impl BookShelf {
             catalog_tab: db.open_table(&"catalog")?,
             page_dir: path.join("page"),
             text_dir: path.join("text"),
-            cfg: db.load_varient("config")?,
+            cfg: db.load_variant("config")?,
         })
     }
 
     /// 列表
-    pub fn list(&self, tag: &Option<&str>) -> CmdResult {
+    pub fn list(&mut self, tag: &Option<&str>) -> CmdResult {
         let tag = tag.unwrap_or("new").to_string();
         //println!("list {:?}", tag);
         let rs = self.book_tab.find_all_pairs().unwrap();
@@ -273,7 +273,7 @@ impl BookShelf {
     }
 
     /// 列出目录
-    pub fn dir(&self, book_id: &str) -> CmdResult {
+    pub fn dir(&mut self, book_id: &str) -> CmdResult {
         if let Ok(id) = book_id.parse::<usize>() {
             if let Ok(book) = self.catalog_tab.get(id) {
                 for (index, link) in book.chapters.iter().enumerate() {
@@ -358,7 +358,7 @@ impl BookShelf {
     }
 
     /// 主机列表
-    pub fn hosts(&self) -> CmdResult {
+    pub fn hosts(&mut self) -> CmdResult {
         let books = self.book_tab.find_all().unwrap();
         let mut map = HashMap::new();
         for book in &books {

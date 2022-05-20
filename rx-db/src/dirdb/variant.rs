@@ -3,45 +3,49 @@ use std::path::PathBuf;
 
 use rx::text::*;
 
-use super::dirdb::DirDb;
+use super::db::DirDb;
 use crate::interface::*;
 
-pub struct DirVarient<T> {
+type IoResult<T> = std::io::Result<T>;
+
+pub struct DirVariant<T> {
     name: String,
     path: PathBuf,
     _p: PhantomData<T>,
 }
 
-impl<T> DirVarient<T> {
+impl<T> DirVariant<T> {
     /// 打开变量
-    pub fn open<S>(db: &DirDb, name: S) -> Result<Self>
+    pub fn open<S>(db: &DirDb, name: S) -> IoResult<Self>
     where
         S: AsRef<str>,
     {
-        Ok(DirVarient::<T> {
+        Ok(DirVariant::<T> {
             name: name.as_ref().to_string(),
-            path: db.varient_path(name),
+            path: db.variant_path(name),
             _p: PhantomData::<T>,
         })
     }
 }
 
-impl<T: Default + Serialize + DeserializeOwned> Variant for DirVarient<T> {
+impl<T: Default + Serialize + DeserializeOwned> Variant for DirVariant<T> {
     type Record = T;
+
+    type Err = std::io::Error;
 
     fn name(&self) -> &str {
         &self.name
     }
 
-    fn exist(&self) -> bool {
+    fn exist(&mut self) -> bool {
         self.path.exists()
     }
 
-    fn get(&self) -> Result<Self::Record> {
+    fn get(&mut self) -> IoResult<Self::Record> {
         load_json(&self.path)
     }
 
-    fn set(&mut self, record: &Self::Record) -> Result<()> {
+    fn set(&mut self, record: &Self::Record) -> IoResult<()> {
         save_json(&record, &self.path)
     }
 }
@@ -55,9 +59,9 @@ mod tests {
     #[test]
     fn var_works() {
         let db = DirDb::open(&"/tmp/test/dirdb1").unwrap();
-        let name = "student";
-        db.remove_varient(name).unwrap();
-        let mut var = DirVarient::open(&db, name).unwrap();
+        let name = "var";
+        db.remove_variant(name).unwrap();
+        let mut var = DirVariant::open(&db, name).unwrap();
 
         let s1 = { Student::new(1, "Jack") };
         let s2 = { Student::new(2, "John") };
