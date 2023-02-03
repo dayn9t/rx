@@ -1,7 +1,7 @@
 use super::table::*;
 use super::variant::*;
 
-use crate::Variant;
+use crate::IVariant;
 use rx::fs;
 use rx::text::*;
 use std::path::{Path, PathBuf};

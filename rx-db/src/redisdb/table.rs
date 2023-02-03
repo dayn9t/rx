@@ -38,7 +38,7 @@ impl<T> RedisTable<T> {
     }*/
 }
 
-impl<T: Default + Serialize + DeserializeOwned> Table for RedisTable<T> {
+impl<T: Default + Serialize + DeserializeOwned> ITable for RedisTable<T> {
     type Record = T;
 
     type Id = usize;
@@ -80,17 +80,20 @@ impl<T: Default + Serialize + DeserializeOwned> Table for RedisTable<T> {
         Ok(())
     }
 
-    fn find(
+    fn find<P>(
         &mut self,
         min_id: Self::Id,
         limit: usize,
-        filter: &dyn Fn(&Self::Record) -> bool,
-    ) -> RedisResult<Vec<Self::Record>> {
+        predicate: P,
+    ) -> RedisResult<Vec<Self::Record>>
+    where
+        P: Fn(&Self::Record) -> bool,
+    {
         let mut vec = Vec::new();
         let ids = self.find_ids(min_id)?;
         for id in ids {
             let r = self.get(id)?;
-            if filter(&r) {
+            if predicate(&r) {
                 vec.push(r);
                 if vec.len() >= limit {
                     break;
@@ -100,17 +103,20 @@ impl<T: Default + Serialize + DeserializeOwned> Table for RedisTable<T> {
         Ok(vec)
     }
 
-    fn find_pairs(
+    fn find_pairs<P>(
         &mut self,
         min_id: Self::Id,
         limit: usize,
-        filter: &dyn Fn(&Self::Record) -> bool,
-    ) -> RedisResult<Vec<(Self::Id, Self::Record)>> {
+        predicate: P,
+    ) -> RedisResult<Vec<(Self::Id, Self::Record)>>
+    where
+        P: Fn(&Self::Record) -> bool,
+    {
         let mut vec = Vec::new();
         let ids = self.find_ids(min_id)?;
         for id in ids {
             let r = self.get(id)?;
-            if filter(&r) {
+            if predicate(&r) {
                 vec.push((id, r));
                 if vec.len() >= limit {
                     break;
@@ -121,13 +127,8 @@ impl<T: Default + Serialize + DeserializeOwned> Table for RedisTable<T> {
     }
 
     fn find_ids(&mut self, min_id: Self::Id) -> RedisResult<Vec<Self::Id>> {
-        let all_ids: Vec<Self::Id> = self.conn.hkeys(&self.name)?;
-        let mut ids = Vec::new();
-        for id in all_ids {
-            if id >= min_id {
-                ids.push(id);
-            }
-        }
+        let ids: Vec<Self::Id> = self.conn.hkeys(&self.name)?;
+        let mut ids: Vec<_> = ids.into_iter().filter(|id| *id >= min_id).collect();
         ids.sort();
         Ok(ids)
     }
@@ -147,13 +148,13 @@ mod tests {
 
     #[test]
     fn tab_works() {
-        let url = "redis://127.0.0.1/";
+        let url = "redis://:howell.net.cn@127.0.0.1/";
         let name = "student";
         let mut db = RedisDb::open(url).unwrap();
         db.remove(name).unwrap();
 
         let mut tab = db.open_table(name).unwrap();
-        assert_eq!(tab.find_ids(0).unwrap().is_empty(), true);
+        assert_eq!(tab.is_empty(), true);
 
         let s1 = { Student::new(1, "Jack") };
         let s2 = { Student::new(2, "John") };
@@ -174,11 +175,15 @@ mod tests {
         let all = tab.find_all().unwrap();
         assert_eq!(all, vec![s1.clone(), s3.clone()]);
 
-        let v = tab.find(2, 1, &|_| true).unwrap();
+        let v = tab.find(2, 1, |_| true).unwrap();
         assert_eq!(v, vec![s3.clone()]);
 
         let name = s1.name.clone();
-        let v = tab.find(0, 1, &|s| s.name == name).unwrap();
+        let v = tab.find(0, 1, |s| s.name == name).unwrap();
         assert_eq!(v, vec![s1.clone()]);
+
+        for _ in 1..100 {
+            let _id1 = tab.post(&s1).unwrap();
+        }
     }
 }

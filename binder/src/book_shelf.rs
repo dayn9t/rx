@@ -180,7 +180,7 @@ impl BookShelf {
     pub fn update(&mut self, title: &Option<&str>) -> CmdResult {
         let books = if let Some(title) = title {
             self.book_tab
-                .find_pairs(0, usize::max_value(), &|r| r.like(title))
+                .find_pairs(0, usize::max_value(), |r| r.like(title))
         } else {
             self.book_tab.find_all_pairs()
         };

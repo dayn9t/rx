@@ -28,7 +28,7 @@ impl<T> DirVariant<T> {
     }
 }
 
-impl<T: Default + Serialize + DeserializeOwned> Variant for DirVariant<T> {
+impl<T: Default + Serialize + DeserializeOwned> IVariant for DirVariant<T> {
     type Record = T;
 
     type Err = std::io::Error;

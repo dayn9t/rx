@@ -28,7 +28,7 @@ impl<T> RedisVariant<T> {
     }
 }
 
-impl<T: Default + Serialize + DeserializeOwned> Variant for RedisVariant<T> {
+impl<T: Default + Serialize + DeserializeOwned> IVariant for RedisVariant<T> {
     type Record = T;
 
     type Err = redis::RedisError;
@@ -62,8 +62,11 @@ mod tests {
 
     #[test]
     fn var_works() {
-        let mut db = RedisDb::open(&"/tmp/test/dirdb1").unwrap();
-        let name = "student";
+        let url = "redis://:howell.net.cn@127.0.0.1/";
+        let name = "var";
+
+        let mut db = RedisDb::open(url).unwrap();
+
         db.remove(name).unwrap();
         let mut var = db.open_variant(name).unwrap();
 

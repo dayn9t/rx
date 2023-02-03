@@ -37,7 +37,7 @@ impl<T> DirTable<T> {
     }
 }
 
-impl<T: Default + Serialize + DeserializeOwned> Table for DirTable<T> {
+impl<T: Default + Serialize + DeserializeOwned> ITable for DirTable<T> {
     type Record = T;
 
     type Id = usize;
@@ -77,17 +77,20 @@ impl<T: Default + Serialize + DeserializeOwned> Table for DirTable<T> {
         fs::remove(&self.record_path(id))
     }
 
-    fn find(
+    fn find<P>(
         &mut self,
         min_id: Self::Id,
         limit: usize,
-        filter: &dyn Fn(&Self::Record) -> bool,
-    ) -> IoResult<Vec<Self::Record>> {
+        predicate: P,
+    ) -> IoResult<Vec<Self::Record>>
+    where
+        P: Fn(&Self::Record) -> bool,
+    {
         let mut vec = Vec::new();
         let ids = self.find_ids(min_id)?;
         for id in ids {
             let r = self.get(id)?;
-            if filter(&r) {
+            if predicate(&r) {
                 vec.push(r);
                 if vec.len() >= limit {
                     break;
@@ -97,17 +100,20 @@ impl<T: Default + Serialize + DeserializeOwned> Table for DirTable<T> {
         Ok(vec)
     }
 
-    fn find_pairs(
+    fn find_pairs<P>(
         &mut self,
         min_id: Self::Id,
         limit: usize,
-        filter: &dyn Fn(&Self::Record) -> bool,
-    ) -> IoResult<Vec<(Self::Id, Self::Record)>> {
+        predicate: P,
+    ) -> IoResult<Vec<(Self::Id, Self::Record)>>
+    where
+        P: Fn(&Self::Record) -> bool,
+    {
         let mut vec = Vec::new();
         let ids = self.find_ids(min_id)?;
         for id in ids {
             let r = self.get(id)?;
-            if filter(&r) {
+            if predicate(&r) {
                 vec.push((id, r));
                 if vec.len() >= limit {
                     break;
@@ -172,11 +178,11 @@ mod tests {
         let all = tab.find_all().unwrap();
         assert_eq!(all, vec![s1.clone(), s3.clone()]);
 
-        let v = tab.find(2, 1, &|_| true).unwrap();
+        let v = tab.find(2, 1, |_| true).unwrap();
         assert_eq!(v, vec![s3.clone()]);
 
         let name = s1.name.clone();
-        let v = tab.find(0, 1, &|s| s.name == name).unwrap();
+        let v = tab.find(0, 1, |s| s.name == name).unwrap();
         assert_eq!(v, vec![s1.clone()]);
     }
 }

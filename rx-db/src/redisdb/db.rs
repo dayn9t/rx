@@ -1,7 +1,7 @@
 use super::table::*;
 use super::variant::*;
 
-use crate::Variant;
+use crate::IVariant;
 use rx::text::*;
 
 use redis::Commands;
@@ -65,7 +65,7 @@ mod tests {
 
     #[test]
     fn db_works() {
-        let url = "redis://127.0.0.1/";
+        let url = "redis://:howell.net.cn@127.0.0.1/";
         let _db = RedisDb::open(url).unwrap();
     }
 }
