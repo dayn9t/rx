@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-p=/home/jiang/rs/rx
+p=/home/jiang/rs/rx-core
 
 cd ${p}
 cargo build

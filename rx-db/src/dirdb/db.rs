@@ -1,12 +1,12 @@
 use super::table::*;
 use super::variant::*;
 
-use crate::IVariant;
-use rx::fs;
-use rx::text::*;
+use crate::{IRecord, IVariant};
+use rx_core::fs;
+use rx_core::text::*;
 use std::path::{Path, PathBuf};
 
-pub type IoResult<T> = std::io::Result<T>;
+//pub type BoxResult<T> = std::io::Result<T>;
 
 pub struct DirDb {
     path: PathBuf,
@@ -14,7 +14,7 @@ pub struct DirDb {
 
 impl DirDb {
     /// 打开数据库
-    pub fn open<P>(path: &P) -> Result<Self>
+    pub fn open<P>(path: P) -> BoxResult<Self>
     where
         P: AsRef<Path>,
     {
@@ -25,7 +25,7 @@ impl DirDb {
     }
 
     /// 打开数据库
-    pub fn open_name<P, S>(path: &P, name: &S) -> Result<Self>
+    pub fn open_name<P, S>(path: &P, name: &S) -> BoxResult<Self>
     where
         P: AsRef<Path>,
         S: AsRef<str>,
@@ -45,21 +45,21 @@ impl DirDb {
     }
 
     /// 打开数据库变量
-    pub fn open_variant<T, S>(&mut self, name: S) -> Result<DirVariant<T>>
+    pub fn open_variant<T, S>(&mut self, name: S, default: Option<T>) -> BoxResult<DirVariant<T>>
     where
         T: Default + DeserializeOwned + Serialize,
         S: AsRef<str>,
     {
-        DirVariant::open(self, name)
+        DirVariant::open(self, name, default)
     }
 
     /// 加载数据库变量
-    pub fn load_variant<T, S>(&mut self, name: S) -> Result<T>
+    pub fn load_variant<T, S>(&mut self, name: S, default: Option<T>) -> BoxResult<T>
     where
-        T: Default + DeserializeOwned + Serialize,
+        T: Default + Clone + DeserializeOwned + Serialize,
         S: AsRef<str>,
     {
-        DirVariant::open(self, name)?.get()
+        DirVariant::open(self, name, default)?.get()
     }
 
     /// 数据库变量路径
@@ -73,17 +73,17 @@ impl DirDb {
     }
 
     /// 删除数据库变量
-    pub fn remove_variant<S>(&self, name: S) -> Result<()>
+    pub fn remove_variant<S>(&self, name: S) -> BoxResult<()>
     where
         S: AsRef<str>,
     {
-        fs::remove(&self.variant_path(name))
+        Ok(fs::remove(&self.variant_path(name))?)
     }
 
     /// 打开数据库表
-    pub fn open_table<T, S>(&mut self, name: &S) -> Result<DirTable<T>>
+    pub fn open_table<T, S>(&mut self, name: &S) -> BoxResult<DirTable<T>>
     where
-        T: Clone + DeserializeOwned + Serialize,
+        T: IRecord,
         S: AsRef<str>,
     {
         DirTable::open(self, name)
@@ -98,11 +98,11 @@ impl DirDb {
     }
 
     /// 删除数据库表
-    pub fn remove_table<S>(&self, name: S) -> Result<()>
+    pub fn remove_table<S>(&self, name: S) -> BoxResult<()>
     where
         S: AsRef<str>,
     {
-        fs::remove(&self.table_path(name))
+        Ok(fs::remove(&self.table_path(name))?)
     }
 }
 
@@ -115,17 +115,17 @@ mod tests {
     #[test]
     fn db_works() {
         let s1 = { Student::new(1, "Jack") };
-        let s2 = { Student::new(2, "John") };
+        let mut s2 = { Student::new(2, "John") };
         let _s3 = { Student::new(3, "Joel") };
 
         let mut db = DirDb::open(&"/tmp/test/dirdb1").unwrap();
 
         assert_eq!(db.name(), "dirdb1");
 
-        let mut var = db.open_variant(&"var").unwrap();
+        let mut var = db.open_variant(&"var", None).unwrap();
         var.set(&s1).unwrap();
 
         let mut tab = db.open_table(&"student").unwrap();
-        tab.put(1, &s2).unwrap();
+        tab.put(1, &mut s2).unwrap();
     }
 }

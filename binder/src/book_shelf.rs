@@ -9,16 +9,19 @@ use std::time::Duration;
 
 use colored::*;
 use http::uri::Uri;
-use leg::*;
+//use leg::*;
+use serde::{Deserialize, Serialize};
 
-use rx::{algo, fs};
+use rx_core::text::BoxResult;
+use rx_core::{algo, fs};
 use rx_db::*;
 use rx_web::node::*;
 use rx_web::req::RequestCfg;
 
 /// 图书信息
-#[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize, Record)]
 struct BookInfo {
+    id: Option<RecordId>,
     title: String,
     url: String,
     tag: String,
@@ -38,15 +41,17 @@ impl BookInfo {
 }
 
 /// 章节信息
-#[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize, Record)]
 struct ChapterInfo {
+    id: Option<RecordId>,
     title: String,
     url: String,
 }
 
 /// 目录，存整个文件里
-#[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Clone, Eq, PartialEq, Serialize, Deserialize, Record)]
 struct CatalogInfo {
+    id: Option<RecordId>,
     title: String,
     chapters: Vec<LinkInfo>,
 }
@@ -55,6 +60,7 @@ impl CatalogInfo {
     /// 从URL拉取目录信息
     pub fn pull(url: &str, cfg: &RequestCfg) -> Option<CatalogInfo> {
         let root = Node::pull(url, cfg)?;
+        //println!("{:?}", root);
         let title = root.find_title()?;
         let mut chapters = root.find_max_links();
 
@@ -62,7 +68,11 @@ impl CatalogInfo {
         for link in &mut chapters {
             link.complete_by(url);
         }
-        Some(CatalogInfo { title, chapters })
+        Some(CatalogInfo {
+            id: None,
+            title,
+            chapters,
+        })
     }
 
     /// 未装订章节结束ID
@@ -91,7 +101,7 @@ pub struct BookShelfCfg {
 
 /// 书架信息
 pub struct BookShelf {
-    root: PathBuf,
+    _root: PathBuf,
     book_tab: DirTable<BookInfo>,
     catalog_tab: DirTable<CatalogInfo>,
     page_dir: PathBuf,
@@ -110,15 +120,15 @@ static TOO_MANY_STORAGE: &'static str = "Too many storage";
 
 impl BookShelf {
     /// 加载
-    pub fn load(path: &Path) -> IoResult<BookShelf> {
+    pub fn load(path: &Path) -> BoxResult<BookShelf> {
         let mut db = DirDb::open(&path)?;
         Ok(BookShelf {
-            root: path.to_owned(),
+            _root: path.to_owned(),
             book_tab: db.open_table(&"book")?,
             catalog_tab: db.open_table(&"catalog")?,
             page_dir: path.join("page"),
             text_dir: path.join("text"),
-            cfg: db.load_variant("config")?,
+            cfg: db.load_variant("config", None)?,
         })
     }
 
@@ -153,13 +163,14 @@ impl BookShelf {
     pub fn add(&mut self, url: &str, name: &Option<&str>) -> CmdResult {
         println!("add: {} {:?}", url, name);
         self.git_pull()?;
-        let book = BookInfo {
+        let mut book = BookInfo {
+            id: None,
             url: url.to_string(),
             tag: "new".to_string(),
             title: name.unwrap_or("").to_string(),
             chapter_start: 1,
         };
-        self.book_tab.post(&book).unwrap();
+        self.book_tab.post(&mut book).unwrap();
         self.git_push()
     }
 
@@ -179,8 +190,20 @@ impl BookShelf {
     /// 更新
     pub fn update(&mut self, title: &Option<&str>) -> CmdResult {
         let books = if let Some(title) = title {
-            self.book_tab
-                .find_pairs(0, usize::max_value(), |r| r.like(title))
+            let id = if let Ok(id) = title.parse::<usize>() {
+                if self.book_tab.exist(id) {
+                    Some(id)
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+            if let Some(id) = id {
+                Ok(vec![(id, self.book_tab.get(id).unwrap())])
+            } else {
+                self.book_tab.find_pairs(0, usize::MAX, |r| r.like(title))
+            }
         } else {
             self.book_tab.find_all_pairs()
         };
@@ -196,7 +219,7 @@ impl BookShelf {
             if let Ok(mut book) = self.book_tab.get(book_id) {
                 println!("tagging book: {}. {}", book_id, book.title);
                 book.tag = new_tag.to_string();
-                self.book_tab.put(book_id, &book).unwrap();
+                self.book_tab.put(book_id, &mut book).unwrap();
                 return Ok(());
             }
         }
@@ -206,10 +229,10 @@ impl BookShelf {
     // 更新一本书
     fn update_book(&mut self, book_id: usize, mut book: BookInfo) {
         print!("[{:02}] {}\t{} ... ", book_id, book.title, book.url);
-        if let Some(new) = CatalogInfo::pull(&book.url, &self.cfg.request) {
+        if let Some(mut new) = CatalogInfo::pull(&book.url, &self.cfg.request) {
             if book.title.is_empty() {
                 book.title = new.title.clone();
-                self.book_tab.put(book_id, &book).unwrap();
+                self.book_tab.put(book_id, &mut book).unwrap();
             }
 
             let mut old = self.catalog_tab.get_or_default(book_id);
@@ -218,8 +241,8 @@ impl BookShelf {
 
             let diff = new.chapters.len() as i64 - old.chapters.len() as i64;
             if diff < 0 {
-                let msg = format!("The number of chapters has been reduced by {}", -diff);
-                warn(&msg, None, None);
+                let _msg = format!("The number of chapters has been reduced by {}", -diff);
+                //warn(&msg, None, None).await;
             }
 
             // 检查并且标记那些缺失的章节
@@ -234,10 +257,10 @@ impl BookShelf {
             let indexes = algo::diff(&new.chapters[..], &old.chapters[..]);
             if !indexes.is_empty() {
                 for i in indexes {
-                    let chapter = new.chapters.get(i).unwrap();
-                    self.save_chapter(chapter, i + 1, book_id);
+                    let chapter = new.chapters.get(i).unwrap().clone();
+                    self.save_chapter(&chapter, i + 1, book_id, &mut new);
                 }
-                self.catalog_tab.put(book_id, &new).unwrap();
+                // self.catalog_tab.put(book_id, &new).unwrap();
             }
         } else {
             println!("Fail");
@@ -245,7 +268,13 @@ impl BookShelf {
     }
 
     // 拉取/保存正文
-    fn save_chapter(&mut self, link: &LinkInfo, chapter_id: usize, book_id: usize) -> Option<()> {
+    fn save_chapter(
+        &mut self,
+        link: &LinkInfo,
+        chapter_id: usize,
+        book_id: usize,
+        new: &mut CatalogInfo,
+    ) -> Option<()> {
         print!("    {}. {} ...          ", chapter_id, link.text);
         //print!("    {}. {} {}...          ", chapter_id, link.text, link.url);
         if let Some(url) = link.url.as_ref() {
@@ -263,6 +292,7 @@ impl BookShelf {
                 let paragraph = format!("\t{}\n\n", s);
                 file.write_all(paragraph.as_bytes()).unwrap();
             }
+            self.catalog_tab.put(book_id, new).unwrap();
             println!("OK");
             thread::sleep(Duration::from_secs(1));
             Some(())
@@ -313,7 +343,7 @@ impl BookShelf {
                 self.copy_file(&book_file)?;
 
                 book.chapter_start = catalog.chapter_end();
-                self.book_tab.put(book_id, &book).unwrap();
+                self.book_tab.put(book_id, &mut book).unwrap();
                 return self.git_push();
             }
         }
@@ -378,29 +408,31 @@ impl BookShelf {
 
     // 拉取数据
     fn git_pull(&self) -> CmdResult {
-        let output = Command::new("git")
-            .arg("-C")
-            .arg(self.root.clone())
-            .arg("pull")
-            .output()
-            .unwrap();
-        println!("pull status: {}", output.status);
-        io::stdout().write_all(&output.stdout).unwrap();
-        io::stderr().write_all(&output.stderr).unwrap();
-
+        /*
+                let output = Command::new("git")
+                    .arg("-C")
+                    .arg(self.root.clone())
+                    .arg("pull")
+                    .output()
+                    .unwrap();
+                println!("pull status: {}", output.status);
+                io::stdout().write_all(&output.stdout).unwrap();
+                io::stderr().write_all(&output.stderr).unwrap();
+        */
         Ok(())
     }
 
     // 提交数据
     fn git_push(&self) -> CmdResult {
-        let output = Command::new("gac1.sh")
-            .arg(self.root.clone())
-            .output()
-            .unwrap();
-        println!("status: {}", output.status);
-        io::stdout().write_all(&output.stdout).unwrap();
-        io::stderr().write_all(&output.stderr).unwrap();
-
+        /*
+                let output = Command::new("gac1.sh")
+                    .arg(self.root.clone())
+                    .output()
+                    .unwrap();
+                println!("status: {}", output.status);
+                io::stdout().write_all(&output.stdout).unwrap();
+                io::stderr().write_all(&output.stderr).unwrap();
+        */
         Ok(())
     }
 }

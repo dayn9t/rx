@@ -7,21 +7,20 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = "*"
+rx-core = { path = "../rx-core" }
+rx-db = { path = "../rx-db" }
+rx-web = { path = "../rx-web" }
+
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+
+clap = "3.*"
 colored = "*"
 leg = "*"
 
 http_req = "*"
 http = "*"
-html5ever = "*"
+html5ever = "0.24"
 
 encoding_rs = "*"
 regex = "*"
-
-serde = "*"
-serde_json = "*"
-serde_derive = "*"
-
-rx = { path = "../rx" }
-rx-db = { path = "../rx-db" }
-rx-web = { path = "../rx-web" }

@@ -1,13 +1,22 @@
 /// 数据库结果
 pub use std::result::Result;
 
+use serde::de::DeserializeOwned;
+use serde::Serialize;
+
+/// 记录ID类型
+pub type RecordId = usize;
+
+/// 带有Id的记录
+pub trait IRecord: Default + Serialize + DeserializeOwned {
+    fn get_id(&self) -> Option<RecordId>;
+    fn set_id(&mut self, id: RecordId);
+}
+
 /// 数据库表
 pub trait ITable {
     /// 记录类型
-    type Record: Default;
-
-    /// ID类型
-    type Id: Default + Copy;
+    type Record: IRecord;
 
     /// 错误类型
     type Err;
@@ -20,42 +29,42 @@ pub trait ITable {
     fn name(&self) -> &str;
 
     /// 获取表长度
-    fn len(&mut self) -> usize;
+    fn len(&self) -> usize;
 
     /// 获取表是否为空
-    fn is_empty(&mut self) -> bool {
+    fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
     /// 判断记录是否存在
-    fn exist(&mut self, id: Self::Id) -> bool;
+    fn exist(&self, id: RecordId) -> bool;
 
     /// 获取记录
-    fn get(&mut self, id: Self::Id) -> Result<Self::Record, Self::Err>;
+    fn get(&self, id: RecordId) -> Result<Self::Record, Self::Err>;
 
     /// 获取变量值/缺省值
-    fn get_or(&mut self, id: Self::Id, record: Self::Record) -> Self::Record {
+    fn get_or(&mut self, id: RecordId, record: Self::Record) -> Self::Record {
         self.get(id).unwrap_or(record)
     }
 
     /// 获取变量值/缺省值
-    fn get_or_default(&mut self, id: Self::Id) -> Self::Record {
+    fn get_or_default(&mut self, id: RecordId) -> Self::Record {
         self.get_or(id, Self::Record::default())
     }
 
     /// 添加记录
-    fn post(&mut self, record: &Self::Record) -> Result<Self::Id, Self::Err>;
+    fn post(&mut self, record: &mut Self::Record) -> Result<RecordId, Self::Err>;
 
     /// 更新记录
-    fn put(&mut self, id: Self::Id, record: &Self::Record) -> Result<(), Self::Err>;
+    fn put(&mut self, id: RecordId, record: &mut Self::Record) -> Result<(), Self::Err>;
 
     /// 删除记录(幂等)
-    fn delete(&mut self, id: Self::Id) -> Result<(), Self::Err>;
+    fn delete(&mut self, id: RecordId) -> Result<(), Self::Err>;
 
     /// 查询记录集
     fn find<P>(
         &mut self,
-        min_id: Self::Id,
+        min_id: RecordId,
         limit: usize,
         predicate: P,
     ) -> Result<Vec<Self::Record>, Self::Err>
@@ -64,35 +73,35 @@ pub trait ITable {
 
     /// 查询记录集
     fn find_all(&mut self) -> Result<Vec<Self::Record>, Self::Err> {
-        self.find(Self::Id::default(), usize::max_value(), |_| true)
+        self.find(RecordId::default(), usize::MAX, |_| true)
     }
 
     /// 查询K/V对
     fn find_pairs<P>(
         &mut self,
-        min_id: Self::Id,
+        min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> Result<Vec<(Self::Id, Self::Record)>, Self::Err>
+    ) -> Result<Vec<(RecordId, Self::Record)>, Self::Err>
     where
         P: Fn(&Self::Record) -> bool;
 
     /// 查询K/V对
-    fn find_all_pairs(&mut self) -> Result<Vec<(Self::Id, Self::Record)>, Self::Err> {
-        self.find_pairs(Self::Id::default(), usize::max_value(), |_| true)
+    fn find_all_pairs(&mut self) -> Result<Vec<(RecordId, Self::Record)>, Self::Err> {
+        self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
     }
 
     /// 查询Id集
-    fn find_ids(&mut self, min_id: Self::Id) -> Result<Vec<Self::Id>, Self::Err>;
+    fn find_ids(&mut self, min_id: RecordId) -> Result<Vec<RecordId>, Self::Err>;
 
     /// 获取下一个ID
-    fn next_id(&mut self) -> Result<Self::Id, Self::Err>;
+    fn next_id(&mut self) -> Result<RecordId, Self::Err>;
 }
 
 /// 数据库变量
 pub trait IVariant {
     /// 记录类型
-    type Record: Default;
+    type Record: Default + Clone;
 
     /// 错误类型
     type Err;
@@ -101,18 +110,18 @@ pub trait IVariant {
     fn name(&self) -> &str;
 
     /// 判断变量是否存在
-    fn exist(&mut self) -> bool;
+    fn exist(&self) -> bool;
 
     /// 获取变量值
-    fn get(&mut self) -> Result<Self::Record, Self::Err>;
+    fn get(&self) -> Result<Self::Record, Self::Err>;
 
     /// 获取变量值/缺省值
-    fn get_or(&mut self, record: Self::Record) -> Self::Record {
+    fn get_or(&self, record: Self::Record) -> Self::Record {
         self.get().unwrap_or(record)
     }
 
     /// 获取变量值/缺省值
-    fn get_or_default(&mut self) -> Self::Record {
+    fn get_or_default(&self) -> Self::Record {
         self.get_or(Self::Record::default())
     }
 

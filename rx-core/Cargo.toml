@@ -1,0 +1,33 @@
+[package]
+name = "rx-core"
+version = "0.1.4"
+authors = ["dayn9t <dayn9t@gmail.com>"]
+edition = "2021"
+
+build = "build.rs"
+
+[build-dependencies]
+vergen = { version = "*", features = ["build", "git", "gitcl"] }
+
+[dependencies]
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+serde_json5 = { package = "json5", version = "*" }
+serde_ron = { package = "ron", version = "*" }
+serde_yaml = "*"
+
+encoding_rs = "*"
+
+tracing = "*"
+tracing-subscriber = "*"
+
+uuid = { version = "0.6", features = ["serde", "v5"] }
+chrono = { version = "*", features = ["serde"] }
+time = "*"
+
+dirs = "*"
+num = "*"
+
+itertools = "*"
+
+anyhow = "*"

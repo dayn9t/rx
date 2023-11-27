@@ -1,6 +1,6 @@
+use rx_core::text::json;
 use rx_web::node::*;
 use rx_web::req::RequestCfg;
-use serde_json::to_string_pretty as to_json;
 
 fn main() {
     let _url = "http://116.228.67.70:30080/";
@@ -31,10 +31,10 @@ fn main() {
     println!("Title: {}", root.find_title().unwrap());
 
     let text_node = root.find_max_text();
-    println!("\ntext: {}", to_json(&text_node).unwrap());
+    println!("\ntext: {}", json::to_pretty(&text_node).unwrap());
 
     let links = root.find_max_links();
-    println!("\nlinks: {} ", to_json(&links).unwrap());
+    println!("\nlinks: {} ", json::to_pretty(&links).unwrap());
     //let parent_node = root.find_max_children().unwrap();
-    //println!("\nparent_node: {} ", to_json(&parent_node).unwrap());
+    //println!("\nparent_node: {} ", json::to_pretty(&parent_node).unwrap());
 }

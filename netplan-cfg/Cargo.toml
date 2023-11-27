@@ -1,0 +1,16 @@
+[package]
+name = "netplan-cfg"
+version = "0.1.0"
+authors = ["dayn9t <dayn9t@gmail.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "*", features = ["derive"] }
+rx-core = { path = "../rx-core" }
+rx-net = { path = "../rx-net" }
+console = "*"
+dialoguer = "*"
+indicatif = "*"
+console_engine = "*"

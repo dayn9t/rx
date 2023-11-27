@@ -3,10 +3,12 @@
 use std::time::Duration;
 
 /// MQTT消息&结果
-pub use paho_mqtt::{Message, MqttResult};
+pub use paho_mqtt::Message;
+
+pub type MqttResult<T> = paho_mqtt::Result<T>;
 
 /// MQTT消息接受者
-pub type Receiver = std::sync::mpsc::Receiver<Option<Message>>;
+pub type Receiver = paho_mqtt::Receiver<Option<Message>>;
 
 /// MQTT客户
 pub struct MqttClient {
@@ -15,17 +17,19 @@ pub struct MqttClient {
 
 impl MqttClient {
     /// 新建对象
-    pub fn connect(id: &str, server_uri: &str) -> MqttResult<MqttClient> {
+    pub fn connect(id: impl Into<String>, server_uri: impl Into<String>) -> MqttResult<MqttClient> {
+        let id = id.into();
+        let clean_session = id.is_empty();
         let opts = paho_mqtt::CreateOptionsBuilder::new()
             .server_uri(server_uri)
             .client_id(id)
             .finalize();
-        let mut client = paho_mqtt::Client::new(opts)?;
+        let client = paho_mqtt::Client::new(opts)?;
 
         let d = Duration::from_secs(20);
         let opts = paho_mqtt::ConnectOptionsBuilder::new()
             .keep_alive_interval(d)
-            .clean_session(false)
+            .clean_session(clean_session)
             .automatic_reconnect(d, d) // 固定间隔重连
             .finalize();
         client.connect(opts)?;
@@ -64,7 +68,7 @@ mod tests {
         let payload = "hi111你好吗";
 
         let mut client = MqttClient::connect("test_id", "tcp://localhost:1883").unwrap();
-        let mut rx = client.subscribe(topic).unwrap();
+        let rx = client.subscribe(topic).unwrap();
         client.publish(topic, payload).unwrap();
 
         let m = rx.iter().next().unwrap().unwrap();

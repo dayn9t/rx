@@ -1,15 +1,13 @@
 #[macro_use]
 extern crate clap;
-#[macro_use]
-extern crate serde_derive;
 
-use rx::fs;
+use rx_core::fs;
 
 mod book_shelf;
 
 fn main() {
     let matches = clap_app!(binder =>
-        (version: "0.2")
+        (version: "0.2.1 2021-06-05")
         (author: "J. <dayn9t@gmail.com>")
         (about: "Book binder，bind scattered pages into a book")
         (@subcommand list =>

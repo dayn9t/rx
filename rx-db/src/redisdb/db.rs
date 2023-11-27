@@ -2,7 +2,7 @@ use super::table::*;
 use super::variant::*;
 
 use crate::IVariant;
-use rx::text::*;
+use rx_core::text::*;
 
 use redis::Commands;
 pub use redis::RedisResult;
@@ -31,10 +31,10 @@ impl RedisDb {
     /// 加载数据库变量
     pub fn load_variant<T, S>(&mut self, name: S) -> RedisResult<T>
     where
-        T: Default + DeserializeOwned + Serialize,
+        T: Default + Clone + DeserializeOwned + Serialize,
         S: AsRef<str>,
     {
-        let mut v: RedisVariant<T> = self.open_variant(name)?;
+        let v: RedisVariant<T> = self.open_variant(name)?;
         v.get()
     }
 

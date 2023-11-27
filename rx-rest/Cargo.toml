@@ -2,6 +2,24 @@
 name = "rx-rest"
 version = "0.1.0"
 authors = ["dayn9t <dayn9t@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
+rx-core = { version = "*", path = "../rx-core" }
+rx-db = { version = "*", path = "../rx-db" }
+
+#serde = { version = "*", features = ["derive"] }
+#serde_json = "*"
+#rocket = "*"
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
+
+poem = "*"
+poem-openapi = { version = "*", features = ["swagger-ui"]}
+tokio = { version = "1", features = ["full"] }
+
+#[dependencies.rocket_contrib]
+#default-features = false
+#features = ["json"]
+actix-web = "*"

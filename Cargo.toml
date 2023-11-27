@@ -1,10 +1,14 @@
 [workspace]
 
 members = [
-    "rx",
-    "rx-net",
+    "rx-core",
     "rx-db",
-    "rx-web",
+    "rx-db-derive",
+    "rx-net",
     "rx-rest",
+    "rx-web",
+    "rx-fst",
     "binder",
+    "bin-parser",
+    "netplan-cfg",
 ]

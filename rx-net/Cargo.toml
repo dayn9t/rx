@@ -2,7 +2,14 @@
 name = "rx-net"
 version = "0.1.0"
 authors = ["dayn9t <dayn9t@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
+rx-core = { path = "../rx-core" }
+
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+
 paho-mqtt = "*"
+sysinfo = "*"
+network-interface = "*"

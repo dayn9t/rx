@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use html5ever::rcdom::{Handle, NodeData};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::req::{self, RequestCfg};
 use crate::{html, url};
@@ -22,7 +22,7 @@ impl LinkInfo {
     }
 }
 
-#[derive(Default, Clone, Serialize)]
+#[derive(Default, Clone, Serialize, Debug)]
 pub struct Node {
     pub name: String,
     pub attrs: HashMap<String, String>,
@@ -47,6 +47,33 @@ impl Node {
     /// 获取文本长度
     pub fn text_len(&self) -> usize {
         self.text.iter().map(|s| s.len()).sum()
+    }
+
+    /// 获取类型
+    pub fn type_(&self) -> Option<&String> {
+        self.attrs.get("type")
+    }
+
+    /// 判断节点是否为脚本
+    pub fn type_match(&self, type_: &str) -> bool {
+        if let Some(t) = self.type_() {
+            if t == type_ {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// 判断节点是否为脚本
+    pub fn is_script(&self) -> bool {
+        let t = "text/javascript";
+        self.type_match(t)
+    }
+
+    /// 判断节点是否为脚本
+    pub fn is_css(&self) -> bool {
+        let t = "text/css";
+        self.type_match(t)
     }
 
     /// 判断节点是否为链接
@@ -121,7 +148,15 @@ impl Node {
 
     /// 查找最大文本的节点
     pub fn find_max_text(&self) -> Vec<String> {
-        let node = self.find_max(&|node: &Node| node.text_len()).unwrap();
+        let node = self
+            .find_max(&|node: &Node| {
+                if node.is_script() || node.is_css() {
+                    0
+                } else {
+                    node.text_len()
+                }
+            })
+            .unwrap();
         node.text
     }
 

@@ -1,8 +1,9 @@
+use std::cell::RefCell;
 use std::marker::PhantomData;
 
 use redis::Commands;
 
-use rx::text::*;
+use rx_core::text::*;
 
 use crate::interface::*;
 
@@ -13,7 +14,7 @@ use super::db::*;
 //#[derive(Size)]
 pub struct RedisTable<T> {
     name: String,
-    conn: redis::Connection,
+    conn: RefCell<redis::Connection>,
     _p: PhantomData<T>,
 }
 
@@ -26,7 +27,7 @@ impl<T> RedisTable<T> {
         let name = name.as_ref().to_string();
         RedisTable::<T> {
             name,
-            conn,
+            conn: RefCell::new(conn),
             _p: PhantomData::<T>,
         }
     }
@@ -38,10 +39,8 @@ impl<T> RedisTable<T> {
     }*/
 }
 
-impl<T: Default + Serialize + DeserializeOwned> ITable for RedisTable<T> {
+impl<T: IRecord> ITable for RedisTable<T> {
     type Record = T;
-
-    type Id = usize;
 
     type Err = redis::RedisError;
 
@@ -49,40 +48,40 @@ impl<T: Default + Serialize + DeserializeOwned> ITable for RedisTable<T> {
         &self.name
     }
 
-    fn len(&mut self) -> usize {
-        self.conn.hlen(&self.name).unwrap()
+    fn len(&self) -> usize {
+        self.conn.borrow_mut().hlen(&self.name).unwrap()
     }
 
-    fn exist(&mut self, id: Self::Id) -> bool {
-        self.conn.hexists(&self.name, id).unwrap()
+    fn exist(&self, id: RecordId) -> bool {
+        self.conn.borrow_mut().hexists(&self.name, id).unwrap()
     }
 
-    fn get(&mut self, id: Self::Id) -> RedisResult<Self::Record> {
-        let s: String = self.conn.hget(&self.name, id)?;
-        let v: Self::Record = from_str(&s).unwrap();
+    fn get(&self, id: RecordId) -> RedisResult<Self::Record> {
+        let s: String = self.conn.borrow_mut().hget(&self.name, id)?;
+        let v: Self::Record = json::from_str(&s).unwrap();
         Ok(v)
     }
 
-    fn post(&mut self, record: &Self::Record) -> RedisResult<Self::Id> {
+    fn post(&mut self, record: &mut Self::Record) -> RedisResult<RecordId> {
         let id = self.next_id()?;
         self.put(id, record)?;
         Ok(id)
     }
 
-    fn put(&mut self, id: Self::Id, record: &Self::Record) -> RedisResult<()> {
-        let s = to_json(record).unwrap();
-        self.conn.hset(&self.name, id, &s)?;
+    fn put(&mut self, id: RecordId, record: &mut Self::Record) -> RedisResult<()> {
+        let s = json::to_pretty(record).unwrap();
+        self.conn.borrow_mut().hset(&self.name, id, &s)?;
         Ok(())
     }
 
-    fn delete(&mut self, id: Self::Id) -> RedisResult<()> {
-        self.conn.hdel(&self.name, id)?;
+    fn delete(&mut self, id: RecordId) -> RedisResult<()> {
+        self.conn.borrow_mut().hdel(&self.name, id)?;
         Ok(())
     }
 
     fn find<P>(
         &mut self,
-        min_id: Self::Id,
+        min_id: RecordId,
         limit: usize,
         predicate: P,
     ) -> RedisResult<Vec<Self::Record>>
@@ -105,10 +104,10 @@ impl<T: Default + Serialize + DeserializeOwned> ITable for RedisTable<T> {
 
     fn find_pairs<P>(
         &mut self,
-        min_id: Self::Id,
+        min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> RedisResult<Vec<(Self::Id, Self::Record)>>
+    ) -> RedisResult<Vec<(RecordId, Self::Record)>>
     where
         P: Fn(&Self::Record) -> bool,
     {
@@ -126,14 +125,14 @@ impl<T: Default + Serialize + DeserializeOwned> ITable for RedisTable<T> {
         Ok(vec)
     }
 
-    fn find_ids(&mut self, min_id: Self::Id) -> RedisResult<Vec<Self::Id>> {
-        let ids: Vec<Self::Id> = self.conn.hkeys(&self.name)?;
+    fn find_ids(&mut self, min_id: RecordId) -> RedisResult<Vec<RecordId>> {
+        let ids: Vec<RecordId> = self.conn.borrow_mut().hkeys(&self.name)?;
         let mut ids: Vec<_> = ids.into_iter().filter(|id| *id >= min_id).collect();
         ids.sort();
         Ok(ids)
     }
 
-    fn next_id(&mut self) -> RedisResult<Self::Id> {
+    fn next_id(&mut self) -> RedisResult<RecordId> {
         let ids = self.find_ids(0)?;
         let next = ids.last().unwrap_or(&0) + 1;
         Ok(next)
@@ -142,9 +141,8 @@ impl<T: Default + Serialize + DeserializeOwned> ITable for RedisTable<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::test::tests::*;
-
     use super::*;
+    use crate::test::tests::*;
 
     #[test]
     fn tab_works() {
@@ -156,19 +154,19 @@ mod tests {
         let mut tab = db.open_table(name).unwrap();
         assert_eq!(tab.is_empty(), true);
 
-        let s1 = { Student::new(1, "Jack") };
-        let s2 = { Student::new(2, "John") };
-        let s3 = { Student::new(3, "Joel") };
+        let mut s1 = { Student::new(1, "Jack") };
+        let mut s2 = { Student::new(2, "John") };
+        let mut s3 = { Student::new(3, "Joel") };
 
-        let id1 = tab.post(&s1).unwrap();
+        let id1 = tab.post(&mut s1).unwrap();
         assert_eq!(tab.get(id1).unwrap(), s1);
         assert_eq!(tab.find_ids(0).unwrap(), vec![id1]);
 
-        let id2 = tab.post(&s2).unwrap();
+        let id2 = tab.post(&mut s2).unwrap();
         assert_eq!(tab.get(id2).unwrap(), s2);
         assert_eq!(tab.find_ids(0).unwrap(), vec![id1, id2]);
 
-        tab.put(id2, &s3).unwrap();
+        tab.put(id2, &mut s3).unwrap();
         assert_eq!(tab.get(id2).unwrap(), s3);
         assert_eq!(tab.find_ids(0).unwrap(), vec![id1, id2]);
 
@@ -183,7 +181,7 @@ mod tests {
         assert_eq!(v, vec![s1.clone()]);
 
         for _ in 1..100 {
-            let _id1 = tab.post(&s1).unwrap();
+            let _id1 = tab.post(&mut s1).unwrap();
         }
     }
 }

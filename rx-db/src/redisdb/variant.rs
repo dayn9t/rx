@@ -1,8 +1,9 @@
+use std::cell::RefCell;
 use std::marker::PhantomData;
 
 use redis::Commands;
 
-use rx::text::*;
+use rx_core::text::*;
 
 use crate::interface::*;
 
@@ -10,7 +11,7 @@ use super::db::*;
 
 pub struct RedisVariant<T> {
     name: String,
-    conn: redis::Connection,
+    conn: RefCell<redis::Connection>,
     _p: PhantomData<T>,
 }
 
@@ -22,13 +23,13 @@ impl<T> RedisVariant<T> {
     {
         RedisVariant::<T> {
             name: name.as_ref().to_string(),
-            conn,
+            conn: RefCell::new(conn),
             _p: PhantomData::<T>,
         }
     }
 }
 
-impl<T: Default + Serialize + DeserializeOwned> IVariant for RedisVariant<T> {
+impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for RedisVariant<T> {
     type Record = T;
 
     type Err = redis::RedisError;
@@ -37,19 +38,19 @@ impl<T: Default + Serialize + DeserializeOwned> IVariant for RedisVariant<T> {
         &self.name
     }
 
-    fn exist(&mut self) -> bool {
-        self.conn.exists(&self.name).unwrap()
+    fn exist(&self) -> bool {
+        self.conn.borrow_mut().exists(&self.name).unwrap()
     }
 
-    fn get(&mut self) -> RedisResult<Self::Record> {
-        let s: String = self.conn.get(&self.name)?;
-        let v: Self::Record = from_str(&s).unwrap();
+    fn get(&self) -> RedisResult<Self::Record> {
+        let s: String = self.conn.borrow_mut().get(&self.name)?;
+        let v: Self::Record = json::from_str(&s).unwrap();
         Ok(v)
     }
 
     fn set(&mut self, record: &Self::Record) -> RedisResult<()> {
-        let s = to_json(record).unwrap();
-        self.conn.set(&self.name, &s)?;
+        let s = json::to_pretty(record).unwrap();
+        self.conn.borrow_mut().set(&self.name, &s)?;
         Ok(())
     }
 }
@@ -63,7 +64,7 @@ mod tests {
     #[test]
     fn var_works() {
         let url = "redis://:howell.net.cn@127.0.0.1/";
-        let name = "var";
+        let name = "v\0a\0r";
 
         let mut db = RedisDb::open(url).unwrap();
 

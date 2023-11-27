@@ -4,7 +4,7 @@ use html5ever::parse_document;
 use html5ever::rcdom::{Handle, NodeData, RcDom};
 use html5ever::tendril::TendrilSink;
 
-use rx::text;
+use rx_core::text;
 
 /// HTML文档
 pub struct Document {

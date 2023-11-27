@@ -1,18 +1,19 @@
 #[cfg(test)]
 pub mod tests {
 
-    use serde_derive::{Deserialize, Serialize};
+    use crate::*;
+    use serde::{Deserialize, Serialize};
 
-    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize, Record)]
     pub struct Student {
-        pub number: i32,
+        pub id: Option<RecordId>,
         pub name: String,
     }
 
     impl Student {
-        pub fn new(number: i32, name: &str) -> Student {
+        pub fn new(id: RecordId, name: &str) -> Student {
             Student {
-                number,
+                id: Some(id),
                 name: name.to_string(),
             }
         }

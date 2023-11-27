@@ -14,7 +14,7 @@ pub fn complete(url: &str, page_url: &str) -> Option<String> {
         // 站内全路径
         let uri = page_url.parse::<Uri>().ok()?;
         let uri = Builder::new()
-            .authority(uri.authority_part()?.as_str())
+            .authority(uri.authority()?.as_str())
             .scheme(uri.scheme_str()?)
             .path_and_query(url)
             .build()
