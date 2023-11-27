@@ -11,17 +11,12 @@ pub struct PackageInfo {
     pub description: &'static str,
     /// 构建日期
     pub build_date: &'static str,
-    /// SHA
-    pub git_sha: &'static str,
 }
 
 impl PackageInfo {
     /// 完整版本信息
     pub fn full_version(&self) -> String {
-        format!(
-            "v{}-{}  build: {}",
-            self.version, self.git_sha, self.build_date
-        )
+        format!("v{}  build: {}", self.version, self.build_date)
     }
 }
 
@@ -35,8 +30,8 @@ macro_rules! package_function {
                 version: env!("CARGO_PKG_VERSION"),
                 authors: env!("CARGO_PKG_AUTHORS"),
                 description: env!("CARGO_PKG_DESCRIPTION"),
-                build_date: env!("VERGEN_BUILD_DATE"),
-                git_sha: env!("VERGEN_GIT_SHA_SHORT"),
+                build_date: env!("VERGEN_BUILD_TIMESTAMP"),
+                //git_sha: env!("VERGEN_GIT_SHA_SHORT"),
             }
         }
     };

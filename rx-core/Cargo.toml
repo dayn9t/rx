@@ -7,7 +7,7 @@ edition = "2021"
 build = "build.rs"
 
 [build-dependencies]
-vergen = { version = "*", features = ["build", "git", "gitcl"] }
+vergen = { version = "*", features = ["build", "git", "cargo"] }
 
 [dependencies]
 serde = { version = "*", features = ["derive"] }
