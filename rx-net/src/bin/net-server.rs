@@ -1,8 +1,7 @@
 use std ::net::{TcpListener,TcpStream};
 use std::thread;
-use std::time;
 use std::io;
-use std::io::{Read,Write};
+use std::io::Read;
  
  
 fn handle_client(mut stream: TcpStream) -> io::Result<()>{

@@ -1,6 +1,6 @@
-use std::io::{self,prelude::*,BufReader,Write};
+use std::io::{self,Write};
 use std::net::TcpStream;
-use std::str;
+
  
  
 fn main() -> io::Result<( )> {

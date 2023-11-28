@@ -1,12 +1,9 @@
-use std::io;
-use std::io::Write;
 
 use network_interface::NetworkInterface;
 use network_interface::NetworkInterfaceConfig;
-use sysinfo::{NetworkExt, NetworksExt, ProcessExt, System, SystemExt};
 
 use rx_net::cfg::{get_adapters, get_ip_addr_v4, get_pci_adapter_ip_addr_v4, get_pci_adapters};
-
+/*
 fn f1() {
     let sys = System::new_all();
 
@@ -29,7 +26,7 @@ fn f1() {
             data.total_transmitted(),
         );
     }
-}
+} */
 
 fn f2() {
     let network_interfaces = NetworkInterface::show().unwrap();

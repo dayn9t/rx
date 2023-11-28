@@ -2,7 +2,7 @@ pub use std::path::Path;
 
 pub use poem::Result;
 pub use poem_openapi::{
-    param::Path as UrlPath, payload::Json, types::ToJSON, ApiResponse, Object, OpenApi,
+    param::Path as UrlPath, payload::Json, types::ToJSON, ApiResponse, Object
 };
 
 pub use rx_core::log::*;
