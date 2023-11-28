@@ -30,8 +30,8 @@ macro_rules! package_function {
                 version: env!("CARGO_PKG_VERSION"),
                 authors: env!("CARGO_PKG_AUTHORS"),
                 description: env!("CARGO_PKG_DESCRIPTION"),
-                build_date: env!("VERGEN_BUILD_TIMESTAMP"),
-                //git_sha: env!("VERGEN_GIT_SHA_SHORT"),
+                //build_date: env!("VERGEN_BUILD_TIMESTAMP"),
+                build_date: "VERGEN_BUILD_TIMESTAMP", // FIXME: ?
             }
         }
     };

@@ -133,10 +133,14 @@ where
     P: AsRef<Path>,
 {
     let path = path.as_ref();
-    if path.is_dir() {
-        fs::remove_dir_all(path)
+    if path.exists() {
+        if path.is_dir() {
+            fs::remove_dir_all(path)
+        } else {
+            fs::remove_file(path)
+        }
     } else {
-        fs::remove_file(path)
+        Ok(())
     }
 }
 
