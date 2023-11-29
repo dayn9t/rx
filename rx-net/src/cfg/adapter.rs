@@ -70,7 +70,6 @@ pub fn get_pci_adapter_ip_addr_v4() -> Option<V4IfAddr> {
 
 #[cfg(test)]
 mod tests {
-    use rx_core::text::yaml;
 
     use super::*;
 

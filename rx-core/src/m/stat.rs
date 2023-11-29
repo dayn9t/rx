@@ -27,7 +27,6 @@ pub fn hist_top_n<T: Ord + Clone>(values: &[T], n: usize) -> Vec<(T, usize)> {
 
 #[cfg(test)]
 mod tests {
-    use core::fmt::Debug;
 
     use super::*;
 
