@@ -30,8 +30,8 @@ macro_rules! package_function {
                 version: env!("CARGO_PKG_VERSION"),
                 authors: env!("CARGO_PKG_AUTHORS"),
                 description: env!("CARGO_PKG_DESCRIPTION"),
-                build_date: env!("VERGEN_BUILD_DATE"), // FIXME: ?
-                //build_date: "VERGEN_BUILD_DATE",
+                //build_date: env!("VERGEN_BUILD_DATE"), // FIXME: ?
+                build_date: "VERGEN_BUILD_DATE",
             }
         }
     };
