@@ -35,6 +35,24 @@ pub fn get_adapters(catalog: Option<&str>) -> Vec<String> {
     adapters
 }
 
+/// 获取网卡上的所有地址
+pub fn get_adapters_ip4s() -> Vec<V4IfAddr> {
+    let mut ip4s = Vec::new();
+    let interfaces = NetworkInterface::show().unwrap();
+
+    for interface in interfaces.iter() {
+        for addr in &interface.addr {
+            match addr {
+                Addr::V4(v4) => {
+                    ip4s.push(*v4);
+                }
+                Addr::V6(_) => {}
+            }
+        }
+    }
+    ip4s
+}
+
 /// 获取PCI网卡
 pub fn get_pci_adapters() -> Vec<String> {
     get_adapters(Some(&"pci"))
@@ -70,7 +88,6 @@ pub fn get_pci_adapter_ip_addr_v4() -> Option<V4IfAddr> {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
     #[test]
