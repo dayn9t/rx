@@ -10,6 +10,9 @@ build = "build.rs"
 vergen = { version = "*", features = ["build", "git", "cargo"] }
 
 [dependencies]
+
+geo-types = "*"
+
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 serde_json5 = { package = "json5", version = "*" }
