@@ -1,7 +1,7 @@
 use super::table::*;
 use super::variant::*;
 
-use crate::{IRecord, IVariant};
+use crate::{IRecord, ITable, IVariant};
 use rx_core::fs;
 use rx_core::text::*;
 use std::path::{Path, PathBuf};
@@ -103,6 +103,16 @@ impl DirDb {
         S: AsRef<str>,
     {
         Ok(fs::remove(&self.table_path(name))?)
+    }
+
+
+    /// 加载表中的记录
+    pub fn load_records<T>(&self, name: &str) -> BoxResult<Vec<T>>
+        where
+            T: IRecord,
+    {
+        let mut table = DirTable::<T>::open(self, name)?;
+        table.find_all()
     }
 }
 
