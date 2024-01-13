@@ -15,7 +15,7 @@ pub struct DirTable<T> {
 
 impl<T: IRecord> DirTable<T> {
     /// 打开表
-    pub fn open<S>(db: &DirDb, name: &S) -> BoxResult<Self>
+    pub fn open<S>(db: &DirDb, name: S) -> BoxResult<Self>
     where
         S: AsRef<str>,
     {
