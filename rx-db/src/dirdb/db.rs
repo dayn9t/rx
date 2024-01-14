@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use rx_core::fs;
 use rx_core::text::*;
 
-use crate::{IRecord, ITable, IVariant};
+use crate::{IRecord, ITable, IVariant, RecordId};
 
 use super::table::*;
 use super::variant::*;
@@ -107,15 +107,25 @@ impl DirDb {
         Ok(fs::remove(&self.table_path(name))?)
     }
 
-
+/*
+    fn find<P>(
+        &mut self,
+        min_id: RecordId,
+        limit: usize,
+        predicate: P,
+    ) -> Result<Vec<Self::Record>, Self::Err>
+    where
+        P: Fn(&Self::Record) -> bool;
+*/
     /// 加载表中的记录
-    pub fn load_records<T, S>(&self, name: S) -> BoxResult<Vec<T>>
+    pub fn load_records<T, S, P>(&self, name: S, predicate: P) -> BoxResult<Vec<T>>
         where
             T: IRecord,
-            S: AsRef<str>
+            S: AsRef<str>,
+            P: Fn(&T) -> bool
     {
         let mut table = DirTable::<T>::open(self, name)?;
-        table.find_all()
+        table.find(0, RecordId::MAX, predicate)
     }
 }
 

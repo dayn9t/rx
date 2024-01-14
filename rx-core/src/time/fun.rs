@@ -24,13 +24,19 @@ pub fn to_local_id(dt: NaiveDateTime) -> String {
     format!("{}", dt.format_with_items(fmt))
 }
 
+/// 时间转换本地时间字符串ID
+pub fn to_local_iso_str(dt: NaiveDateTime) -> String {
+    let fmt = StrftimeItems::new("%Y-%m-%dT%H:%M:%S%.3f");
+    format!("{}+08:00", dt.format_with_items(fmt))
+}
+
 /// 时间转换本地时间文件路径，如：2020-01-01/00-00-00.000.jpg
 pub fn to_local_path(dt: NaiveDateTime, ext: &str) -> String {
     let fmt = StrftimeItems::new("%Y-%m-%d/%H-%M-%S%.3f");
     format!("{}{}", dt.format_with_items(fmt), ext)
 }
 
-/// 获取当前时间本地字符串（不含有毫秒）
+/// 获取当前时间本地字符串
 pub fn now() -> NaiveDateTime {
     Local::now().naive_local()
 }
@@ -71,6 +77,10 @@ mod tests {
         let t2 = now();
         let _d = t2 - t1;
 
+        let s1 = local_time_str();
+
+        let s1 = to_local_iso_str(t1);
+        let s1 = to_local_iso_str(t1);
         //let r1 = 1..5;
         //assert_eq!(v.binary_search(&6), Ok(16));
     }
