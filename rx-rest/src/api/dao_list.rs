@@ -1,4 +1,5 @@
 use tokio::sync::Mutex;
+use tokio::sync::MutexGuard;
 
 pub use rx_db::RecordId;
 use rx_db::{DirDb, DirTable, IRecord, ITable};
@@ -20,6 +21,11 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         let db = DirDb::open(db_path).unwrap();
         let table = Mutex::new(DirTable::open(&db, table_name).unwrap());
         Ok(Self { table })
+    }
+
+    /// 获取模型对应的表
+    pub async fn table(&self) -> MutexGuard<DirTable<R>> {
+        self.table.lock().await
     }
 
     /// 添加记录
@@ -60,4 +66,5 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         tab.put(id.0 as RecordId, &mut record.0).unwrap();
         Ok(CodeResponse::Created(record))
     }
+
 }
