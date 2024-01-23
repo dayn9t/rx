@@ -5,6 +5,6 @@ pub fn uuid_or_new(name: &str) -> Uuid {
     if let Ok(uuid) = Uuid::parse_str(name) {
         uuid
     } else {
-        Uuid::new_v5(&uuid::NAMESPACE_OID, name)
+        Uuid::new_v5(&Uuid::NAMESPACE_OID, name.as_ref())
     }
 }

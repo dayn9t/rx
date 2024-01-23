@@ -7,11 +7,13 @@ edition = "2021"
 build = "build.rs"
 
 [build-dependencies]
-vergen = { version = "*", features = ["build", "git", "cargo"] }
+vergen = { version = "*", features = ["build", "git", "cargo", "gitoxide"] }
 
 [dependencies]
 
 geo-types = "*"
+itertools = "*"
+anyhow = "*"
 
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
@@ -24,13 +26,10 @@ encoding_rs = "*"
 tracing = "*"
 tracing-subscriber = "*"
 
-uuid = { version = "0.6", features = ["serde", "v5"] }
+uuid = { version = "*", features = ["serde", "v5"] }
 chrono = { version = "*", features = ["serde"] }
 time = "*"
 
 dirs = "*"
 num = "*"
 
-itertools = "*"
-
-anyhow = "*"
