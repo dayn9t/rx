@@ -4,6 +4,7 @@ extern crate clap;
 use rx_core::fs;
 
 fn main() {
+    // TODO 替换
     let matches = clap_app!(rxfst =>
         (version: "0.2")
         (author: "J. <dayn9t@gmail.com>")

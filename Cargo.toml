@@ -7,7 +7,7 @@ members = [
     "rx-db-derive",
     "rx-net",
     "rx-rest",
-    "rx-fst",
+    #"rx-fst",
     #"rx-web",
     #"binder",
     #"bin-parser",
