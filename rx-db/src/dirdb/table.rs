@@ -29,7 +29,7 @@ impl<T: IRecord> DirTable<T> {
     }
 
     /// 加载全部记录
-    pub fn load_records<S>(db: &DirDb, table_name: &S) -> Result<Vec<T>, <Self as ITable>::Err>
+    pub fn load_records<S>(db: &DirDb, table_name: &S) -> BoxResult<Vec<T>>
     where
         S: AsRef<str>,
     {
@@ -49,8 +49,6 @@ impl<T: IRecord> DirTable<T> {
 
 impl<T: IRecord> ITable for DirTable<T> {
     type Record = T;
-
-    type Err = Box<dyn std::error::Error>;
 
     //type Filter = dyn Fn(&Self::Record) -> bool;
 

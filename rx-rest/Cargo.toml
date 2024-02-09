@@ -8,9 +8,6 @@ edition = "2021"
 rx-core = { version = "*", path = "../rx-core" }
 rx-db = { version = "*", path = "../rx-db" }
 
-#serde = { version = "*", features = ["derive"] }
-#serde_json = "*"
-#rocket = "*"
 serde = "*"
 serde_json = "*"
 serde_derive = "*"
@@ -19,6 +16,5 @@ poem = { version = "*", features = ["anyhow"] }
 poem-openapi = { version = "*", features = ["swagger-ui", "time", "uuid", "geo", "url"] }
 tokio = { version = "1", features = ["full"] }
 
-#[dependencies.rocket_contrib]
-#default-features = false
-#features = ["json"]
+anyhow = "*"
+thiserror = "*"

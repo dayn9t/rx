@@ -7,11 +7,6 @@ use rx_core::text::*;
 
 use crate::interface::*;
 
-use super::db::*;
-
-//use std::collections::HashSet;
-
-//#[derive(Size)]
 pub struct RedisTable<T> {
     name: String,
     conn: RefCell<redis::Connection>,
@@ -42,8 +37,6 @@ impl<T> RedisTable<T> {
 impl<T: IRecord> ITable for RedisTable<T> {
     type Record = T;
 
-    type Err = redis::RedisError;
-
     fn name(&self) -> &str {
         &self.name
     }
@@ -56,25 +49,25 @@ impl<T: IRecord> ITable for RedisTable<T> {
         self.conn.borrow_mut().hexists(&self.name, id).unwrap()
     }
 
-    fn get(&self, id: RecordId) -> RedisResult<Self::Record> {
+    fn get(&self, id: RecordId) -> BoxResult<Self::Record> {
         let s: String = self.conn.borrow_mut().hget(&self.name, id)?;
         let v: Self::Record = json::from_str(&s).unwrap();
         Ok(v)
     }
 
-    fn post(&mut self, record: &mut Self::Record) -> RedisResult<RecordId> {
+    fn post(&mut self, record: &mut Self::Record) -> BoxResult<RecordId> {
         let id = self.next_id()?;
         self.put(id, record)?;
         Ok(id)
     }
 
-    fn put(&mut self, id: RecordId, record: &mut Self::Record) -> RedisResult<()> {
+    fn put(&mut self, id: RecordId, record: &mut Self::Record) -> BoxResult<()> {
         let s = json::to_pretty(record).unwrap();
         self.conn.borrow_mut().hset(&self.name, id, &s)?;
         Ok(())
     }
 
-    fn delete(&mut self, id: RecordId) -> RedisResult<()> {
+    fn delete(&mut self, id: RecordId) -> BoxResult<()> {
         self.conn.borrow_mut().hdel(&self.name, id)?;
         Ok(())
     }
@@ -84,7 +77,7 @@ impl<T: IRecord> ITable for RedisTable<T> {
         min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> RedisResult<Vec<Self::Record>>
+    ) -> BoxResult<Vec<Self::Record>>
     where
         P: Fn(&Self::Record) -> bool,
     {
@@ -107,7 +100,7 @@ impl<T: IRecord> ITable for RedisTable<T> {
         min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> RedisResult<Vec<(RecordId, Self::Record)>>
+    ) -> BoxResult<Vec<(RecordId, Self::Record)>>
     where
         P: Fn(&Self::Record) -> bool,
     {
@@ -125,14 +118,14 @@ impl<T: IRecord> ITable for RedisTable<T> {
         Ok(vec)
     }
 
-    fn find_ids(&mut self, min_id: RecordId) -> RedisResult<Vec<RecordId>> {
+    fn find_ids(&mut self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
         let ids: Vec<RecordId> = self.conn.borrow_mut().hkeys(&self.name)?;
         let mut ids: Vec<_> = ids.into_iter().filter(|id| *id >= min_id).collect();
         ids.sort();
         Ok(ids)
     }
 
-    fn next_id(&mut self) -> RedisResult<RecordId> {
+    fn next_id(&mut self) -> BoxResult<RecordId> {
         let ids = self.find_ids(0)?;
         let next = ids.last().unwrap_or(&0) + 1;
         Ok(next)

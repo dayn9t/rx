@@ -1,5 +1,5 @@
 /// 包信息
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PackageInfo {
     /// 名称
     pub name: &'static str,
@@ -38,7 +38,7 @@ macro_rules! package_function {
 }
 
 /// 应用程序信息(项目包括多个应用程序)
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AppInfo {
     /// 应用程序名称
     pub name: String,

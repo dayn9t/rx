@@ -1,8 +1,7 @@
-/// 数据库结果
-pub use std::result::Result;
-
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+
+pub use rx_core::text::BoxResult;
 
 /// 记录ID类型
 pub type RecordId = usize;
@@ -17,9 +16,6 @@ pub trait IRecord: Default + Serialize + DeserializeOwned {
 pub trait ITable {
     /// 记录类型
     type Record: IRecord;
-
-    /// 错误类型
-    type Err;
 
     /// 过滤条件类型
     //type Filter: ?Sized; //: Default = Fn(&Self::Record) -> bool;
@@ -40,7 +36,7 @@ pub trait ITable {
     fn exist(&self, id: RecordId) -> bool;
 
     /// 获取记录
-    fn get(&self, id: RecordId) -> Result<Self::Record, Self::Err>;
+    fn get(&self, id: RecordId) -> BoxResult<Self::Record>;
 
     /// 获取变量值/缺省值
     fn get_or(&mut self, id: RecordId, record: Self::Record) -> Self::Record {
@@ -53,13 +49,13 @@ pub trait ITable {
     }
 
     /// 添加记录
-    fn post(&mut self, record: &mut Self::Record) -> Result<RecordId, Self::Err>;
+    fn post(&mut self, record: &mut Self::Record) -> BoxResult<RecordId>;
 
     /// 更新记录
-    fn put(&mut self, id: RecordId, record: &mut Self::Record) -> Result<(), Self::Err>;
+    fn put(&mut self, id: RecordId, record: &mut Self::Record) -> BoxResult<()>;
 
     /// 删除记录(幂等)
-    fn delete(&mut self, id: RecordId) -> Result<(), Self::Err>;
+    fn delete(&mut self, id: RecordId) -> BoxResult<()>;
 
     /// 查询记录集
     fn find<P>(
@@ -67,12 +63,12 @@ pub trait ITable {
         min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> Result<Vec<Self::Record>, Self::Err>
+    ) -> BoxResult<Vec<Self::Record>>
     where
         P: Fn(&Self::Record) -> bool;
 
     /// 查询记录集
-    fn find_all(&mut self) -> Result<Vec<Self::Record>, Self::Err> {
+    fn find_all(&mut self) -> BoxResult<Vec<Self::Record>> {
         self.find(RecordId::default(), usize::MAX, |_| true)
     }
 
@@ -82,29 +78,26 @@ pub trait ITable {
         min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> Result<Vec<(RecordId, Self::Record)>, Self::Err>
+    ) -> BoxResult<Vec<(RecordId, Self::Record)>>
     where
         P: Fn(&Self::Record) -> bool;
 
     /// 查询K/V对
-    fn find_all_pairs(&mut self) -> Result<Vec<(RecordId, Self::Record)>, Self::Err> {
+    fn find_all_pairs(&mut self) -> BoxResult<Vec<(RecordId, Self::Record)>> {
         self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
     }
 
     /// 查询Id集
-    fn find_ids(&mut self, min_id: RecordId) -> Result<Vec<RecordId>, Self::Err>;
+    fn find_ids(&mut self, min_id: RecordId) -> BoxResult<Vec<RecordId>>;
 
     /// 获取下一个ID
-    fn next_id(&mut self) -> Result<RecordId, Self::Err>;
+    fn next_id(&mut self) -> BoxResult<RecordId>;
 }
 
 /// 数据库变量
 pub trait IVariant {
     /// 记录类型
     type Record: Default + Clone;
-
-    /// 错误类型
-    type Err;
 
     /// 获取变量名
     fn name(&self) -> &str;
@@ -113,7 +106,7 @@ pub trait IVariant {
     fn exist(&self) -> bool;
 
     /// 获取变量值
-    fn get(&self) -> Result<Self::Record, Self::Err>;
+    fn get(&self) -> BoxResult<Self::Record>;
 
     /// 获取变量值/缺省值
     fn get_or(&self, record: Self::Record) -> Self::Record {
@@ -126,7 +119,7 @@ pub trait IVariant {
     }
 
     /// 设置变量值
-    fn set(&mut self, record: &Self::Record) -> Result<(), Self::Err>;
+    fn set(&mut self, record: &Self::Record) -> BoxResult<()>;
 }
 
 /*

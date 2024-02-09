@@ -1,5 +1,5 @@
-pub use stat::*;
 pub use basic::*;
+pub use stat::*;
 
-mod stat;
 mod basic;
+mod stat;

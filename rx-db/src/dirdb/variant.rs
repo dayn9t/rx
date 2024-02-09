@@ -29,8 +29,6 @@ impl<T> DirVariant<T> {
 impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for DirVariant<T> {
     type Record = T;
 
-    type Err = Box<dyn std::error::Error>;
-
     fn name(&self) -> &str {
         &self.name
     }

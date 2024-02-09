@@ -9,3 +9,10 @@ mod dirdb;
 mod interface;
 mod redisdb;
 mod test;
+
+#[cfg(test)]
+mod tests {
+    //use super::*;
+    #[test]
+    fn it_works() {}
+}

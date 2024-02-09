@@ -12,3 +12,6 @@ serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 
 redis = "*"
+
+anyhow = "*"
+thiserror = "*"

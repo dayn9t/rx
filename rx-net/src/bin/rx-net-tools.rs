@@ -1,4 +1,3 @@
-
 use network_interface::NetworkInterface;
 use network_interface::NetworkInterfaceConfig;
 

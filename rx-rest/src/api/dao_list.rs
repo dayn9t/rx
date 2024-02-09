@@ -66,5 +66,4 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         tab.put(id.0 as RecordId, &mut record.0).unwrap();
         Ok(CodeResponse::Created(record))
     }
-
 }

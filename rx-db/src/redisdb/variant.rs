@@ -7,8 +7,6 @@ use rx_core::text::*;
 
 use crate::interface::*;
 
-use super::db::*;
-
 pub struct RedisVariant<T> {
     name: String,
     conn: RefCell<redis::Connection>,
@@ -32,8 +30,6 @@ impl<T> RedisVariant<T> {
 impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for RedisVariant<T> {
     type Record = T;
 
-    type Err = redis::RedisError;
-
     fn name(&self) -> &str {
         &self.name
     }
@@ -42,13 +38,13 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for RedisVarian
         self.conn.borrow_mut().exists(&self.name).unwrap()
     }
 
-    fn get(&self) -> RedisResult<Self::Record> {
+    fn get(&self) -> BoxResult<Self::Record> {
         let s: String = self.conn.borrow_mut().get(&self.name)?;
         let v: Self::Record = json::from_str(&s).unwrap();
         Ok(v)
     }
 
-    fn set(&mut self, record: &Self::Record) -> RedisResult<()> {
+    fn set(&mut self, record: &Self::Record) -> BoxResult<()> {
         let s = json::to_pretty(record).unwrap();
         self.conn.borrow_mut().set(&self.name, &s)?;
         Ok(())

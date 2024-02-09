@@ -1,4 +1,3 @@
-
 use geo_types::CoordNum;
 
 /// 不同类型的除法, 用f64计算中间结果

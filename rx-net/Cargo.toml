@@ -13,3 +13,6 @@ serde_json = "*"
 paho-mqtt = "*"
 sysinfo = "*"
 network-interface = "*"
+
+anyhow = "*"
+thiserror = "*"
