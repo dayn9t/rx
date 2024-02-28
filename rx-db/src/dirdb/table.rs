@@ -69,11 +69,7 @@ impl<T: IRecord> ITable for DirTable<T> {
     }
 
     fn post(&mut self, record: &mut Self::Record) -> BoxResult<RecordId> {
-        let r = record.get_id();
-        let id = match r {
-            Some(id) if id > 0 => id,
-            _ => self.next_id()?,
-        };
+        let id = self.next_id()?;
         self.put(id, record)?;
         Ok(id)
     }
