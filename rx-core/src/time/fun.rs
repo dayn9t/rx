@@ -77,10 +77,10 @@ mod tests {
         let t2 = now();
         let _d = t2 - t1;
 
-        let s1 = local_time_str();
+        let _s1 = local_time_str();
 
-        let s1 = to_local_iso_str(t1);
-        let s1 = to_local_iso_str(t1);
+        let _s1 = to_local_iso_str(t1);
+        let _s1 = to_local_iso_str(t1);
         //let r1 = 1..5;
         //assert_eq!(v.binary_search(&6), Ok(16));
     }

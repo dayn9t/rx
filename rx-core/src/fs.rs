@@ -1,10 +1,17 @@
+use chrono::prelude::*;
+use dirs;
 use std::ffi::OsStr;
 pub use std::fs::File;
 use std::fs::{self, DirEntry};
 pub use std::io::*;
 pub use std::path::{Path, PathBuf};
 
-use dirs;
+/// 当前时间转化为文件
+pub fn now_to_file(ext: &str) -> String {
+    let dt = Local::now();
+    let filename = dt.format("%Y-%m-%d/%H-%M-%S%.3f.").to_string() + ext;
+    filename
+}
 
 /// 文件作为字符串访问
 pub fn to_str<P>(p: &P) -> &str
