@@ -1,5 +1,4 @@
 use chrono::prelude::*;
-use dirs;
 use std::ffi::OsStr;
 pub use std::fs::File;
 use std::fs::{self, DirEntry};

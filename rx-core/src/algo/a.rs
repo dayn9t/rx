@@ -55,7 +55,7 @@ pub fn locate_range<T: Ord>(array: &[T], value_range: &Range<T>) -> Range<usize>
 }
 
 /// 可按照索引删除
-trait RemoveByIndex {
+trait _RemoveByIndex {
     fn remove(&mut self, index: usize);
 }
 
