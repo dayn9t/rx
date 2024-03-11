@@ -4,12 +4,12 @@ use super::types::*;
 
 /// 获取纪元到现在秒数
 pub fn secs_since_epoch() -> f64 {
-    now().timestamp_nanos_opt().unwrap() as f64 / 1000_000_000.0
+    now().and_utc().timestamp_nanos_opt().unwrap() as f64 / 1000_000_000.0
 }
 
 /// 获取纪元到现在纳秒数
 pub fn nsecs_since_epoch() -> i64 {
-    now().timestamp_nanos_opt().unwrap()
+    now().and_utc().timestamp_nanos_opt().unwrap()
 }
 
 /// 时间转换本地字符串（不含有毫秒）
