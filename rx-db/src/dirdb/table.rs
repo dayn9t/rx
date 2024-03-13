@@ -155,14 +155,18 @@ impl<T: IRecord> ITable for DirTable<T> {
 #[cfg(test)]
 mod tests {
     use crate::test::tests::*;
+    use path_macro::path;
 
     use super::*;
 
     #[test]
     fn tab_works() {
+        let dir = "/tmp/test/dirdb1";
         let name = "student";
-        let db = DirDb::open(&"/tmp/test/dirdb1").unwrap();
+        let db = DirDb::open(dir).unwrap();
         db.remove_table(name).unwrap();
+        let p = path!(dir / name);
+        assert!(!p.exists());
 
         let mut tab = DirTable::open(&db, &"student").unwrap();
         assert_eq!(tab.find_ids(0).unwrap().is_empty(), true);

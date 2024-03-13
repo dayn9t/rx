@@ -33,8 +33,8 @@ pub fn load_csv_to_maps(path: &Path) -> Vec<HashMap<String, String>> {
     dst
 }
 
-#[test]
-fn io() {
+//#[test] TODO: make local file
+fn _test_io() {
     let path = "/home/jiang/game/tk5x/client/data/scenarios/1/char_names.tsv";
     let path = Path::new(path);
     let arr2d = load_csv_to_2d(path);
