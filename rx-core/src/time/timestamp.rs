@@ -62,13 +62,15 @@ impl Sub for Timestamp {
 
 impl From<NaiveDateTime> for Timestamp {
     fn from(dt: NaiveDateTime) -> Self {
-        Timestamp(dt.timestamp() as u32)
+        Timestamp(dt.and_utc().timestamp() as u32)
     }
 }
 
 impl Into<NaiveDateTime> for Timestamp {
     fn into(self) -> NaiveDateTime {
-        NaiveDateTime::from_timestamp_opt(self.0 as i64, 0).unwrap()
+        DateTime::from_timestamp(self.0 as i64, 0)
+            .unwrap()
+            .naive_local()
     }
 }
 
@@ -117,6 +119,9 @@ mod tests {
         let t = Timestamp::parse_from_common_str(s).unwrap();
         assert_eq!(t.to_string(), s);
         println!("{}", t);
+
+        let t1: NaiveDateTime = t.into();
+        println!("{}", t1);
     }
 }
 

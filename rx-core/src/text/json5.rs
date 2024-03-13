@@ -49,5 +49,5 @@ fn io() {
 
     let s1 = to_pretty(&a).unwrap();
 
-    assert_eq!(s1, "k");
+    assert_eq!(s1, "{\"i\":1,\"f\":2}");
 }

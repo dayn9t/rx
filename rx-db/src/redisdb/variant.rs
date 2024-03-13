@@ -54,6 +54,7 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for RedisVarian
 #[cfg(test)]
 mod tests {
     use crate::test::tests::*;
+    use crate::RedisDb;
 
     use super::*;
 

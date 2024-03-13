@@ -136,6 +136,7 @@ impl<T: IRecord> ITable for RedisTable<T> {
 mod tests {
     use super::*;
     use crate::test::tests::*;
+    use crate::RedisDb;
 
     #[test]
     fn tab_works() {

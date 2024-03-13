@@ -130,7 +130,6 @@ impl NetplanCfg {
 
 #[cfg(test)]
 mod tests {
-    use rx_core::text::yaml;
 
     use super::*;
 

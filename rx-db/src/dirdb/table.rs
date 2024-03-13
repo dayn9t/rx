@@ -16,8 +16,8 @@ pub struct DirTable<T> {
 impl<T: IRecord> DirTable<T> {
     /// 打开表
     pub fn open<S>(db: &DirDb, name: S) -> BoxResult<Self>
-        where
-            S: AsRef<str>,
+    where
+        S: AsRef<str>,
     {
         let path = db.table_path(name);
         fs::ensure_dir_exist(&path)?;
@@ -30,8 +30,8 @@ impl<T: IRecord> DirTable<T> {
 
     /// 加载全部记录
     pub fn load_records<S>(db: &DirDb, table_name: &S) -> BoxResult<Vec<T>>
-        where
-            S: AsRef<str>,
+    where
+        S: AsRef<str>,
     {
         let mut table = DirTable::<T>::open(&db, table_name).unwrap();
         table.find_all()
@@ -90,8 +90,8 @@ impl<T: IRecord> ITable for DirTable<T> {
         limit: usize,
         predicate: P,
     ) -> BoxResult<Vec<Self::Record>>
-        where
-            P: Fn(&Self::Record) -> bool,
+    where
+        P: Fn(&Self::Record) -> bool,
     {
         let mut vec = Vec::new();
         let ids = self.find_ids(min_id)?;
@@ -113,8 +113,8 @@ impl<T: IRecord> ITable for DirTable<T> {
         limit: usize,
         predicate: P,
     ) -> BoxResult<Vec<(RecordId, Self::Record)>>
-        where
-            P: Fn(&Self::Record) -> bool,
+    where
+        P: Fn(&Self::Record) -> bool,
     {
         let mut vec = Vec::new();
         let ids = self.find_ids(min_id)?;
