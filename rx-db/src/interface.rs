@@ -1,5 +1,6 @@
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use std::collections::HashMap;
 
 pub use rx_core::text::BoxResult;
 
@@ -10,6 +11,11 @@ pub type RecordId = usize;
 pub trait IRecord: Default + Serialize + DeserializeOwned {
     fn get_id(&self) -> Option<RecordId>;
     fn set_id(&mut self, id: RecordId);
+}
+
+/// Vec<Record> => HasMap<ID, Record>
+pub fn vec_to_map<R: IRecord>(rs: Vec<R>) -> HashMap<RecordId, R> {
+    rs.into_iter().map(|r| (r.get_id().unwrap(), r)).collect()
 }
 
 /// 数据库表

@@ -127,6 +127,15 @@ impl DirDb {
         let mut table = DirTable::<T>::open(self, name)?;
         table.find(0, RecordId::MAX, predicate)
     }
+
+    /// 加载表中的记录
+    pub fn load_all_records<T, S>(&self, name: S) -> BoxResult<Vec<T>>
+    where
+        T: IRecord,
+        S: AsRef<str>,
+    {
+        self.load_records(name, |_: &T| true)
+    }
 }
 
 #[cfg(test)]
