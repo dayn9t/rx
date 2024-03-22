@@ -28,7 +28,7 @@ pub fn get_adapters(catalog: Option<&str>) -> Vec<String> {
         let catalog_part = device_catalog(&path);
         if let Some(c) = catalog_part {
             if catalog.is_none() || c.contains(catalog.unwrap()) {
-                adapters.push(fs::file_name_owned(&path));
+                adapters.push(fs::file_name(&path));
             }
         }
     }

@@ -52,7 +52,7 @@ impl<T: IRecord> ITable for DirTable<T> {
 
     //type Filter = dyn Fn(&Self::Record) -> bool;
 
-    fn name(&self) -> &str {
+    fn name(&self) -> String {
         fs::file_name(&self.path)
     }
 

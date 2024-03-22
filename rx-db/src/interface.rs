@@ -28,7 +28,7 @@ pub trait ITable {
     //type Filter: ?Sized;
 
     /// 获取表名
-    fn name(&self) -> &str;
+    fn name(&self) -> String;
 
     /// 获取表长度
     fn len(&self) -> usize;

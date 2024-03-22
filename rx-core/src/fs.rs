@@ -21,65 +21,29 @@ where
 }
 
 /// 文件作为字符串访问
-pub fn to_string<P>(p: &P) -> String
-where
-    P: AsRef<Path> + ?Sized,
-{
-    to_str(p).to_owned()
+pub fn to_string<P>(p: impl AsRef<Path>) -> String {
+    p.as_ref().to_str().unwrap().to_owned()
 }
 
 /// 获取文件名
-pub fn file_name(p: &impl AsRef<Path>) -> &str {
-    p.as_ref().file_name().unwrap().to_str().unwrap()
-}
-
-/// 获取文件名
-pub fn file_name_owned<P>(p: &P) -> String
-where
-    P: AsRef<Path>,
-{
-    file_name(p).to_owned()
+pub fn file_name(p: impl AsRef<Path>) -> String {
+    p.as_ref().file_name().unwrap().to_str().unwrap().to_owned()
 }
 
 /// 获取扩展名，不包括＂.＂，比如＂jpg"，而不是".jpg"
-pub fn file_ext<P>(p: &P) -> &str
-where
-    P: AsRef<Path>,
-{
-    p.as_ref().extension().unwrap().to_str().unwrap()
-}
-
-/// 获取扩展名，参见: file_ext
-pub fn file_ext_owned<P>(p: &P) -> String
-where
-    P: AsRef<Path>,
-{
-    file_ext(p).to_owned()
+pub fn file_ext(p: impl AsRef<Path>) -> String {
+    p.as_ref().extension().unwrap().to_str().unwrap().to_owned()
 }
 
 /// 获取主干文件名(去掉扩展名)
-pub fn file_stem<P>(p: &P) -> &str
-where
-    P: AsRef<Path>,
-{
-    p.as_ref().file_stem().unwrap().to_str().unwrap()
-}
-
-/// 获取主干文件名(去掉扩展名)
-pub fn file_stem_owned<P>(p: &P) -> String
-where
-    P: AsRef<Path>,
-{
-    file_stem(p).to_owned()
+pub fn file_stem(p: impl AsRef<Path>) -> String {
+    p.as_ref().file_stem().unwrap().to_str().unwrap().to_owned()
 }
 
 /// 在文件名后面追加后缀
-pub fn file_name_append<P>(p: &P, s: &str) -> PathBuf
-where
-    P: AsRef<Path>,
-{
-    let stem = file_stem(p);
-    let ext = file_ext(p);
+pub fn file_name_append(p: impl AsRef<Path>, s: &str) -> PathBuf {
+    let stem = file_stem(p.as_ref());
+    let ext = file_ext(p.as_ref());
     let name = format!("{}{}.{}", stem, s, ext);
     let parent = p.as_ref().parent().unwrap();
     parent.join(&name)
@@ -105,10 +69,7 @@ where
 }
 
 /// 创建上级目录，幂等
-pub fn make_parent<P>(path: &P) -> Result<()>
-where
-    P: AsRef<Path>,
-{
+pub fn make_parent(path: impl AsRef<Path>) -> Result<()> {
     if let Some(parent) = path.as_ref().parent() {
         fs::create_dir_all(parent)?;
         Ok(())
@@ -134,10 +95,7 @@ where
 }
 
 /// 删除路径（文件/目录）
-pub fn remove<P>(path: &P) -> Result<()>
-where
-    P: AsRef<Path>,
-{
+pub fn remove(path: impl AsRef<Path>) -> Result<()> {
     let path = path.as_ref();
     if path.exists() {
         if path.is_dir() {
@@ -199,10 +157,7 @@ where
 }
 
 /// 遍历目录
-pub fn visit_dir<P>(dir: &P, cb: &mut dyn FnMut(&Path)) -> Result<()>
-where
-    P: AsRef<Path>,
-{
+pub fn visit_dir(dir: impl AsRef<Path>, cb: &mut dyn FnMut(&Path)) -> Result<()> {
     for entry in fs::read_dir(dir)? {
         cb(&entry?.path());
     }
@@ -218,12 +173,9 @@ where
 }
 
 /// 获取目录中的目录
-pub fn dirs_in<P>(dir: &P) -> Result<Vec<PathBuf>>
-where
-    P: AsRef<Path>,
-{
+pub fn dirs_in(dir: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
     let mut vec = Vec::new();
-    visit_dir(dir, &mut |p: &Path| {
+    visit_dir(dir.as_ref(), &mut |p: &Path| {
         if p.is_dir() {
             vec.push(p.to_owned());
         }
@@ -232,12 +184,9 @@ where
 }
 
 /// 获取目录中目录名
-pub fn dir_names_in<P>(dir: &P) -> Result<Vec<String>>
-where
-    P: AsRef<Path>,
-{
+pub fn dir_names_in(dir: impl AsRef<Path>) -> Result<Vec<String>> {
     let v = dirs_in(dir)?;
-    let v: Vec<_> = v.iter().map(|p| file_name_owned(p)).collect();
+    let v: Vec<_> = v.iter().map(|p| file_name(p)).collect();
     Ok(v)
 }
 
@@ -247,11 +196,7 @@ pub fn mtp_dirs() -> Result<Vec<PathBuf>> {
 }
 
 /// 查找第一个目录(广度优先)
-pub fn find_first_dir<P, S>(dir: &P, dir_name: &S) -> Result<PathBuf>
-where
-    P: AsRef<Path>,
-    S: AsRef<str>,
-{
+pub fn find_first_dir(dir: impl AsRef<Path>, dir_name: impl AsRef<str>) -> Result<PathBuf> {
     let mut dirs = Vec::new();
 
     for entry in fs::read_dir(dir.as_ref())? {
@@ -266,7 +211,7 @@ where
     }
 
     for dir in dirs {
-        let r = find_first_dir(&dir, dir_name);
+        let r = find_first_dir(&dir, dir_name.as_ref());
         if r.is_ok() {
             return r;
         }
@@ -275,11 +220,7 @@ where
 }
 
 /// 获取目录中文件
-pub fn files_in<P, S>(dir: &P, ext: &S) -> Result<Vec<PathBuf>>
-where
-    P: AsRef<Path>,
-    S: AsRef<str>,
-{
+pub fn files_in(dir: impl AsRef<Path>, ext: impl AsRef<str>) -> Result<Vec<PathBuf>> {
     let ext = Some(OsStr::new(ext.as_ref()));
     let mut vec = Vec::new();
     visit_dir(dir, &mut |p: &Path| {
@@ -291,24 +232,16 @@ where
 }
 
 /// 获取目录中文件名
-pub fn file_names_in<P, S>(dir: &P, ext: &S) -> Result<Vec<String>>
-where
-    P: AsRef<Path>,
-    S: AsRef<str>,
-{
+pub fn file_names_in(dir: impl AsRef<Path>, ext: impl AsRef<str>) -> Result<Vec<String>> {
     let v = files_in(dir, ext)?;
-    let v: Vec<_> = v.iter().map(|p| file_name_owned(p)).collect();
+    let v: Vec<_> = v.iter().map(|p| file_name(p)).collect();
     Ok(v)
 }
 
 /// 获取目录中文件名主干(去掉扩展名)
-pub fn file_stems_in<P, S>(dir: &P, ext: &S) -> Result<Vec<String>>
-where
-    P: AsRef<Path>,
-    S: AsRef<str>,
-{
+pub fn file_stems_in(dir: impl AsRef<Path>, ext: impl AsRef<str>) -> Result<Vec<String>> {
     let v = files_in(dir, ext)?;
-    let v: Vec<_> = v.iter().map(|p| file_stem_owned(p)).collect();
+    let v: Vec<_> = v.iter().map(|p| file_stem(p)).collect();
     Ok(v)
 }
 
@@ -337,6 +270,7 @@ pub fn combine_files(src_files: &Vec<PathBuf>, dst_file: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::os::unix::fs::symlink;
 
     const A_JSON: &str = "/tmp/a.json";
 
@@ -383,5 +317,13 @@ mod tests {
 
         let p = "/etc/passwd/abc";
         assert_eq!(make_parent(&p).is_ok(), false);
+    }
+
+    #[test]
+    fn link_works() {
+        let src = "/home";
+        let dst = "/tmp/home";
+        remove(&dst).unwrap();
+        assert_eq!(symlink(src, dst).is_ok(), true);
     }
 }
