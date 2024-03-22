@@ -21,7 +21,7 @@ where
 }
 
 /// 文件作为字符串访问
-pub fn to_string<P>(p: impl AsRef<Path>) -> String {
+pub fn to_string(p: impl AsRef<Path>) -> String {
     p.as_ref().to_str().unwrap().to_owned()
 }
 
@@ -61,10 +61,7 @@ where
 }
 
 /// 配置目录
-pub fn config_dir_of<S>(name: S) -> PathBuf
-where
-    S: AsRef<str>,
-{
+pub fn config_dir_of(name: impl AsRef<str>) -> PathBuf {
     dirs::config_dir().unwrap().join(&name.as_ref())
 }
 
@@ -79,10 +76,7 @@ pub fn make_parent(path: impl AsRef<Path>) -> Result<()> {
 }
 
 /// 确保目录存在，不存在则建立
-pub fn ensure_dir_exist<P>(path: &P) -> Result<()>
-where
-    P: AsRef<Path>,
-{
+pub fn ensure_dir_exist(path: impl AsRef<Path>) -> Result<()> {
     let p = path.as_ref();
     if !p.exists() {
         fs::create_dir_all(&p)?;
@@ -125,11 +119,7 @@ pub fn visit_dirs(dir: &Path, cb: &mut dyn FnMut(&Path)) -> Result<()> {
 }
 
 /// 获取递归目录中指定扩展名文件
-pub fn find_file_by_ext<P, S>(dir: &P, ext: &S) -> Result<Vec<PathBuf>>
-where
-    P: AsRef<Path>,
-    S: AsRef<str>,
-{
+pub fn find_file_by_ext(dir: impl AsRef<Path>, ext: impl AsRef<str>) -> Result<Vec<PathBuf>> {
     let ext = Some(OsStr::new(ext.as_ref()));
     let mut vec = Vec::new();
     visit_dirs(dir.as_ref(), &mut |p: &Path| {
@@ -141,11 +131,7 @@ where
 }
 
 /// 获取递归目录中指定名称文件
-pub fn find_file_by_name<P, S>(dir: &P, name: &S) -> Result<Vec<PathBuf>>
-where
-    P: AsRef<Path>,
-    S: AsRef<str>,
-{
+pub fn find_file_by_name(dir: impl AsRef<Path>, name: impl AsRef<str>) -> Result<Vec<PathBuf>> {
     let name = Some(OsStr::new(name.as_ref()));
     let mut vec = Vec::new();
     visit_dirs(dir.as_ref(), &mut |p: &Path| {
@@ -165,10 +151,7 @@ pub fn visit_dir(dir: impl AsRef<Path>, cb: &mut dyn FnMut(&Path)) -> Result<()>
 }
 
 /// 判断路径是有有扩展名
-pub fn has_extension<S>(_dir_entry: &DirEntry, _ext: &S) -> bool
-where
-    S: AsRef<str>,
-{
+pub fn has_extension(_dir_entry: &DirEntry, _ext: AsRef<str>) -> bool {
     false
 }
 
