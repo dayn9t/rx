@@ -151,7 +151,7 @@ pub fn visit_dir(dir: impl AsRef<Path>, cb: &mut dyn FnMut(&Path)) -> Result<()>
 }
 
 /// 判断路径是有有扩展名
-pub fn has_extension(_dir_entry: &DirEntry, _ext: AsRef<str>) -> bool {
+pub fn has_extension(_dir_entry: &DirEntry, _ext: impl AsRef<str>) -> bool {
     false
 }
 
