@@ -1,9 +1,11 @@
-use chrono::prelude::*;
 use std::ffi::OsStr;
-pub use std::fs::File;
 use std::fs::{self, DirEntry};
+pub use std::fs::File;
 pub use std::io::*;
+use std::os::unix::fs::symlink;
 pub use std::path::{Path, PathBuf};
+
+use chrono::prelude::*;
 
 /// 当前时间转化为文件
 pub fn now_to_file(ext: &str) -> String {
@@ -14,8 +16,8 @@ pub fn now_to_file(ext: &str) -> String {
 
 /// 文件作为字符串访问
 pub fn to_str<P>(p: &P) -> &str
-where
-    P: AsRef<Path> + ?Sized,
+    where
+        P: AsRef<Path> + ?Sized,
 {
     p.as_ref().to_str().unwrap()
 }
@@ -51,9 +53,9 @@ pub fn file_name_append(p: impl AsRef<Path>, s: &str) -> PathBuf {
 
 /// 路径连接
 pub fn join<P1, P2>(p1: &P1, p2: &P2) -> PathBuf
-where
-    P1: AsRef<Path> + ?Sized,
-    P2: AsRef<Path> + ?Sized,
+    where
+        P1: AsRef<Path> + ?Sized,
+        P2: AsRef<Path> + ?Sized,
 {
     let mut p = p1.as_ref().to_owned();
     p.push(p2.as_ref());
@@ -250,10 +252,18 @@ pub fn combine_files(src_files: &Vec<PathBuf>, dst_file: &Path) -> Result<()> {
     Ok(())
 }
 
+/// 建立符号链接, 如果目标已经存在则删除
+pub fn relink(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<()> {
+    let dst = dst.as_ref();
+    if dst.exists() {
+        fs::remove_file(dst).unwrap();
+    }
+    symlink(src, dst)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::os::unix::fs::symlink;
 
     const A_JSON: &str = "/tmp/a.json";
 
@@ -306,7 +316,6 @@ mod tests {
     fn link_works() {
         let src = "/home";
         let dst = "/tmp/home";
-        remove(&dst).unwrap();
-        assert_eq!(symlink(src, dst).is_ok(), true);
+        relink(src, dst).unwrap();
     }
 }
