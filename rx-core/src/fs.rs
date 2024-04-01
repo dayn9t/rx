@@ -255,7 +255,7 @@ pub fn combine_files(src_files: &Vec<PathBuf>, dst_file: &Path) -> Result<()> {
 /// 建立符号链接, 如果目标已经存在则删除
 pub fn relink(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<()> {
     let dst = dst.as_ref();
-    if dst.exists() {
+    if dst.is_symlink() {
         fs::remove_file(dst).unwrap();
     }
     symlink(src, dst)
