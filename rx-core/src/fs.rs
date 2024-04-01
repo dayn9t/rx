@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
-use std::fs::{self, DirEntry};
 pub use std::fs::File;
+use std::fs::{self, DirEntry};
 pub use std::io::*;
 use std::os::unix::fs::symlink;
 pub use std::path::{Path, PathBuf};
@@ -16,8 +16,8 @@ pub fn now_to_file(ext: &str) -> String {
 
 /// 文件作为字符串访问
 pub fn to_str<P>(p: &P) -> &str
-    where
-        P: AsRef<Path> + ?Sized,
+where
+    P: AsRef<Path> + ?Sized,
 {
     p.as_ref().to_str().unwrap()
 }
@@ -53,9 +53,9 @@ pub fn file_name_append(p: impl AsRef<Path>, s: &str) -> PathBuf {
 
 /// 路径连接
 pub fn join<P1, P2>(p1: &P1, p2: &P2) -> PathBuf
-    where
-        P1: AsRef<Path> + ?Sized,
-        P2: AsRef<Path> + ?Sized,
+where
+    P1: AsRef<Path> + ?Sized,
+    P2: AsRef<Path> + ?Sized,
 {
     let mut p = p1.as_ref().to_owned();
     p.push(p2.as_ref());
