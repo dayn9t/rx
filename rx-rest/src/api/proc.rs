@@ -121,3 +121,19 @@ fn to_resp(r: Option<CommandOutput>) -> Result<CodeResponse<ServiceCmd>> {
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_works() {
+        init_log(1);
+
+        let r = rsync("-avc", "/opt/howell/iws/v0.9/", "/opt/howell/iws/v0.8/").unwrap();
+        println!("stdout: {}", r.stdout);
+        println!("stderr: {}", r.stderr);
+
+    }
+}
