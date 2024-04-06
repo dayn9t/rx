@@ -41,7 +41,9 @@ where
                 stdout: String::from_utf8_lossy(&output.stdout).to_string(),
                 stderr: String::from_utf8_lossy(&output.stderr).to_string(),
             };
-            if !out.success {
+            if out.success {
+                info!("run='{}' OK", title.as_ref());
+            } else {
                 error!(
                     "run='{}' exit_status='{}'",
                     title.as_ref(),
@@ -77,6 +79,17 @@ where
     );
     let r = run_command(program, args, &title);
     to_resp(r)
+}
+
+/// 利用supervisorctl管理服务
+pub fn rsync<S>(opts: S, src: S, dst: S) -> Option<CommandOutput>
+where
+    S: AsRef<str>,
+{
+    let program = "/usr/bin/rsync";
+    let args = [opts.as_ref(), src.as_ref(), dst.as_ref()];
+    let title = format!("rsync_{:?}_{:?}_{:?}", args[0], args[1], args[2]);
+    run_command(program, args, &title)
 }
 
 /// 利用supervisorctl管理服务
