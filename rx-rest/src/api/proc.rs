@@ -1,5 +1,7 @@
 use std::ffi::OsStr;
-use std::process::Command;
+use std::io;
+use std::io::Write;
+use std::process::{Command, Output, Stdio};
 
 use super::common::*;
 
@@ -33,7 +35,40 @@ where
     T: AsRef<str>,
 {
     let r = Command::new(program).args(args).output();
-    match r {
+    proc_output(title, r)
+}
+
+/// 运行命令, 含有输入
+pub fn run_command_inputs<I, S>(
+    program: S,
+    args: I,
+    title: impl AsRef<str>,
+    inputs1: impl AsRef<str>,
+) -> Option<CommandOutput>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let mut child = Command::new(program)
+        .args(args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("Failed to start command");
+
+    if let Some(stdin) = child.stdin.as_mut() {
+        stdin
+            .write_all(inputs1.as_ref().as_bytes())
+            .expect("Failed to write to stdin");
+    }
+
+    let output = child.wait_with_output();
+    proc_output(title, output)
+}
+
+fn proc_output(title: impl AsRef<str>, output_result: io::Result<Output>) -> Option<CommandOutput> {
+    match output_result {
         Ok(output) => {
             let out = CommandOutput {
                 success: output.status.success(),
@@ -62,14 +97,11 @@ where
 }
 
 /// 利用supervisorctl管理服务
-pub fn supervisorctl<S>(
+pub fn supervisorctl(
     _record: Json<ServiceCmd>,
-    sub_cmd: S,
-    service: S,
-) -> Result<CodeResponse<ServiceCmd>>
-where
-    S: AsRef<str>,
-{
+    sub_cmd: impl AsRef<str>,
+    service: impl AsRef<str>,
+) -> Result<CodeResponse<ServiceCmd>> {
     let program = "/usr/bin/supervisorctl";
     let args = [sub_cmd.as_ref(), service.as_ref()];
     let title = format!(
@@ -82,21 +114,27 @@ where
 }
 
 /// 利用supervisorctl管理服务
-pub fn rsync<S>(opts: S, src: S, dst: S) -> Option<CommandOutput>
-where
-    S: AsRef<str>,
-{
+pub fn rsync(
+    opts: impl AsRef<str>,
+    src: impl AsRef<str>,
+    dst: impl AsRef<str>,
+    password: Option<&str>,
+) -> Option<CommandOutput> {
     let program = "/usr/bin/rsync";
     let args = [opts.as_ref(), src.as_ref(), dst.as_ref()];
     let title = format!("rsync_{:?}_{:?}_{:?}", args[0], args[1], args[2]);
-    run_command(program, args, &title)
+    if let Some(password) = password {
+        run_command_inputs(program, args, &title, password)
+    } else {
+        run_command(program, args, &title)
+    }
 }
 
 /// 利用supervisorctl管理服务
-pub fn netplan<S>(_record: Json<ServiceCmd>, sub_cmd: S) -> Result<CodeResponse<ServiceCmd>>
-where
-    S: AsRef<str>,
-{
+pub fn netplan(
+    _record: Json<ServiceCmd>,
+    sub_cmd: impl AsRef<str>,
+) -> Result<CodeResponse<ServiceCmd>> {
     let program = "/usr/sbin/netplan";
     let args = [sub_cmd.as_ref()];
     let title = format!("netplan_{}", sub_cmd.as_ref());
@@ -122,7 +160,6 @@ fn to_resp(r: Option<CommandOutput>) -> Result<CodeResponse<ServiceCmd>> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -131,9 +168,14 @@ mod tests {
     fn it_works() {
         init_log(1);
 
-        let r = rsync("-avc", "/opt/howell/iws/v0.9/", "/opt/howell/iws/v0.8/").unwrap();
+        let r = rsync(
+            "-avc",
+            "/opt/howell/iws/v0.9/",
+            "/opt/howell/iws/v0.8/",
+            None,
+        )
+        .unwrap();
         println!("stdout: {}", r.stdout);
         println!("stderr: {}", r.stderr);
-
     }
 }
