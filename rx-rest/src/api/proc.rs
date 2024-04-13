@@ -117,6 +117,12 @@ pub fn supervisorctl(
 const SSHPASS: &str = "/usr/bin/sshpass";
 const RSYNC: &str = "/usr/bin/rsync";
 
+pub trait AsRef1<T: ?Sized> {
+    fn as_ref(&self) -> &T;
+}
+
+// type StrRef = impl AsRef<str>; TODO: 报错, 参考 type_alias_impl_trait
+
 /// 利用supervisorctl管理服务
 pub fn rsync(
     opts: impl AsRef<str>,
