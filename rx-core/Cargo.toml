@@ -35,3 +35,5 @@ time = "*"
 dirs = "*"
 num = "*"
 
+rand_core = "*"
+ring = "*"

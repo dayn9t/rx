@@ -29,10 +29,10 @@ pub struct ServiceCmd {
 
 /// 运行命令
 pub fn run_command<I, S, T>(program: S, args: I, title: T) -> Option<CommandOutput>
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
-    T: AsRef<str>,
+    where
+        I: IntoIterator<Item=S>,
+        S: AsRef<OsStr>,
+        T: AsRef<str>,
 {
     let r = Command::new(program).args(args).output();
     proc_output(title, r)
@@ -43,11 +43,11 @@ pub fn run_command_inputs<I, S>(
     program: S,
     args: I,
     title: impl AsRef<str>,
-    inputs1: impl AsRef<str>,
+    inputs: impl AsRef<str>,
 ) -> Option<CommandOutput>
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
+    where
+        I: IntoIterator<Item=S>,
+        S: AsRef<OsStr>,
 {
     let mut child = Command::new(program)
         .args(args)
@@ -56,10 +56,11 @@ where
         .stderr(Stdio::piped())
         .spawn()
         .expect("Failed to start command");
-
     if let Some(stdin) = child.stdin.as_mut() {
+        //sleep(Duration::from_secs(4));
+        info!("password='{}'", inputs.as_ref());
         stdin
-            .write_all(inputs1.as_ref().as_bytes())
+            .write_all(inputs.as_ref().as_bytes())
             .expect("Failed to write to stdin");
     }
 
@@ -113,6 +114,9 @@ pub fn supervisorctl(
     to_resp(r)
 }
 
+const SSHPASS: &str = "/usr/bin/sshpass";
+const RSYNC: &str = "/usr/bin/rsync";
+
 /// 利用supervisorctl管理服务
 pub fn rsync(
     opts: impl AsRef<str>,
@@ -120,13 +124,14 @@ pub fn rsync(
     dst: impl AsRef<str>,
     password: Option<&str>,
 ) -> Option<CommandOutput> {
-    let program = "/usr/bin/rsync";
-    let args = [opts.as_ref(), src.as_ref(), dst.as_ref()];
-    let title = format!("rsync_{:?}_{:?}_{:?}", args[0], args[1], args[2]);
     if let Some(password) = password {
-        run_command_inputs(program, args, &title, password)
+        let args = ["-p", password, RSYNC, opts.as_ref(), src.as_ref(), dst.as_ref()];
+        let title = format!("rsync_{:?}_{:?}_{:?}", args[0], args[1], args[2]);
+        run_command(SSHPASS, args, &title)
     } else {
-        run_command(program, args, &title)
+        let args = [opts.as_ref(), src.as_ref(), dst.as_ref()];
+        let title = format!("rsync_{:?}_{:?}_{:?}", args[0], args[1], args[2]);
+        run_command(RSYNC, args, &title)
     }
 }
 
@@ -165,16 +170,29 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
+    fn rsync_local() {
         init_log(1);
-
         let r = rsync(
             "-avc",
             "/opt/howell/iws/v0.9/",
             "/opt/howell/iws/v0.8/",
             None,
         )
-        .unwrap();
+            .unwrap();
+        println!("stdout: {}", r.stdout);
+        println!("stderr: {}", r.stderr);
+    }
+
+    #[test]
+    fn rsync_remote() {
+        init_log(1);
+        let r = rsync(
+            "-avc",
+            "howell@101.91.231.243:/opt/howell/.meta/updater",
+            "/opt/howell/.meta/updater",
+            Some("Howell.net.cn1409"),
+        )
+            .unwrap();
         println!("stdout: {}", r.stdout);
         println!("stderr: {}", r.stderr);
     }

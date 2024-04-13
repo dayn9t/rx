@@ -7,3 +7,4 @@ mod a;
 mod it;
 mod slice;
 mod vec;
+pub mod aes;
