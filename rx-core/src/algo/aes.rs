@@ -1,4 +1,3 @@
-
 /*
 use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey, CHACHA20_POLY1305};
 use ring::rand::{SecureRandom, SystemRandom};

@@ -4,7 +4,7 @@ pub use slice::*;
 pub use vec::*;
 
 mod a;
+pub mod aes;
 mod it;
 mod slice;
 mod vec;
-pub mod aes;

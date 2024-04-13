@@ -29,10 +29,10 @@ pub struct ServiceCmd {
 
 /// 运行命令
 pub fn run_command<I, S, T>(program: S, args: I, title: T) -> Option<CommandOutput>
-    where
-        I: IntoIterator<Item=S>,
-        S: AsRef<OsStr>,
-        T: AsRef<str>,
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+    T: AsRef<str>,
 {
     let r = Command::new(program).args(args).output();
     proc_output(title, r)
@@ -45,9 +45,9 @@ pub fn run_command_inputs<I, S>(
     title: impl AsRef<str>,
     inputs: impl AsRef<str>,
 ) -> Option<CommandOutput>
-    where
-        I: IntoIterator<Item=S>,
-        S: AsRef<OsStr>,
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
 {
     let mut child = Command::new(program)
         .args(args)
@@ -125,7 +125,14 @@ pub fn rsync(
     password: Option<&str>,
 ) -> Option<CommandOutput> {
     if let Some(password) = password {
-        let args = ["-p", password, RSYNC, opts.as_ref(), src.as_ref(), dst.as_ref()];
+        let args = [
+            "-p",
+            password,
+            RSYNC,
+            opts.as_ref(),
+            src.as_ref(),
+            dst.as_ref(),
+        ];
         let title = format!("rsync_{:?}_{:?}_{:?}", args[0], args[1], args[2]);
         run_command(SSHPASS, args, &title)
     } else {
@@ -178,7 +185,7 @@ mod tests {
             "/opt/howell/iws/v0.8/",
             None,
         )
-            .unwrap();
+        .unwrap();
         println!("stdout: {}", r.stdout);
         println!("stderr: {}", r.stderr);
     }
@@ -192,7 +199,7 @@ mod tests {
             "/opt/howell/.meta/updater",
             Some("Howell.net.cn1409"),
         )
-            .unwrap();
+        .unwrap();
         println!("stdout: {}", r.stdout);
         println!("stderr: {}", r.stderr);
     }
