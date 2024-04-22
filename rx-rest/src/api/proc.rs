@@ -1,3 +1,4 @@
+use rx_core::fs::to_string;
 use std::ffi::OsStr;
 use std::io;
 use std::io::Write;
@@ -116,6 +117,7 @@ pub fn supervisorctl(
 
 const SSHPASS: &str = "/usr/bin/sshpass";
 const RSYNC: &str = "/usr/bin/rsync";
+const SH: &str = "/usr/bin/sh";
 
 pub trait AsRef1<T: ?Sized> {
     fn as_ref(&self) -> &T;
@@ -146,6 +148,14 @@ pub fn rsync(
         let title = format!("rsync_{:?}_{:?}_{:?}", args[0], args[1], args[2]);
         run_command(RSYNC, args, &title)
     }
+}
+
+/// 利用supervisorctl管理服务
+pub fn run_sh(sh_path: impl AsRef<Path>) -> Option<CommandOutput> {
+    let title = "SH".to_string();
+    let sh_path = to_string(sh_path.as_ref());
+    let args = [sh_path.as_ref()];
+    run_command(SH, args, &title)
 }
 
 /// 利用supervisorctl管理服务
