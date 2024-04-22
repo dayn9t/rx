@@ -37,3 +37,4 @@ num = "*"
 
 rand_core = "*"
 ring = "*"
+linked-hash-map="*"

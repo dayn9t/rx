@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use crate::collections::VecMap;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -7,13 +7,13 @@ use std::path::Path;
 
 /// 环境变量映射
 pub struct EnvMap {
-    vars: HashMap<String, String>,
+    vars: VecMap,
 }
 
 impl EnvMap {
     /// 加载环境变文件
     pub fn load(path: impl AsRef<Path>) -> io::Result<Self> {
-        let mut vars = HashMap::new();
+        let mut vars = VecMap::new();
 
         let file = File::open(path)?;
         let reader = io::BufReader::new(file);
@@ -22,7 +22,7 @@ impl EnvMap {
             let line = line?;
             let mut parts = line.splitn(2, '=');
             if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
-                vars.insert(key.to_string(), value.to_string());
+                vars.insert(&key.to_string(), &value.to_string());
             }
         }
 
@@ -51,7 +51,7 @@ impl EnvMap {
 
     /// 设置变量的值
     pub fn set(&mut self, key: &str, value: &str) {
-        self.vars.insert(key.to_string(), value.to_string());
+        self.vars.insert(key, value);
     }
 }
 
