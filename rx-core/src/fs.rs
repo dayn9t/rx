@@ -7,6 +7,13 @@ pub use std::path::{Path, PathBuf};
 
 use chrono::prelude::*;
 
+
+/// 获取当前可执行文件所在目录
+pub fn current_exe_dir() -> PathBuf {
+    env::current_exe().unwrap().parent().unwrap().to_path_buf();
+}
+
+
 /// 当前时间转化为文件
 pub fn now_to_file(ext: &str) -> String {
     let dt = Local::now();
@@ -16,8 +23,8 @@ pub fn now_to_file(ext: &str) -> String {
 
 /// 文件作为字符串访问
 pub fn to_str<P>(p: &P) -> &str
-where
-    P: AsRef<Path> + ?Sized,
+    where
+        P: AsRef<Path> + ?Sized,
 {
     p.as_ref().to_str().unwrap()
 }
@@ -53,9 +60,9 @@ pub fn file_name_append(p: impl AsRef<Path>, s: &str) -> PathBuf {
 
 /// 路径连接
 pub fn join<P1, P2>(p1: &P1, p2: &P2) -> PathBuf
-where
-    P1: AsRef<Path> + ?Sized,
-    P2: AsRef<Path> + ?Sized,
+    where
+        P1: AsRef<Path> + ?Sized,
+        P2: AsRef<Path> + ?Sized,
 {
     let mut p = p1.as_ref().to_owned();
     p.push(p2.as_ref());
