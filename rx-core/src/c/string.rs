@@ -17,7 +17,7 @@ impl StrWrapper {
     where
         P: AsRef<Path>,
     {
-        let s = crate::fs::to_str(p).to_owned();
+        let s = crate::sys::fs::to_str(p).to_owned();
         Self::new(s)
     }
 

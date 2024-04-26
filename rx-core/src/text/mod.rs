@@ -6,7 +6,6 @@ pub use basic::*;
 mod basic;
 pub mod csv;
 mod encoding;
-pub mod env_map;
 mod id;
 pub mod json;
 pub mod json5;

@@ -3,7 +3,7 @@ use std::path::{Component, Path};
 pub use network_interface::V4IfAddr;
 use network_interface::{Addr, NetworkInterface, NetworkInterfaceConfig};
 
-use rx_core::fs;
+use rx_core::sys::fs;
 
 // 根据网卡设备路径确定网卡类型
 fn device_catalog(device_path: &Path) -> Option<String> {

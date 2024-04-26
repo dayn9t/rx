@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
-use rx_core::{fs, text::*};
+use rx_core::{sys::fs, text::*};
 
 use crate::interface::*;
 

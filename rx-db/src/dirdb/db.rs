@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use rx_core::fs;
+use rx_core::sys::fs;
 use rx_core::text::*;
 
 use crate::{IRecord, ITable, IVariant, RecordId};

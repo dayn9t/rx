@@ -1,4 +1,4 @@
-use rx_core::fs::to_string;
+use rx_core::sys::fs::to_string;
 use std::ffi::OsStr;
 use std::io;
 use std::io::Write;
