@@ -1,3 +1,5 @@
+use chrono::prelude::*;
+use std::env;
 use std::ffi::OsStr;
 pub use std::fs::File;
 use std::fs::{self, DirEntry};
@@ -5,11 +7,9 @@ pub use std::io::*;
 use std::os::unix::fs::symlink;
 pub use std::path::{Path, PathBuf};
 
-use chrono::prelude::*;
-
 /// 获取当前可执行文件所在目录
 pub fn current_exe_dir() -> PathBuf {
-    env::current_exe().unwrap().parent().unwrap().to_path_buf();
+    env::current_exe().unwrap().parent().unwrap().to_path_buf()
 }
 
 /// 当前时间转化为文件
