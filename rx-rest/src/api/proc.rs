@@ -79,7 +79,7 @@ fn proc_output(title: impl AsRef<str>, output_result: io::Result<Output>) -> Opt
                 stderr: String::from_utf8_lossy(&output.stderr).to_string(),
             };
             if out.success {
-                info!("run='{}' OK", title.as_ref());
+                trace!("run='{}' OK", title.as_ref());
             } else {
                 error!(
                     "run='{}' exit_status='{}'",

@@ -5,14 +5,14 @@ use std::io::Write;
 use std::io::{self, BufRead};
 use std::path::Path;
 
-/// 环境变量映射
-pub struct EnvMap {
+/// 文本文件映射
+pub struct TextMap {
     vars: VecMap,
 }
 
-impl EnvMap {
+impl TextMap {
     /// 加载环境变文件
-    pub fn load(path: impl AsRef<Path>) -> io::Result<Self> {
+    pub fn load(path: impl AsRef<Path>, sep: char) -> io::Result<Self> {
         let mut vars = VecMap::new();
 
         let file = File::open(path)?;
@@ -20,7 +20,7 @@ impl EnvMap {
 
         for line in reader.lines() {
             let line = line?;
-            let mut parts = line.splitn(2, '=');
+            let mut parts = line.splitn(2, sep);
             if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
                 vars.insert(&key.to_string(), &value.to_string());
             }
@@ -70,7 +70,7 @@ mod tests {
         fs::write(&temp_file, "KEY1=VALUE1\nKEY2=VALUE2\n")?;
 
         // Load the environment variables and check that they were loaded correctly
-        let mut envs = EnvMap::load(&temp_file)?;
+        let mut envs = TextMap::load(&temp_file, '=')?;
         assert_eq!(envs.get("KEY1"), Some(&"VALUE1".to_string()));
         assert_eq!(envs.get("KEY2"), Some(&"VALUE2".to_string()));
 
@@ -80,7 +80,7 @@ mod tests {
         envs.save(&temp_file)?;
 
         // Reload the environment variables and check that they were saved correctly
-        let envs = EnvMap::load(&temp_file)?;
+        let envs = TextMap::load(&temp_file, '=')?;
         assert_eq!(envs.get("KEY1"), Some(&"NEW_VALUE1".to_string()));
         assert_eq!(envs.get("KEY2"), Some(&"VALUE2".to_string()));
         assert_eq!(envs.get("KEY3"), Some(&"VALUE3".to_string()));
