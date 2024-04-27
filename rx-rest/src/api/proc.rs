@@ -118,6 +118,8 @@ pub fn supervisorctl(
 const SSHPASS: &str = "/usr/bin/sshpass";
 const RSYNC: &str = "/usr/bin/rsync";
 const SH: &str = "/usr/bin/sh";
+const APT: &str = "/usr/bin/apt";
+const SUDO: &str = "/usr/bin/sudo";
 
 pub trait AsRef1<T: ?Sized> {
     fn as_ref(&self) -> &T;
@@ -156,6 +158,20 @@ pub fn run_sh(sh_path: impl AsRef<Path>) -> Option<CommandOutput> {
     let sh_path = to_string(sh_path.as_ref());
     let args = [sh_path.as_ref()];
     run_command(SH, args, &title)
+}
+
+/// APT安装包
+pub fn apt_install(pkgs: &[&str], sudo: bool) -> Option<CommandOutput> {
+    let title = "APT".to_string();
+    if sudo {
+        let mut args = vec![APT, "install", "-y"];
+        args.extend(pkgs.iter());
+        run_command(SUDO, args, &title)
+    } else {
+        let mut args = vec!["install", "-y"];
+        args.extend(pkgs.iter());
+        run_command(APT, args, &title)
+    }
 }
 
 /// 利用supervisorctl管理服务
@@ -216,6 +232,14 @@ mod tests {
             Some("Howell.net.cn1409"),
         )
         .unwrap();
+        println!("stdout: {}", r.stdout);
+        println!("stderr: {}", r.stderr);
+    }
+
+    #[test]
+    fn apt_install_test() {
+        init_log(1);
+        let r = apt_install(&["jq", "qiv"], true).unwrap();
         println!("stdout: {}", r.stdout);
         println!("stderr: {}", r.stderr);
     }
