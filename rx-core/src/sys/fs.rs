@@ -266,6 +266,36 @@ pub fn relink(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<()> {
     symlink(src, dst)
 }
 
+/// 把一个目录的内容合并到另一个目录, 子目录不替换
+pub fn merge_dir(src: &Path, dst: &Path) -> Result<()> {
+    if !src.is_dir() {
+        return Err(Error::new(ErrorKind::Other, "Source is not a directory"));
+    }
+
+    if !dst.exists() {
+        fs::create_dir_all(dst)?;
+    } else if !dst.is_dir() {
+        return Err(Error::new(
+            ErrorKind::Other,
+            "Destination is not a directory",
+        ));
+    }
+
+    for entry_result in src.read_dir()? {
+        let entry = entry_result?;
+        let src_path = entry.path();
+        let dst_path = dst.join(src_path.file_name().unwrap());
+
+        if src_path.is_dir() {
+            merge_dir(&src_path, &dst_path)?;
+        } else {
+            fs::copy(&src_path, &dst_path)?;
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -322,5 +352,34 @@ mod tests {
         let src = "/home";
         let dst = "/tmp/home";
         relink(src, dst).unwrap();
+    }
+
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_merge_dir() {
+        // 创建临时目录
+        let dir = tempdir().unwrap();
+        let src_dir = dir.path().join("src/1");
+        let dst_dir = dir.path().join("dst/1");
+
+        // 创建源目录和目标目录
+        fs::create_dir_all(&src_dir).unwrap();
+        fs::create_dir_all(&dst_dir).unwrap();
+
+        // 在源目录中创建文件
+        let mut file = File::create(src_dir.join("test1.txt")).unwrap();
+        writeln!(file, "Hello, world!").unwrap();
+
+        // 在目标目录中创建文件
+        let mut file = File::create(dst_dir.join("test2.txt")).unwrap();
+        writeln!(file, "Hello, world!").unwrap();
+
+        // 执行合并操作
+        merge_dir(&src_dir, &dst_dir).unwrap();
+
+        // 检查目标目录中是否存在源目录中的文件
+        assert!(dst_dir.join("test1.txt").exists());
+        assert!(dst_dir.join("test2.txt").exists());
     }
 }
