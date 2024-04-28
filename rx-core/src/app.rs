@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 /// 包信息
 #[derive(Debug, Clone)]
 pub struct PackageInfo {
@@ -42,19 +44,31 @@ macro_rules! package_function {
 pub struct AppInfo {
     /// 应用程序名称
     pub name: String,
+    /// 厂商信息
+    pub vendor: String,
     /// 应用程序表述信息
     pub about: String,
     /// 包信息
     pub package: PackageInfo,
+    /// 所在跟路径
+    pub root: PathBuf,
 }
 
 impl AppInfo {
     /// 创建引用程序信息
-    pub fn new(name: &str, about: &str, package: PackageInfo) -> AppInfo {
+    pub fn new(
+        name: &str,
+        vendor: &str,
+        about: &str,
+        package: PackageInfo,
+        root: &Path,
+    ) -> AppInfo {
         AppInfo {
             name: name.to_owned(),
+            vendor: vendor.to_owned(),
             about: about.to_owned(),
             package,
+            root: root.to_owned(),
         }
     }
 
