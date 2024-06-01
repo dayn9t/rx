@@ -9,6 +9,7 @@ pub mod algo;
 pub mod app;
 pub mod c;
 pub mod collections;
+pub mod complete_by;
 pub mod id;
 pub mod int_enum;
 pub mod log;

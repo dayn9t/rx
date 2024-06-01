@@ -2,7 +2,7 @@
 resolver = "2"
 
 members = [
-    "rx-core",
+    "rx-core", "rx-core-derive",
     "rx-db",
     "rx-db-derive",
     "rx-net",
