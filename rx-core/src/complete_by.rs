@@ -1,3 +1,5 @@
+pub use rx_core_derive::CompleteBy;
+
 /// 通过另一个实例补全当前实例
 pub trait CompleteBy {
     fn complete_by(&mut self, other: &Self);
