@@ -17,6 +17,11 @@ pub fn ancestor_nth(p: &Path, n: usize) -> &Path {
     p.ancestors().nth(n).unwrap()
 }
 
+/// 获取当前可执行文件祖先目录
+pub fn current_exe_ancestor_nth(n: usize) -> PathBuf {
+    ancestor_nth(&env::current_exe().unwrap(), n).to_path_buf()
+}
+
 /// 当前时间转化为文件
 pub fn now_to_file(ext: &str) -> String {
     let dt = Local::now();
