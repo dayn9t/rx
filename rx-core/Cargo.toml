@@ -11,6 +11,7 @@ vergen = { version = "*", features = ["build", "git", "cargo", "gitoxide"] }
 
 [dependencies]
 
+path_macro = "*"
 rx-core-derive = { path = "../rx-core-derive" }
 
 geo-types = "*"

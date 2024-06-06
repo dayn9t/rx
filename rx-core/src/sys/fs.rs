@@ -12,6 +12,11 @@ pub fn current_exe_dir() -> PathBuf {
     env::current_exe().unwrap().parent().unwrap().to_path_buf()
 }
 
+/// 获取路径的指定代祖先
+pub fn ancestor_nth(p: &Path, n: usize) -> &Path {
+    p.ancestors().nth(n).unwrap()
+}
+
 /// 当前时间转化为文件
 pub fn now_to_file(ext: &str) -> String {
     let dt = Local::now();
@@ -257,7 +262,7 @@ pub fn combine_files(src_files: &Vec<PathBuf>, dst_file: &Path) -> Result<()> {
     Ok(())
 }
 
-/// 建立符号链接, 如果目标已经存在则删除
+/// 重建符号链接, 如果目标已经存在则删除
 pub fn relink(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<()> {
     let dst = dst.as_ref();
     if dst.is_symlink() {
@@ -296,9 +301,29 @@ pub fn merge_dir(src: &Path, dst: &Path) -> Result<()> {
     Ok(())
 }
 
+/// 在路径的各个部分里查找指定路径
+pub fn find_in_parts(folder: &Path, sub_path: &str) -> Option<PathBuf> {
+    let mut folder = folder.canonicalize().ok()?;
+
+    loop {
+        let path = folder.join(sub_path);
+        if path.exists() {
+            return Some(path);
+        }
+        if let Some(parent) = folder.parent() {
+            folder = parent.to_path_buf();
+        } else {
+            break;
+        }
+    }
+
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use path_macro::path;
 
     const A_JSON: &str = "/tmp/a.json";
 
@@ -381,5 +406,26 @@ mod tests {
         // 检查目标目录中是否存在源目录中的文件
         assert!(dst_dir.join("test1.txt").exists());
         assert!(dst_dir.join("test2.txt").exists());
+    }
+
+    #[test]
+    fn test_find_in_parts() {
+        let tmp = tempdir().unwrap();
+        let start_path = path!(tmp / "a" / "b");
+        fs::create_dir_all(&start_path).unwrap();
+
+        let a = path!(tmp / "a" / "a.txt");
+        let b = path!(tmp / "a" / "b" / "b.txt");
+        File::create(&a).unwrap();
+        File::create(&b).unwrap();
+
+        let p = find_in_parts(&start_path, "a.txt");
+        assert_eq!(p, Some(a.to_owned()));
+
+        let p = find_in_parts(&start_path, "b.txt");
+        assert_eq!(p, Some(b.to_owned()));
+
+        let p = find_in_parts(&start_path, "c.txt");
+        assert_eq!(p, None);
     }
 }
