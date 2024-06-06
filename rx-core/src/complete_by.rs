@@ -30,8 +30,21 @@ impl<T: Clone> CompleteBy for Option<T> {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
     use crate::complete_by::CompleteBy;
 
+    #[test]
+    fn int_complete() {
+        let mut a = 10;
+        let b = 0;
+        a.complete_by(&b);
+        assert_eq!(a, 10);
+
+        let a = 10u8;
+        let mut b = 0u8;
+        b.complete_by(&a);
+        assert_eq!(b, 10);
+    }
     #[test]
     fn option_complete() {
         let mut a = Some(10);
@@ -49,4 +62,13 @@ mod tests {
         b.complete_by(&a);
         assert_eq!(b, None);
     }
+
+
+    #[derive(Debug, CompleteBy)]
+    pub struct Opt {
+        pub domain: Option<String>,
+        pub root: Option<PathBuf>,
+        pub verbose: u8,
+    }
+
 }

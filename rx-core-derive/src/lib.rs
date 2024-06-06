@@ -25,7 +25,8 @@ pub fn complete_by_derive(input: TokenStream) -> TokenStream {
     let field_names = fields.iter().map(|f| &f.ident);
     let expansions = field_names.map(|field_name| {
         quote! {
-            self.#field_name = self.#field_name.clone().or_else(|| other.#field_name.clone());
+            //self.#field_name = self.#field_name.clone().or_else(|| other.#field_name.clone());
+            self.#field_name.complete_by(&other.#field_name);
         }
     });
 
@@ -44,8 +45,6 @@ pub fn complete_by_derive(input: TokenStream) -> TokenStream {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn it_works() {}
 }
