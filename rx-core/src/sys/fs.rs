@@ -1,11 +1,14 @@
-use chrono::prelude::*;
 use std::env;
 use std::ffi::OsStr;
-pub use std::fs::File;
 use std::fs::{self, DirEntry};
+pub use std::fs::File;
 pub use std::io::*;
 use std::os::unix::fs::symlink;
 pub use std::path::{Path, PathBuf};
+
+use chrono::prelude::*;
+use fs_extra::copy_items;
+use fs_extra::dir::CopyOptions;
 
 /// 获取当前可执行文件所在目录
 pub fn current_exe_dir() -> PathBuf {
@@ -330,10 +333,24 @@ pub fn find_in_parts(folder: &Path, sub_path: &str) -> Option<PathBuf> {
     None
 }
 
+/// 复制目录树
+pub fn copy_tree(src_dir: &Path, dst_dir: &Path) -> fs_extra::error::Result<u64> {
+    let mut options = CopyOptions::new();
+    options.overwrite = true;
+    options.copy_inside = true;
+
+    let paths_to_copy = vec![src_dir];
+    fs::create_dir_all(dst_dir.parent().unwrap()).unwrap();
+    copy_items(&paths_to_copy, dst_dir, &options)
+}
+
+
 #[cfg(test)]
 mod tests {
-    use super::*;
     use path_macro::path;
+    use tempfile::tempdir;
+
+    use super::*;
 
     const A_JSON: &str = "/tmp/a.json";
 
@@ -389,8 +406,6 @@ mod tests {
         relink(src, dst).unwrap();
     }
 
-    use tempfile::tempdir;
-
     #[test]
     fn test_merge_dir() {
         // 创建临时目录
@@ -437,5 +452,13 @@ mod tests {
 
         let p = find_in_parts(&start_path, "c.txt");
         assert_eq!(p, None);
+    }
+
+    #[test]
+    fn test_copy_tree() {
+        let _tmp = tempdir().unwrap();
+        let src = path!("/opt/howell/iws/v0.9/ias/domain/shws/template/");
+        let dst = path!("/opt/howell/iws/v0.9/ias/domain/shws/test1/");
+        copy_tree(&src, &dst).unwrap();
     }
 }

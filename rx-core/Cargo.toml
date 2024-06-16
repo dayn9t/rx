@@ -36,6 +36,7 @@ chrono = { version = "*", features = ["serde"] }
 time = "*"
 
 dirs = "*"
+fs_extra = "*"
 num = "*"
 
 rand_core = "*"
