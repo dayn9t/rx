@@ -22,11 +22,16 @@ pub fn current_exe_ancestor_nth(n: usize) -> PathBuf {
     ancestor_nth(&env::current_exe().unwrap(), n).to_path_buf()
 }
 
+/// 时间转化为文件
+pub fn time_to_file(dt: &DateTime<Local>, ext: &str) -> String {
+    let filename = dt.format("%Y-%m-%d/%H-%M-%S%.3f.").to_string() + ext;
+    filename
+}
+
 /// 当前时间转化为文件
 pub fn now_to_file(ext: &str) -> String {
     let dt = Local::now();
-    let filename = dt.format("%Y-%m-%d/%H-%M-%S%.3f.").to_string() + ext;
-    filename
+    time_to_file(&dt, ext)
 }
 
 /// 文件作为字符串访问

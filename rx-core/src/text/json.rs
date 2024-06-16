@@ -5,6 +5,7 @@ pub use serde_json::from_str;
 pub use serde_json::to_string_pretty as to_pretty;
 
 use crate::serde_export::*;
+use crate::time::now;
 
 pub use super::basic::*;
 
@@ -29,4 +30,20 @@ where
     let writer = BufWriter::new(File::create(path)?);
     serde_json::to_writer_pretty(writer, value)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Local;
+
+    #[test]
+    fn test_local_time_str() {
+        let t1 = now();
+        let s1 = to_pretty(&t1).unwrap();
+
+        let t2 = Local::now();
+        let s2 = to_pretty(&t2).unwrap();
+        println!("time: {} {}", s1, s2);
+    }
 }
