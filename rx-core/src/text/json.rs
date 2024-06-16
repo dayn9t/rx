@@ -5,7 +5,6 @@ pub use serde_json::from_str;
 pub use serde_json::to_string_pretty as to_pretty;
 
 use crate::serde_export::*;
-use crate::time::now;
 
 pub use super::basic::*;
 
@@ -34,8 +33,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Local;
+
+    use super::*;
 
     #[test]
     fn test_local_time_str() {
