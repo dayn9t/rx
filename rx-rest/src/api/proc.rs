@@ -6,6 +6,12 @@ use std::process::{Command, Output, Stdio};
 
 use super::common::*;
 
+const SSHPASS: &str = "/usr/bin/sshpass";
+const RSYNC: &str = "/usr/bin/rsync";
+const SH: &str = "/usr/bin/sh";
+const APT: &str = "/usr/bin/apt";
+const SUDO: &str = "/usr/bin/sudo";
+
 /// 命令输出
 #[derive(Object, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct CommandOutput {
@@ -114,12 +120,6 @@ pub fn supervisorctl(
     let r = run_command(program, args, &title);
     to_resp(r)
 }
-
-const SSHPASS: &str = "/usr/bin/sshpass";
-const RSYNC: &str = "/usr/bin/rsync";
-const SH: &str = "/usr/bin/sh";
-const APT: &str = "/usr/bin/apt";
-const SUDO: &str = "/usr/bin/sudo";
 
 pub trait AsRef1<T: ?Sized> {
     fn as_ref(&self) -> &T;

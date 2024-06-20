@@ -1,7 +1,7 @@
 use std::env;
 use std::ffi::OsStr;
-use std::fs::{self, DirEntry};
 pub use std::fs::File;
+use std::fs::{self, DirEntry};
 pub use std::io::*;
 use std::os::unix::fs::symlink;
 pub use std::path::{Path, PathBuf};
@@ -343,7 +343,6 @@ pub fn copy_tree(src_dir: &Path, dst_dir: &Path) -> fs_extra::error::Result<u64>
     fs::create_dir_all(dst_dir.parent().unwrap()).unwrap();
     copy_items(&paths_to_copy, dst_dir, &options)
 }
-
 
 #[cfg(test)]
 mod tests {
