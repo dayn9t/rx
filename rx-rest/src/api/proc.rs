@@ -152,6 +152,13 @@ pub fn rsync(
     }
 }
 
+pub fn reboot(delay: i32) -> Option<CommandOutput> {
+    let program = "shutdown -r now + 2";
+    let args = ["-r", "now", "+", &delay.to_string()];
+    let title = "reboot";
+    run_command(program, args, &title)
+}
+
 /// 利用supervisorctl管理服务
 pub fn run_sh(sh_path: impl AsRef<Path>) -> Option<CommandOutput> {
     let title = "SH".to_string();

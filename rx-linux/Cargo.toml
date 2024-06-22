@@ -1,0 +1,11 @@
+[package]
+name = "rx-linux"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rx-core = { path = "../rx-core" }
+
+anyhow = "*"
+thiserror = "*"
+path_macro = "*"

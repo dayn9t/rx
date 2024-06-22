@@ -11,6 +11,7 @@ rx-db = { version = "*", path = "../rx-db" }
 serde = "*"
 serde_json = "*"
 serde_derive = "*"
+toml = "*"
 
 poem = { version = "*", features = ["anyhow"] }
 poem-openapi = { version = "*", features = ["swagger-ui", "time", "uuid", "geo", "url"] }

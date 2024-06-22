@@ -6,6 +6,7 @@ members = [
     "rx-core-derive",
     "rx-db",
     "rx-db-derive",
+    "rx-linux",
     "rx-net",
     "rx-rest",
     #"rx-fst",
