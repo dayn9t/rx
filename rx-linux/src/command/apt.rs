@@ -20,7 +20,6 @@ mod tests {
 
     #[test]
     fn apt_install_test() {
-        init_log(1);
         let r = apt_install(&["jq", "qiv"], true).unwrap();
         println!("stdout: {}", r.stdout);
         println!("stderr: {}", r.stderr);
