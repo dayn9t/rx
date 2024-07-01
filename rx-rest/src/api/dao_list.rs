@@ -28,6 +28,14 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         self.table.lock().await
     }
 
+    /// 获取记录集合
+    pub async fn get_rs(&self) -> Result<Vec<R>> {
+        let mut tab = self.table.lock().await;
+        let rs = tab.find_all()?;
+        Ok(rs)
+    }
+
+
     /// 添加记录
     pub async fn post(&self, mut record: Json<R>) -> Result<CodeResponse<R>> {
         let mut tab = self.table.lock().await;
