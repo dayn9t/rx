@@ -36,9 +36,14 @@ pub fn to_local_path(dt: NaiveDateTime, ext: &str) -> String {
     format!("{}{}", dt.format_with_items(fmt), ext)
 }
 
-/// 获取当前时间本地字符串
+/// 获取当前时间本地时间
 pub fn now() -> NaiveDateTime {
     Local::now().naive_local()
+}
+
+/// 当前时间转换为标准字符串
+pub fn now_local_iso_str() -> String {
+    to_local_iso_str(now())
 }
 
 /// 获取当前时间本地字符串（不含有毫秒）
@@ -67,6 +72,8 @@ mod tests {
 
     #[test]
     fn test_local_time_str() {
+        let s = now_local_iso_str();
+        println!("{}", s);
         //let r1 = 1..5;
         //assert_eq!(v.binary_search(&6), Ok(16));
     }

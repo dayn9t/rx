@@ -35,7 +35,6 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         Ok(rs)
     }
 
-
     /// 添加记录
     pub async fn post(&self, mut record: Json<R>) -> Result<CodeResponse<R>> {
         let mut tab = self.table.lock().await;
