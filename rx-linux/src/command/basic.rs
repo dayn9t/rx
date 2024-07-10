@@ -40,6 +40,7 @@ where
     S: AsRef<OsStr>,
     T: AsRef<str>,
 {
+    error!("program: {:?} '{:?}'", &program, &args);
     let r = Command::new(program).args(args).output();
     proc_output(title, r)
 }

@@ -1,5 +1,6 @@
 use rx_core::sys::fs::to_string;
 use std::ffi::OsStr;
+use std::fmt::Debug;
 use std::io;
 use std::io::Write;
 use std::process::{Command, Output, Stdio};
@@ -37,10 +38,11 @@ pub struct ServiceCmd {
 /// 运行命令
 pub fn run_command<I, S, T>(program: S, args: I, title: T) -> Option<CommandOutput>
 where
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
+    I: IntoIterator<Item = S> + Debug,
+    S: AsRef<OsStr> + Debug,
     T: AsRef<str>,
 {
+    debug!("program: {:?} '{:?}'", &program, &args);
     let r = Command::new(program).args(args).output();
     proc_output(title, r)
 }
@@ -134,21 +136,16 @@ pub fn rsync(
     dst: impl AsRef<str>,
     password: Option<&str>,
 ) -> Option<CommandOutput> {
+    let mut rsync_opts: Vec<_> = opts.as_ref().split(' ').collect();
+    rsync_opts.append(&mut vec![src.as_ref(), dst.as_ref()]);
+
+    let title = format!("rsync");
     if let Some(password) = password {
-        let args = [
-            "-p",
-            password,
-            RSYNC,
-            opts.as_ref(),
-            src.as_ref(),
-            dst.as_ref(),
-        ];
-        let title = format!("rsync_{:?}_{:?}_{:?}", args[0], args[1], args[2]);
+        let mut args = vec!["-p", password, RSYNC];
+        args.append(&mut rsync_opts);
         run_command(SSHPASS, args, &title)
     } else {
-        let args = [opts.as_ref(), src.as_ref(), dst.as_ref()];
-        let title = format!("rsync_{:?}_{:?}_{:?}", args[0], args[1], args[2]);
-        run_command(RSYNC, args, &title)
+        run_command(RSYNC, rsync_opts, &title)
     }
 }
 

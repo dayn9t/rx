@@ -9,6 +9,7 @@ pub use std::path::{Path, PathBuf};
 use chrono::prelude::*;
 use fs_extra::copy_items;
 use fs_extra::dir::CopyOptions;
+use tracing::debug;
 
 /// 获取当前可执行文件所在目录
 pub fn current_exe_dir() -> PathBuf {
@@ -45,9 +46,18 @@ where
     p.as_ref().to_str().unwrap()
 }
 
-/// 文件作为字符串访问
+/// 文件转换为字符串
 pub fn to_string(p: impl AsRef<Path>) -> String {
     p.as_ref().to_str().unwrap().to_owned()
+}
+
+/// 目录文件转换为字符串, 保证以＂/＂结尾
+pub fn to_dir_string(path: impl AsRef<Path>) -> String {
+    let mut path_str = path.as_ref().to_string_lossy().into_owned();
+    if !path_str.ends_with("/") {
+        path_str.push('/');
+    }
+    path_str
 }
 
 /// 获取文件名
@@ -307,6 +317,7 @@ pub fn merge_dir(src: &Path, dst: &Path) -> Result<()> {
         if src_path.is_dir() {
             merge_dir(&src_path, &dst_path)?;
         } else {
+            debug!("Copy {:?} => {:?}", src_path, dst_path);
             fs::copy(&src_path, &dst_path)?;
         }
     }
@@ -459,5 +470,17 @@ mod tests {
         let src = path!("/opt/howell/iws/v0.9/ias/domain/shws/template/");
         let dst = path!("/opt/howell/iws/v0.9/ias/domain/shws/test1/");
         copy_tree(&src, &dst).unwrap();
+    }
+
+    #[test]
+    fn test_to_dir_string() {
+        let s1 = "/opt/howell";
+        let s2 = "/opt/howell/";
+        let p1 = path!(s1);
+        let p2 = path!(s2);
+        assert_eq!(p1, p2);
+        assert_eq!(p2, p2);
+        assert_eq!(to_dir_string(p1), s2);
+        assert_eq!(to_dir_string(p2), s2);
     }
 }
