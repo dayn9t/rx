@@ -9,6 +9,8 @@ rx-core = { path = "../rx-core" }
 
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
+reqwest = { version = "*", features = ["blocking"] }
+url = "*"
 
 paho-mqtt = "*"
 sysinfo = "*"
