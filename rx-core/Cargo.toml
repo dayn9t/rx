@@ -38,6 +38,7 @@ time = "*"
 dirs = "*"
 fs_extra = "*"
 num = "*"
+rand = "*"
 
 rand_core = "*"
 ring = "*"
