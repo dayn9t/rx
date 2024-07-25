@@ -57,5 +57,4 @@ impl<T: DeserializeOwned> MqttReceiver<T> {
 }
 
 #[cfg(test)]
-mod tests {
-}
+mod tests {}
