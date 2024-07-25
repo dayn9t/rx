@@ -13,8 +13,12 @@ reqwest = { version = "*", features = ["blocking"] }
 url = "*"
 
 paho-mqtt = "*"
+rumqttc = "*"
+
 sysinfo = "*"
 network-interface = "*"
 
 anyhow = "*"
 thiserror = "*"
+uuid = { version = "*", features = ["v4"] }
+path_macro = "*"
