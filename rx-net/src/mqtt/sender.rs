@@ -50,16 +50,5 @@ mod tests {
 
     #[test]
     fn test_send() {
-        let mqtt_cfg = MqttCfg {
-            server_url: "tcp://localhost:1883".to_string(),
-            root_topic: None,
-            keep_alive: 30,
-        };
-
-        let topic = "ias/shws/home";
-        //let sender = MqttSender::new(mqtt_cfg, Path::new(topic));
-
-        let message = "Hello, MQTT!";
-        //sender.send(&message).unwrap();
     }
 }
