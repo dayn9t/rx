@@ -1,12 +1,10 @@
 use crate::mqtt::cfg::MqttCfg;
-use path_macro::path;
-use rumqttc::{Client, MqttOptions, QoS};
+
+use rumqttc::{Client, QoS};
 use rx_core::log::{error, info};
-use rx_core::sys::fs::to_string;
 use serde::Serialize;
 use std::path::Path;
 use std::sync::mpsc::Receiver;
-use std::thread::Thread;
 
 /// 数据发送器
 pub struct MqttSender<T> {
@@ -27,8 +25,8 @@ impl<T: Serialize> MqttSender<T> {
     /// 从receiver获取消息, 并发送到 mqtt
     pub fn run(&self) {
         let opt = self.cfg.to_option();
-        let (client, mut connection) = Client::new(opt, 10);
-        client.subscribe(&self.topic, QoS::ExactlyOnce).unwrap();
+        let (client, _) = Client::new(opt, 10);
+        //client.subscribe(&self.topic, QoS::ExactlyOnce).unwrap();
         info!("Subscribed to mqtt: {:?}", self.topic);
 
         for msg in self.receiver.iter() {

@@ -1,5 +1,6 @@
 use path_macro::path;
 use rumqttc::MqttOptions;
+use std::path::Path;
 use std::time::Duration;
 use url::Url;
 use uuid::Uuid;
@@ -29,7 +30,7 @@ impl MqttCfg {
     }
 
     /// 获取完整主题
-    pub fn full_topic(&self, topic: impl AsRef<str>) -> String {
+    pub fn full_topic(&self, topic: impl AsRef<Path>) -> String {
         let topic = if let Some(ref root_topic) = self.root_topic {
             path!(root_topic / topic)
         } else {

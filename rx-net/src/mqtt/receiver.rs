@@ -1,12 +1,10 @@
 use std::path::Path;
 use std::sync::mpsc::Sender;
 
-use path_macro::path;
 use rumqttc::{Client, Event, Incoming, QoS};
 use serde::de::DeserializeOwned;
 
 use rx_core::log::{error, info};
-use rx_core::sys::fs::to_string;
 use rx_core::text::json;
 
 use crate::mqtt::cfg::MqttCfg;
@@ -61,6 +59,8 @@ impl<T: DeserializeOwned> MqttReceiver<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mqtt::MqttSender;
+    use std::thread;
 
     #[test]
     fn param_works() {
@@ -72,10 +72,32 @@ mod tests {
 
         let topic = "ias/shws/home";
 
-        let (tx, _rx) = std::sync::mpsc::channel();
+        let (tx1, rx1) = std::sync::mpsc::channel();
+        let (tx2, rx2) = std::sync::mpsc::channel();
 
-        let source = MqttReceiver::<i32>::new(mqtt_cfg, Path::new(topic), tx);
+        let sender = MqttSender::<i32>::new(mqtt_cfg.clone(), Path::new(topic), rx1);
+        let receiver = MqttReceiver::<i32>::new(mqtt_cfg, Path::new(topic), tx2);
 
-        source.run()
+        let thread1 = thread::spawn(move || {
+            sender.run();
+        });
+
+        let thread2 = thread::spawn(move || {
+            receiver.run();
+        });
+
+        for i in 0..10 {
+            tx1.send(i).unwrap();
+            println!("Send: {}", i);
+        }
+
+        for i in 0..10 {
+            let i1 = rx2.recv().unwrap();
+            assert_eq!(i, i1);
+            println!("Receive: {}", i);
+        }
+
+        thread1.join().unwrap();
+        thread2.join().unwrap();
     }
 }
