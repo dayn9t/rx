@@ -1,10 +1,11 @@
-use std::time::Duration;
-
+use path_macro::path;
 use rumqttc::MqttOptions;
+use std::time::Duration;
 use url::Url;
 use uuid::Uuid;
 
 use rx_core::serde_export::*;
+use rx_core::sys::fs::to_string;
 
 /// Mqtt配置信息
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -25,5 +26,15 @@ impl MqttCfg {
         let mut opt = MqttOptions::new(id, uri.host_str().unwrap(), uri.port().unwrap());
         opt.set_keep_alive(Duration::from_secs(self.keep_alive as u64));
         opt
+    }
+
+    /// 获取完整主题
+    pub fn full_topic(&self, topic: impl AsRef<str>) -> String {
+        let topic = if let Some(ref root_topic) = self.root_topic {
+            path!(root_topic / topic)
+        } else {
+            topic.as_ref().to_path_buf()
+        };
+        to_string(topic)
     }
 }

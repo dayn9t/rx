@@ -17,14 +17,8 @@ pub struct MqttSender<T> {
 
 impl<T: Serialize> MqttSender<T> {
     pub fn new(cfg: MqttCfg, topic: impl AsRef<Path>, receiver: Receiver<T>) -> Self {
-        let topic = if let Some(ref root_topic) = cfg.root_topic {
-            path!(root_topic / topic)
-        } else {
-            topic.as_ref().to_path_buf()
-        };
-
         Self {
-            topic: to_string(topic),
+            topic: cfg.full_topic(topic),
             cfg,
             receiver,
         }
