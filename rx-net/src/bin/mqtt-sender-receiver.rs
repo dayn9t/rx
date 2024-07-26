@@ -39,8 +39,8 @@ fn main() {
     for i in 0..10 {
         let i = i.to_string();
         let i1 = rx2.recv().unwrap();
-        assert_eq!(i, i1);
         println!("Receive: {}", i);
+        assert_eq!(i, i1);
     }
 
     thread1.join().unwrap();
