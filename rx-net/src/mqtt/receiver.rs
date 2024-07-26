@@ -28,16 +28,17 @@ impl<T: DeserializeOwned> MqttReceiver<T> {
     /// 从mqtt获取消息并发送到sender
     pub fn run(&self) {
         let opt = self.cfg.to_option();
+        //info!("Receiver opt: {:?}", opt);
+        //info!("Receiver topic: {:?}", self.topic);
         let (client, mut connection) = Client::new(opt, 10);
         client.subscribe(&self.topic, QoS::ExactlyOnce).unwrap();
-        info!("Subscribed to mqtt: {:?}", self.topic);
 
-        for (_i, notification) in connection.iter().enumerate() {
+        for notification in connection.iter() {
             match notification {
                 Ok(Event::Incoming(incoming)) => match incoming {
                     Incoming::Publish(p) => {
                         let msg_str = std::str::from_utf8(&p.payload).unwrap();
-                        info!("Received: {:?}", msg_str);
+                        //info!("Received: {:?}", msg_str);
                         match json::from_str(msg_str) {
                             Ok(msg) => self.sender.send(msg).unwrap(),
                             Err(e) => {

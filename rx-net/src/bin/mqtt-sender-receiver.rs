@@ -1,7 +1,6 @@
-use rx_net::mqtt::*;
-use std::path::Path;
-
 use rx_core::log::init_log;
+use rx_net::mqtt::*;
+use std::sync::mpsc::channel;
 use std::thread;
 
 fn main() {
@@ -17,11 +16,11 @@ fn main() {
 
     let topic = "ias/shws/home";
 
-    let (tx1, rx1) = std::sync::mpsc::channel();
-    let (tx2, rx2) = std::sync::mpsc::channel();
+    let (tx1, rx1) = channel();
+    let (tx2, rx2) = channel();
 
-    let sender = MqttSender::<i32>::new(mqtt_cfg.clone(), Path::new(topic), rx1);
-    let receiver = MqttReceiver::<i32>::new(mqtt_cfg, Path::new(topic), tx2);
+    let sender = MqttSender::<String>::new(mqtt_cfg.clone(), topic, rx1);
+    let receiver = MqttReceiver::<String>::new(mqtt_cfg, topic, tx2);
 
     let thread1 = thread::spawn(move || {
         sender.run();
@@ -32,11 +31,13 @@ fn main() {
     });
 
     for i in 0..10 {
-        tx1.send(i).unwrap();
+        let i = i.to_string();
         println!("Send: {}", i);
+        tx1.send(i).unwrap();
     }
 
     for i in 0..10 {
+        let i = i.to_string();
         let i1 = rx2.recv().unwrap();
         assert_eq!(i, i1);
         println!("Receive: {}", i);
