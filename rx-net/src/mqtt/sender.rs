@@ -1,12 +1,13 @@
-use crate::mqtt::cfg::MqttCfg;
-
-use rumqttc::{Client, MqttOptions, QoS};
-use rx_core::log::{error, info};
-use serde::Serialize;
 use std::path::Path;
 use std::sync::mpsc::Receiver;
 use std::thread;
-use std::time::Duration;
+
+use rumqttc::{Client, QoS};
+use serde::Serialize;
+
+use rx_core::log::error;
+
+use crate::mqtt::cfg::MqttCfg;
 
 /// 数据发送器
 pub struct MqttSender<T> {
@@ -62,8 +63,9 @@ impl<T: Serialize> MqttSender<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::sync::mpsc::channel;
+
+    use super::*;
 
     #[test]
     fn test_send() {

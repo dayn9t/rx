@@ -2,6 +2,7 @@ pub use rx_core::log::*;
 pub use rx_core::text::BoxResult;
 
 use std::ffi::OsStr;
+use std::fmt::Debug;
 use std::io;
 use std::io::Write;
 
@@ -36,8 +37,8 @@ pub struct CommandOutput {
 /// 运行命令
 pub fn run_command<I, S, T>(program: S, args: I, title: T) -> Option<CommandOutput>
 where
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
+    I: IntoIterator<Item = S> + Debug,
+    S: AsRef<OsStr> + Debug,
     T: AsRef<str>,
 {
     error!("program: {:?} '{:?}'", &program, &args);

@@ -4,7 +4,7 @@ use std::sync::mpsc::Sender;
 use rumqttc::{Client, Event, Incoming, QoS};
 use serde::de::DeserializeOwned;
 
-use rx_core::log::{error, info};
+use rx_core::log::error;
 use rx_core::text::json;
 
 use crate::mqtt::cfg::MqttCfg;
