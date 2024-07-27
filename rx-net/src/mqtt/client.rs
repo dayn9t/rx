@@ -1,9 +1,16 @@
 //use crate::basic::*;
 
+use std::path::Path;
 use std::time::Duration;
 
 /// MQTT消息&结果
 pub use paho_mqtt::Message;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
+
+use rx_core::sys::fs::to_string;
+use rx_core::text::json::to_pretty;
+use rx_core::text::{json, BoxResult};
 
 pub type MqttResult<T> = paho_mqtt::Result<T>;
 
@@ -38,14 +45,15 @@ impl MqttClient {
     }
 
     /// 订阅主题
-    pub fn subscribe(&mut self, topic: &str) -> MqttResult<Receiver> {
+    pub fn subscribe(&mut self, topic: impl AsRef<Path>) -> MqttResult<Receiver> {
+        let topic = to_string(topic.as_ref());
         let rx = self.client.start_consuming();
         self.client.subscribe(&topic, 1)?;
         Ok(rx)
     }
 
-    /// 发布消息
-    pub fn publish<V>(&mut self, topic: &str, payload: V) -> MqttResult<()>
+    /// 发布消息 - 转换成 Vec<u8
+    pub fn publish_as_bytes<V>(&mut self, topic: &str, payload: V) -> BoxResult<()>
     where
         V: Into<Vec<u8>>,
     {
@@ -54,8 +62,21 @@ impl MqttClient {
             .payload(payload)
             .qos(1)
             .finalize();
-        self.client.publish(msg)
+        self.client.publish(msg)?;
+        Ok(())
     }
+
+    /// 发布消息 - 序列换成JSON
+    pub fn publish_as_json<V>(&mut self, topic: &str, ob: &impl Serialize) -> BoxResult<()> {
+        let s = to_pretty(ob)?;
+        self.publish_as_bytes(topic, s)
+    }
+}
+
+/// 解析消息成对象
+pub fn parse_json<T: DeserializeOwned>(msg: &Message) -> Result<T, serde_json::Error> {
+    let s = String::from_utf8(msg.payload().to_vec()).unwrap();
+    json::from_str(&s)
 }
 
 #[cfg(test)]
@@ -69,7 +90,7 @@ mod tests {
 
         let mut client = MqttClient::connect("test_id", "tcp://localhost:1883").unwrap();
         let rx = client.subscribe(topic).unwrap();
-        client.publish(topic, payload).unwrap();
+        client.publish_as_bytes(topic, payload).unwrap();
 
         let m = rx.iter().next().unwrap().unwrap();
 
