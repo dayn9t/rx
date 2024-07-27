@@ -6,7 +6,7 @@ fn main() {
 
     let mut client = MqttClient::connect("test_id", "tcp://localhost:1883").unwrap();
     let rx = client.subscribe(topic).unwrap();
-    client.publish(topic, payload).unwrap();
+    client.publish_as_bytes(topic, payload).unwrap();
 
     let m = rx.iter().next().unwrap().unwrap();
 
