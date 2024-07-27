@@ -67,7 +67,7 @@ impl MqttClient {
     }
 
     /// 发布消息 - 序列换成JSON
-    pub fn publish_as_json<V>(&mut self, topic: &str, ob: &impl Serialize) -> BoxResult<()> {
+    pub fn publish_as_json(&mut self, topic: &str, ob: &impl Serialize) -> BoxResult<()> {
         let s = to_pretty(ob)?;
         self.publish_as_bytes(topic, s)
     }
