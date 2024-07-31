@@ -1,4 +1,4 @@
-use std::{env, process, time::Duration};
+use std::{env, process, thread, time::Duration};
 
 use paho_mqtt as mqtt;
 
@@ -66,6 +66,6 @@ fn test_send() {
 }
 
 fn main() {
-    //test_send();
-    test_receive()
+    thread::spawn(move || test_send());
+    //thread::sleep(Duration::from_secs(10));
 }

@@ -5,9 +5,9 @@ use std::thread;
 use rumqttc::{Client, QoS};
 use serde::Serialize;
 
-use rx_core::log::error;
-
 use crate::mqtt::cfg::MqttCfg;
+use rx_core::log::error;
+use rx_core::text::json;
 
 /// 数据发送器
 pub struct MqttSender<T> {
@@ -45,7 +45,7 @@ impl<T: Serialize> MqttSender<T> {
         });
 
         for msg in self.receiver.iter() {
-            match serde_json::to_string(&msg) {
+            match json::to_pretty(&msg) {
                 Ok(payload) => {
                     //info!("send: {}", &payload);
                     client
@@ -75,9 +75,9 @@ mod tests {
             keep_alive: 30,
         };
 
-        let topic = "ias/shws/home";
+        let topic = "iws-ias";
         let (tx, rx) = channel();
-        let sender = MqttSender::new(mqtt_cfg, Path::new(topic), rx);
+        let sender = MqttSender::new(mqtt_cfg, topic, rx);
 
         tx.send("Hello, MQTT!").unwrap();
         sender.run();

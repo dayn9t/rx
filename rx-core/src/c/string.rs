@@ -1,16 +1,14 @@
+use deref_derive::{Deref, DerefMut};
 use std::ffi::{c_char, CString};
 use std::path::Path;
 
-/// 字符串表装器
-pub struct StrWrapper {
-    c_string: CString,
-}
+/// CString 增强版本
+#[derive(Debug, Default, Deref, DerefMut)]
+pub struct CStringX(CString);
 
-impl StrWrapper {
+impl CStringX {
     pub fn new(s: impl Into<Vec<u8>>) -> Self {
-        Self {
-            c_string: CString::new(s).unwrap(),
-        }
+        Self(CString::new(s).unwrap())
     }
 
     pub fn from<P>(p: &P) -> Self
@@ -22,9 +20,14 @@ impl StrWrapper {
     }
 
     /// 获取C字符串指针
-    pub fn as_cstr(&self) -> *const c_char {
-        self.c_string.as_ptr() as *const c_char
+    pub fn ptr(&self) -> *const c_char {
+        self.0.as_ptr() as *const c_char
     }
+}
+
+/// 构造 C 字符串
+pub fn cstr(s: impl Into<Vec<u8>>) -> CStringX {
+    CStringX::new(s)
 }
 
 /*
@@ -44,3 +47,33 @@ fn main1() {
     let str_buf: String = str_slice.to_owned();  // if necessary
 }
 */
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ffi::CStr;
+
+    #[test]
+    fn test_new() {
+        let s = "hello";
+        let wrapper = CStringX::new(s);
+        let c_str = unsafe { CStr::from_ptr(wrapper.ptr()) };
+        assert_eq!(c_str.to_str().unwrap(), s);
+    }
+
+    #[test]
+    fn test_from() {
+        let path = std::path::Path::new("test_path");
+        let wrapper = CStringX::from(&path);
+        let expected_str = crate::sys::fs::to_str(&path).to_owned();
+        let c_str = unsafe { CStr::from_ptr(wrapper.ptr()) };
+        assert_eq!(c_str.to_str().unwrap(), expected_str);
+    }
+
+    #[test]
+    fn test_as_cstr() {
+        let s = "test";
+        let wrapper = CStringX::new(s);
+        let c_str = unsafe { CStr::from_ptr(wrapper.ptr()) };
+        assert_eq!(c_str.to_str().unwrap(), s);
+    }
+}
