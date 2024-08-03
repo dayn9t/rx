@@ -4,7 +4,7 @@ use paho_mqtt as mqtt;
 
 use rx_net::mqtt::MqttClient;
 
-fn test_receive() {
+fn _test_receive() {
     let topic = "test";
     let payload = "aaa";
 

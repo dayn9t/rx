@@ -3,7 +3,6 @@ use network_interface::NetworkInterfaceConfig;
 
 use rx_net::cfg::{get_adapters, get_ip_addr_v4, get_pci_adapter_ip_addr_v4, get_pci_adapters};
 
-use rx_net::prelude::Endpoint;
 /*
 fn f1() {
     let sys = System::new_all();

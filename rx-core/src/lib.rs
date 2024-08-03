@@ -2,7 +2,6 @@
 #![feature(new_range_api)]
 extern crate alloc;
 extern crate core;
-extern crate core;
 
 #[macro_use]
 mod macros;
