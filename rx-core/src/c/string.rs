@@ -1,8 +1,10 @@
-use deref_derive::{Deref, DerefMut};
-use std::ffi::{c_char, CString};
+use core::str::Utf8Error;
+use std::ffi::{c_char, CStr, CString};
 use std::io::ErrorKind;
 use std::path::Path;
 use std::{io, ptr};
+
+use deref_derive::{Deref, DerefMut};
 
 /// CString 增强版本
 #[derive(Debug, Default, Deref, DerefMut)]
@@ -57,27 +59,17 @@ pub fn str_to_chars<const N: usize>(s: &str) -> io::Result<[c_char; N]> {
     Ok(c_array)
 }
 
-/*
-impl Deref for StringAdapter {
-    type Target = *const c_char;
-
-    fn deref(&self) -> &Target {
-        self.as_cstr()
-    }
-}*/
-
-/*
-fn main1() {
-    let c_buf: *const c_char = unsafe { hello() };
-    let c_str: &CStr = unsafe { CStr::from_ptr(c_buf) };
-    let str_slice: &str = c_str.to_str().unwrap();
-    let str_buf: String = str_slice.to_owned();  // if necessary
+/// C字符数组转换为字符串
+pub fn chars_to_str<const N: usize>(s: [c_char; N]) -> Result<String, Utf8Error> {
+    let c_str = unsafe { CStr::from_ptr(s.as_ptr()) };
+    c_str.to_str().map(|s| s.to_owned())
 }
-*/
+
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::ffi::CStr;
+
+    use super::*;
 
     #[test]
     fn test_new() {
@@ -120,5 +112,25 @@ mod tests {
         let result = bytes_fill_chars(src, &mut dst);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().kind(), io::ErrorKind::InvalidInput);
+    }
+
+    #[test]
+    fn test_chars_to_str_success() {
+        let src = b"hello\0";
+        let mut c_array = [0 as c_char; 6];
+        for (i, &byte) in src.iter().enumerate() {
+            c_array[i] = byte as c_char;
+        }
+        let result = chars_to_str(c_array);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "hello");
+    }
+
+    #[test]
+    fn test_chars_to_str_invalid_utf8() {
+        let c = 0x80u8 as i8 as c_char;
+        let src = [c, c, c, c, c, 0];
+        let result = chars_to_str(src);
+        assert!(result.is_err());
     }
 }
