@@ -1,9 +1,9 @@
-use std::error::Error;
-
 use url::Url;
 
+use rx_core::text::BoxResult;
+
 /// URL 分解成 base 和 path 两部分
-pub fn split_url2(url: impl AsRef<str>) -> Result<(String, String), Box<dyn Error>> {
+pub fn split_url2(url: impl AsRef<str>) -> BoxResult<(String, String)> {
     let parsed_url = Url::parse(url.as_ref())?;
     let base = match (parsed_url.username(), parsed_url.password()) {
         ("", None) => format!(

@@ -11,3 +11,11 @@ pub fn supervisorctl(sub_cmd: impl AsRef<str>, service: impl AsRef<str>) -> Opti
     );
     run_command(program, args, &title)
 }
+
+/// 重启所有服务
+pub fn supervisorctl_restart_all(services: &[&str]) {
+    for service in services.iter() {
+        let r = supervisorctl("restart", service);
+        info!("Output: {:?}", r)
+    }
+}

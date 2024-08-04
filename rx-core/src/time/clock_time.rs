@@ -6,7 +6,7 @@ use serde::{Deserialize, Deserializer, Serializer};
 use crate::serde_export::Serialize;
 
 /// 时钟时间（时分秒）
-#[derive(PartialEq, Copy, Clone, Default)]
+#[derive(PartialEq, Copy, Clone, Default, Debug)]
 pub struct ClockTime {
     secs: u32,
 }

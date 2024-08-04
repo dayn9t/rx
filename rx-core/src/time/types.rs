@@ -21,5 +21,9 @@ mod tests {
     fn test_local_time_str() {
         println!("LocalDateTime size: {}", size_of::<LocalDateTime>());
         println!("NaiveDateTime size: {}", size_of::<NaiveDateTime>());
+        println!("NaiveTime size: {}", size_of::<NaiveTime>());
+
+        let time = Local::now().time();
+        println!("NaiveTime now: {}", time);
     }
 }

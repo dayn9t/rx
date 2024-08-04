@@ -1,8 +1,10 @@
-use crate::util::split_url2;
 use reqwest::blocking;
 use reqwest::header::ACCEPT;
 use serde::de::DeserializeOwned;
-use std::error::Error;
+
+use rx_core::text::BoxResult;
+
+use crate::util::split_url2;
 
 /// HTTP API Client 使用 JSON 格式
 pub struct ApiClientJson {
@@ -17,7 +19,7 @@ impl ApiClientJson {
     }
 
     /// 从指定的 URL 获取数据(同步), 并转反序列化为指定类型
-    pub fn get<T: DeserializeOwned>(&self, path: impl AsRef<str>) -> Result<T, Box<dyn Error>> {
+    pub fn get<T: DeserializeOwned>(&self, path: impl AsRef<str>) -> BoxResult<T> {
         let path = path.as_ref();
         let client = blocking::Client::new();
         let response = client
@@ -31,10 +33,18 @@ impl ApiClientJson {
 }
 
 /// 从指定的 URL 获取数据(同步), 并转反序列化为指定类型
-pub fn get<T: DeserializeOwned>(url: impl AsRef<str>) -> Result<T, Box<dyn Error>> {
+pub fn get<T: DeserializeOwned>(url: impl AsRef<str>) -> BoxResult<T> {
     let (url_base, path) = split_url2(url)?;
 
     let client = ApiClientJson::new(&url_base);
     let data: T = client.get(path)?;
     Ok(data)
+}
+
+#[cfg(test)]
+mod tests {
+    //use super::*;
+
+    #[test]
+    fn it_works() {}
 }
