@@ -17,3 +17,5 @@ pub struct ScheduleInfo {
     /// 按星期的排班信息
     pub days: [ClockPeriods; 7],
 }
+
+pub type ScheduleInfoVec = Vec<ScheduleInfo>;

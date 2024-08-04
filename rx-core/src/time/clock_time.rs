@@ -12,6 +12,16 @@ pub struct ClockTime {
 }
 
 impl ClockTime {
+    /// 从秒数创建时钟时间
+    pub fn from_secs(secs: u32) -> Self {
+        ClockTime { secs }
+    }
+
+    /// 获取从零点到本时钟时间的秒数
+    pub fn to_secs(&self) -> u32 {
+        self.secs
+    }
+
     /// 返回时钟时间的小时数
     pub fn hour(&self) -> u32 {
         self.secs / 3600

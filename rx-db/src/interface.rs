@@ -63,6 +63,14 @@ pub trait ITable {
     /// 删除记录(幂等)
     fn delete(&mut self, id: RecordId) -> BoxResult<()>;
 
+    /// 删除全部记录(幂等)
+    fn delete_all(&mut self) -> BoxResult<()> {
+        let ids = self.find_ids(RecordId::default())?;
+        for id in ids {
+            self.delete(id)?;
+        }
+        Ok(())
+    }
     /// 查询记录集
     fn find<P>(
         &mut self,
