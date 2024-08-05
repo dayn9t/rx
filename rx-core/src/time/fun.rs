@@ -66,6 +66,16 @@ pub fn naive_local(dt: UtcDateTime) -> NaiveDateTime {
     dt.with_timezone(&Local).naive_local()
 }
 
+/// 从字符串(无时区)解析本地时间
+pub fn parse_datetime_from_naive(datetime_str: &str) -> ParseResult<LocalDateTime> {
+    let naive = if let Ok(d) = NaiveDateTime::parse_from_str(datetime_str, "%Y-%m-%dT%H:%M:%S") {
+        Ok(d)
+    } else {
+        NaiveDateTime::parse_from_str(datetime_str, "%Y-%m-%d %H:%M:%S")
+    };
+    naive.map(|d| Local.from_local_datetime(&d).unwrap())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,5 +100,28 @@ mod tests {
         let _s1 = to_local_iso_str(t1);
         //let r1 = 1..5;
         //assert_eq!(v.binary_search(&6), Ok(16));
+    }
+
+    #[test]
+    fn test_parse_datetime_from_naive_valid() {
+        let datetime_strs = ["2024-07-29T12:00:00", "2024-07-29 12:00:00"];
+        for datetime_str in datetime_strs.iter() {
+            let result = parse_datetime_from_naive(datetime_str);
+            assert!(result.is_ok());
+            let local_dt = result.unwrap();
+            assert_eq!(local_dt.year(), 2024);
+            assert_eq!(local_dt.month(), 7);
+            assert_eq!(local_dt.day(), 29);
+            assert_eq!(local_dt.hour(), 12);
+            assert_eq!(local_dt.minute(), 0);
+            assert_eq!(local_dt.second(), 0);
+        }
+    }
+
+    #[test]
+    fn test_parse_datetime_from_naive_invalid() {
+        let datetime_str = "invalid-datetime";
+        let result = parse_datetime_from_naive(datetime_str);
+        assert!(result.is_err());
     }
 }
