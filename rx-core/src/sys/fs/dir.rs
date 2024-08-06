@@ -1,7 +1,11 @@
-use crate::sys::fs::files_in;
-use crate::text::BoxResult;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
+
+use path_macro::path;
+use tracing::{error, info};
+
+use crate::sys::fs::{file_name, files_in};
+use crate::text::BoxResult;
 
 /// 两个目录中文件主干差集, 限定文件扩展名
 pub fn dir_stem_diff(
@@ -22,11 +26,52 @@ pub fn dir_stem_diff(
     Ok(diff_files)
 }
 
+pub trait FileTranslator {
+    fn translate(&self, src: &Path, dst: &Path) -> BoxResult<()>;
+}
+
+/// 目录文件翻译
+pub struct DirTranslator {
+    src_ext: String,
+    dst_ext: String,
+}
+
+impl DirTranslator {
+    fn translate_dir(
+        &self,
+        src_dir: &Path,
+        dst_dir: &Path,
+        translator: impl FileTranslator,
+    ) -> BoxResult<()> {
+        let diff_files = dir_stem_diff(src_dir, dst_dir, &self.src_ext, &self.dst_ext).unwrap();
+
+        for src_file in diff_files {
+            let dst_file = path!(dst_dir / file_name(src_file.with_extension("srt")));
+            match translator.translate(&src_file, &dst_file) {
+                Ok(_) => info!(
+                    "translate: {} => {}",
+                    src_file.display(),
+                    dst_file.display()
+                ),
+                Err(_) => error!(
+                    "translate: {} => {}",
+                    src_file.display(),
+                    dst_file.display()
+                ),
+            }
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs::{self, File};
+    use std::io::Write;
+
     use tempfile::tempdir;
+
+    use super::*;
 
     #[test]
     fn test_dir_stem_diff() {
@@ -59,5 +104,53 @@ mod tests {
         assert!(diff_file_names.contains("file3.txt"));
         assert!(!diff_file_names.contains("file1.txt"));
         assert!(!diff_file_names.contains("file2.txt"));
+    }
+
+    struct TestFileTranslator;
+
+    impl FileTranslator for TestFileTranslator {
+        fn translate(&self, src: &Path, dst: &Path) -> BoxResult<()> {
+            let mut dst_file = File::create(dst)?;
+            writeln!(dst_file, "Translated from {:?}", src)?;
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn test_dir_translator() {
+        // 创建临时目录
+        let dir = tempdir().unwrap();
+        let src_dir = dir.path().join("src");
+        let dst_dir = dir.path().join("dst");
+
+        // 创建源目录和目标目录
+        fs::create_dir_all(&src_dir).unwrap();
+        fs::create_dir_all(&dst_dir).unwrap();
+
+        // 在源目录中创建文件
+        File::create(src_dir.join("file1.txt")).unwrap();
+        File::create(src_dir.join("file2.txt")).unwrap();
+        File::create(src_dir.join("file3.txt")).unwrap();
+
+        // 在目标目录中创建文件
+        File::create(dst_dir.join("file1.md")).unwrap();
+        File::create(dst_dir.join("file2.md")).unwrap();
+
+        // 创建 DirTranslator 实例
+        let dir_translator = DirTranslator {
+            src_ext: "txt".to_string(),
+            dst_ext: "md".to_string(),
+        };
+
+        // 调用 translate_dir 方法
+        dir_translator
+            .translate_dir(&src_dir, &dst_dir, TestFileTranslator)
+            .unwrap();
+
+        // 验证翻译结果
+        let translated_file = dst_dir.join("file3.srt");
+        assert!(translated_file.exists());
+        let content = fs::read_to_string(translated_file).unwrap();
+        assert!(content.contains("Translated from"));
     }
 }
