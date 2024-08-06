@@ -32,8 +32,8 @@ pub trait FileTranslator {
 
 /// 目录文件翻译
 pub struct DirTranslator {
-    src_ext: String,
-    dst_ext: String,
+    pub src_ext: String,
+    pub dst_ext: String,
 }
 
 impl DirTranslator {
