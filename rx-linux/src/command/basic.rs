@@ -42,7 +42,7 @@ where
     S: AsRef<OsStr> + Debug,
     T: AsRef<str>,
 {
-    error!("program: {:?} '{:?}'", &program, &args);
+    info!("program: {:?} '{:?}'", &program, &args);
     let r = Command::new(program).args(args).output();
     proc_output(title, r)
 }

@@ -43,9 +43,9 @@ impl DirTranslator {
         src_dir: &Path,
         dst_dir: &Path,
         translator: &impl FileTranslator,
-    ) -> BoxResult<()> {
+    ) -> BoxResult<usize> {
         let diff_files = dir_stem_diff(src_dir, dst_dir, &self.src_ext, &self.dst_ext).unwrap();
-
+        let total = diff_files.len();
         for src_file in diff_files {
             let dst_file = path!(dst_dir / file_name(src_file.with_extension("srt")));
             match translator.translate(&src_file, &dst_file) {
@@ -61,7 +61,7 @@ impl DirTranslator {
                 ),
             }
         }
-        Ok(())
+        Ok(total)
     }
 }
 

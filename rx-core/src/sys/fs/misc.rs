@@ -355,6 +355,17 @@ pub fn copy_tree(src_dir: &Path, dst_dir: &Path) -> fs_extra::error::Result<u64>
     copy_items(&paths_to_copy, dst_dir, &options)
 }
 
+use tempfile::Builder;
+
+/// 生成指定扩展名的临时文件
+pub fn temp_file_with(ext: &str) -> PathBuf {
+    let file = Builder::new()
+        .suffix(&format!(".{}", ext))
+        .tempfile()
+        .unwrap();
+    file.path().to_path_buf()
+}
+
 #[cfg(test)]
 mod tests {
     use path_macro::path;
