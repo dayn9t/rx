@@ -37,11 +37,11 @@ pub struct DirTranslator {
 }
 
 impl DirTranslator {
-    fn translate_dir(
+    pub fn translate_dir(
         &self,
         src_dir: &Path,
         dst_dir: &Path,
-        translator: impl FileTranslator,
+        translator: &impl FileTranslator,
     ) -> BoxResult<()> {
         let diff_files = dir_stem_diff(src_dir, dst_dir, &self.src_ext, &self.dst_ext).unwrap();
 
@@ -144,7 +144,7 @@ mod tests {
 
         // 调用 translate_dir 方法
         dir_translator
-            .translate_dir(&src_dir, &dst_dir, TestFileTranslator)
+            .translate_dir(&src_dir, &dst_dir, &TestFileTranslator)
             .unwrap();
 
         // 验证翻译结果

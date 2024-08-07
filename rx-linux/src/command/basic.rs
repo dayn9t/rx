@@ -1,12 +1,11 @@
-pub use rx_core::log::*;
-pub use rx_core::text::BoxResult;
-
 use std::ffi::OsStr;
 use std::fmt::Debug;
 use std::io;
 use std::io::Write;
-
 use std::process::{Command, Output, Stdio};
+
+pub use rx_core::log::*;
+pub use rx_core::text::BoxResult;
 
 pub type StrRef = dyn AsRef<str>;
 
@@ -20,6 +19,8 @@ pub const APT: &str = "/usr/bin/apt";
 pub const SUDO: &str = "/usr/bin/sudo";
 
 pub const SUPER_CTL: &str = "/usr/bin/supervisorctl";
+
+pub const FFMPEG: &str = "/usr/local/bin/ffmpeg";
 
 /// 命令输出
 #[derive(Debug, Default, Clone)]

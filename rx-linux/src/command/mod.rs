@@ -1,5 +1,6 @@
 pub use apt::*;
 pub use basic::*;
+pub use ffmpeg::*;
 pub use netplan::*;
 pub use reboot::*;
 pub use rsync::*;
@@ -8,6 +9,7 @@ pub use supervisorctl::*;
 
 mod apt;
 mod basic;
+mod ffmpeg;
 mod netplan;
 mod reboot;
 mod rsync;
