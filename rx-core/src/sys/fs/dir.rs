@@ -18,11 +18,12 @@ pub fn dir_stem_diff(
     let dst_files = files_in(dst_dir, dst_ext)?;
     let dst_stems: HashSet<_> = dst_files.iter().map(|f| f.file_stem().unwrap()).collect();
 
-    let diff_files = src_files
+    let mut diff_files: Vec<_> = src_files
         .iter()
         .filter(|f| !dst_stems.contains(f.file_stem().unwrap()))
         .map(|f| f.to_path_buf())
         .collect();
+    diff_files.sort();
     Ok(diff_files)
 }
 
