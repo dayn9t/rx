@@ -24,6 +24,11 @@ pub fn to_local_id(dt: NaiveDateTime) -> String {
     format!("{}", dt.format_with_items(fmt))
 }
 
+/// 时间转换为ISO基本格式
+pub fn to_iso_basic(time: &NaiveDateTime) -> String {
+    format!("{}", time.format("%Y-%m-%dT%H:%M:%S"))
+}
+
 /// 时间转换本地时间字符串ID
 pub fn to_local_iso_str(dt: NaiveDateTime) -> String {
     let fmt = StrftimeItems::new("%Y-%m-%dT%H:%M:%S%.3f");

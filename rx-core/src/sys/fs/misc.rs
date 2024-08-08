@@ -237,8 +237,19 @@ pub fn find_first_dir(dir: impl AsRef<Path>, dir_name: impl AsRef<str>) -> Resul
     Err(Error::from(ErrorKind::NotFound))
 }
 
+/// 排序方式
+pub enum SortOrder {
+    None,
+    Asc,
+    Desc,
+}
+
 /// 获取目录中文件
-pub fn files_in(dir: impl AsRef<Path>, ext: impl AsRef<str>) -> Result<Vec<PathBuf>> {
+pub fn files_in(
+    dir: impl AsRef<Path>,
+    ext: impl AsRef<str>,
+    sort_order: SortOrder,
+) -> Result<Vec<PathBuf>> {
     let ext = Some(OsStr::new(ext.as_ref()));
     let mut vec = Vec::new();
     visit_dir(dir, &mut |p: &Path| {
@@ -246,27 +257,39 @@ pub fn files_in(dir: impl AsRef<Path>, ext: impl AsRef<str>) -> Result<Vec<PathB
             vec.push(p.to_owned());
         }
     })?;
+    match sort_order {
+        SortOrder::Asc => vec.sort(),
+        SortOrder::Desc => vec.sort_by(|a, b| b.cmp(a)),
+        SortOrder::None => {}
+    }
     Ok(vec)
 }
 
 /// 获取目录中文件名
-pub fn file_names_in(dir: impl AsRef<Path>, ext: impl AsRef<str>) -> Result<Vec<String>> {
-    let v = files_in(dir, ext)?;
+pub fn file_names_in(
+    dir: impl AsRef<Path>,
+    ext: impl AsRef<str>,
+    sort_order: SortOrder,
+) -> Result<Vec<String>> {
+    let v = files_in(dir, ext, sort_order)?;
     let v: Vec<_> = v.iter().map(|p| file_name(p)).collect();
     Ok(v)
 }
 
 /// 获取目录中文件名主干(去掉扩展名)
-pub fn file_stems_in(dir: impl AsRef<Path>, ext: impl AsRef<str>) -> Result<Vec<String>> {
-    let v = files_in(dir, ext)?;
+pub fn file_stems_in(
+    dir: impl AsRef<Path>,
+    ext: impl AsRef<str>,
+    sort_order: SortOrder,
+) -> Result<Vec<String>> {
+    let v = files_in(dir, ext, sort_order)?;
     let v: Vec<_> = v.iter().map(|p| file_stem(p)).collect();
     Ok(v)
 }
 
 /// 合并目录内所有文件到一个文件
 pub fn combine_files_in(src_dir: &Path, dst_file: &Path, ext: &str) -> Result<()> {
-    let mut files = files_in(&src_dir, &ext)?;
-    files.sort();
+    let files = files_in(&src_dir, &ext, SortOrder::Asc)?;
     combine_files(&files, dst_file)
 }
 

@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use path_macro::path;
 use tracing::{error, info};
 
-use crate::sys::fs::{file_name, files_in};
+use crate::sys::fs::{file_name, files_in, SortOrder};
 use crate::text::BoxResult;
 
 /// 两个目录中文件主干差集, 限定文件扩展名
@@ -14,8 +14,8 @@ pub fn dir_stem_diff(
     src_ext: &str,
     dst_ext: &str,
 ) -> BoxResult<Vec<PathBuf>> {
-    let src_files = files_in(src_dir, src_ext)?;
-    let dst_files = files_in(dst_dir, dst_ext)?;
+    let src_files = files_in(src_dir, src_ext, SortOrder::None)?;
+    let dst_files = files_in(dst_dir, dst_ext, SortOrder::None)?;
     let dst_stems: HashSet<_> = dst_files.iter().map(|f| f.file_stem().unwrap()).collect();
 
     let mut diff_files: Vec<_> = src_files
