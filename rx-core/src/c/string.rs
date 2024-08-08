@@ -4,7 +4,7 @@ use std::io::ErrorKind;
 use std::path::Path;
 use std::{io, ptr};
 
-use deref_derive::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 
 /// CString 增强版本
 #[derive(Debug, Default, Deref, DerefMut)]

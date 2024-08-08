@@ -18,7 +18,7 @@ geo-types = "*"
 itertools = "*"
 anyhow = "*"
 thiserror = "*"
-deref-derive = "*"
+derive_more = { version = "*", features = ["full"] }
 
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
