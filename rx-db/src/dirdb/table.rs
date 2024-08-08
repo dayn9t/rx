@@ -1,9 +1,9 @@
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
-use rx_core::{sys::fs, text::*};
-
 use crate::interface::*;
+use rx_core::sys::fs::SortOrder;
+use rx_core::{sys::fs, text::*};
 
 use super::db::*;
 
@@ -132,7 +132,7 @@ impl<T: IRecord> ITable for DirTable<T> {
 
     fn find_ids(&mut self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
         let mut ids = Vec::new();
-        let names = fs::file_stems_in(&self.path, &"json")?;
+        let names = fs::file_stems_in(&self.path, &"json", SortOrder::None)?;
         for stem in names {
             if let Ok(id) = stem.parse::<RecordId>() {
                 if id >= min_id {
