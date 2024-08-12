@@ -55,6 +55,15 @@ impl DirDb {
         DirVariant::open(self, name, default)
     }
 
+    /// 打开数据库变量
+    pub fn open_variant_default<T, S>(&mut self, name: S) -> BoxResult<DirVariant<T>>
+    where
+        T: Default + DeserializeOwned + Serialize,
+        S: AsRef<str>,
+    {
+        DirVariant::open(self, name, Some(T::default()))
+    }
+
     /// 加载数据库变量
     pub fn load_variant<T, S>(&mut self, name: S, default: Option<T>) -> BoxResult<T>
     where
