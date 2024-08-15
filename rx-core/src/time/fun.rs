@@ -81,6 +81,13 @@ pub fn parse_datetime_from_naive(datetime_str: &str) -> ParseResult<LocalDateTim
     naive.map(|d| Local.from_local_datetime(&d).unwrap())
 }
 
+/// 本地时间舍入到秒
+pub fn round_to_seconds(datetime: LocalDateTime) -> LocalDateTime {
+    let nanos = datetime.timestamp_nanos_opt().unwrap() + 500_000_000;
+    let secs = nanos / 1_000_000_000;
+    Local.timestamp_opt(secs, 0).unwrap()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

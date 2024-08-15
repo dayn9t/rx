@@ -23,3 +23,5 @@ thiserror = "*"
 uuid = { version = "*", features = ["v4"] }
 path_macro = "*"
 env_logger = "*"
+regex = "*"
+tempfile = "3.12.0"

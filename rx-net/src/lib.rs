@@ -1,4 +1,8 @@
+#![feature(new_range_api)]
+extern crate core;
+
 pub mod cfg;
+pub mod frp;
 pub mod http;
 pub mod ip;
 pub mod mqtt;
