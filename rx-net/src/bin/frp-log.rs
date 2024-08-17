@@ -2,9 +2,8 @@
 
 use path_macro::path;
 use rx_core::log::{info, init_log};
-use rx_core::time::{NaiveDateTime, Utc};
+use rx_core::time::NaiveDateTime;
 use rx_net::frp::*;
-use std::time::Duration;
 
 fn main() {
     init_log(0);
@@ -34,7 +33,10 @@ fn main() {
     //let nodes = stat.get_new_nodes(start_time);
     let nodes = stat.get_all_nodes();
     info!("nodes len: {}", nodes.len());
-    let mut names: Vec<_> = nodes.iter().map(|n| n.name[n.name.len() - 3..].to_string()).collect();
+    let mut names: Vec<_> = nodes
+        .iter()
+        .map(|n| n.name[n.name.len() - 3..].to_string())
+        .collect();
     names.sort();
     for name in names {
         println!("{}", name);
