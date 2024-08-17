@@ -1,7 +1,7 @@
 use crate::frp::*;
 use core::range::Range;
 use regex::Regex;
-use rx_core::log::warn;
+use rx_core::log::{debug, info};
 use rx_core::text::BoxResult;
 use rx_core::time::NaiveDateTime;
 use std::collections::HashMap;
@@ -19,12 +19,16 @@ pub struct NodeStat {
 #[derive(Debug)]
 pub struct TimeStat {
     items: HashMap<String, Range<NaiveDateTime>>,
+    include: String,
+    exclude: String,
 }
 
 impl TimeStat {
     pub fn new() -> Self {
         TimeStat {
             items: HashMap::new(),
+            include: "name-".to_string(),
+            exclude: "clos".to_string(),
         }
     }
 
@@ -47,10 +51,17 @@ impl TimeStat {
         let reader = BufReader::new(file);
 
         // 匹配 ANSI 颜色码的正则表达式
-        let re = Regex::new(r"\x1b\[[0-9;]*m").unwrap();
+        let re = Regex::new(r"\x1b\[[0-9;]*m")?;
 
         for line in reader.lines() {
             let line = line?;
+
+            if line.find(&self.include).is_none() {
+                continue;
+            }
+            if line.find(&self.exclude).is_some() {
+                continue;
+            }
 
             // 移除颜色信息
             let line = re.replace_all(&line, "").to_string();
@@ -58,14 +69,20 @@ impl TimeStat {
             if let Ok(msg) = UserConnectionMsg::from_str(&line) {
                 //println!("#{} {:?}", i, msg.time);
                 self.update(msg.name, msg.time);
+            } else if let Ok(msg) = ProxySuccessMsg::from_str(&line) {
+                //println!("#{} {:?}", i, msg.time
+                self.update(msg.name, msg.time);
             } else if let Ok(msg) = ProxyExistMsg::from_str(&line) {
                 //println!("#{} {:?}", i, msg.time
                 self.update(msg.name, msg.time);
+            } else if let Ok(msg) = ProxyListenMsg::from_str(&line) {
+                //println!("#{} {:?}", i, msg.time
+                self.update(msg.name, msg.time);
             } else {
-                warn!("Unrecognized log entry: {}", line);
+                debug!("Unrecognized log entry: {}", line);
             }
         }
-
+        info!("nodes len: {}", self.items.len());
         Ok(())
     }
 
@@ -80,13 +97,21 @@ impl TimeStat {
             .into_iter()
             .collect()
     }
+    pub fn get_all_nodes(&self) -> Vec<NodeStat> {
+        self.items
+            .iter()
+            .map(|(name, range)| NodeStat {
+                name: name.clone(),
+                time_range: range.clone(),
+            })
+            .collect()
+    }
 }
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::fs::File;
     use std::io::Write;
-    use std::path::Path;
     use tempfile::tempdir;
 
     #[test]

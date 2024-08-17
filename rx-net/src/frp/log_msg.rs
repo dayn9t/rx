@@ -84,6 +84,78 @@ impl FromStr for ProxyExistMsg {
     }
 }
 
+/// 代理成功消息
+#[derive(Debug)]
+pub struct ProxySuccessMsg {
+    pub time: NaiveDateTime,
+    pub id: String,
+    pub name: String,
+    pub protocol: String,
+}
+
+impl FromStr for ProxySuccessMsg {
+    type Err = anyhow::Error;
+
+    fn from_str(msg_str: &str) -> Result<Self, Self::Err> {
+        // "2024/08/15 04:13:59 [I] [control.go:497] [b4f12fbff7c9de0f] new proxy [name-51011] type [tcp] success"
+        let pattern = format!(
+            "{} {} {} {} new proxy {} type {} success",
+            TIME, CONTENT, CONTENT, CONTENT, CONTENT, CONTENT
+        );
+        let re = Regex::new(&pattern)?;
+
+        if let Some(caps) = re.captures(msg_str) {
+            Ok(Self {
+                time: parse_time(&caps[1])?,
+                id: caps[4].to_string(),
+                name: caps[5].to_string(),
+                protocol: caps[6].to_string(),
+            })
+        } else {
+            Err(anyhow::anyhow!(
+                "Invalid user connection message: {}",
+                msg_str
+            ))
+        }
+    }
+}
+
+/// 代理监听消息
+#[derive(Debug)]
+pub struct ProxyListenMsg {
+    pub time: NaiveDateTime,
+    pub id: String,
+    pub name: String,
+    pub port: u16,
+}
+
+impl FromStr for ProxyListenMsg {
+    type Err = anyhow::Error;
+
+    fn from_str(msg_str: &str) -> Result<Self, Self::Err> {
+        // "2024/08/15 04:13:59 [I] [tcp.go:81] [b4f12fbff7c9de0f] [name-51011] tcp proxy listen port [51011]"
+        let pattern = format!(
+            "{} {} {} {} {} tcp proxy listen port {}",
+            TIME, CONTENT, CONTENT, CONTENT, CONTENT, CONTENT
+        );
+        let re = Regex::new(&pattern)?;
+
+        if let Some(caps) = re.captures(msg_str) {
+            Ok(Self {
+                time: parse_time(&caps[1])?,
+                id: caps[4].to_string(),
+                name: caps[5].to_string(),
+                port: u16::from_str(&caps[6])?,
+            })
+        } else {
+            Err(anyhow::anyhow!(
+                "Invalid user connection message: {}",
+                msg_str
+            ))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
