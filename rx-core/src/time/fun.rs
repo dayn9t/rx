@@ -71,6 +71,17 @@ pub fn naive_local(dt: UtcDateTime) -> NaiveDateTime {
     dt.with_timezone(&Local).naive_local()
 }
 
+/// Naive时间转本地时间
+pub fn naive_to_local(naive: NaiveDateTime) -> LocalDateTime {
+    Local.from_local_datetime(&naive).unwrap()
+}
+
+/// 今天起点的时间
+pub fn today_midnight() -> NaiveDateTime {
+    let today: NaiveDate = Local::now().date_naive();
+    NaiveDateTime::new(today, NaiveTime::default())
+}
+
 /// 从字符串(无时区)解析本地时间
 pub fn parse_datetime_from_naive(datetime_str: &str) -> ParseResult<LocalDateTime> {
     let naive = if let Ok(d) = NaiveDateTime::parse_from_str(datetime_str, "%Y-%m-%dT%H:%M:%S") {
