@@ -1,12 +1,22 @@
 use super::basic::*;
 /// 利用supervisorctl管理服务
-pub fn ffmpeg1(sub_cmd: impl AsRef<str>, service: impl AsRef<str>) -> Option<CommandOutput> {
+pub fn ffmpeg(args: impl AsRef<str>) -> Option<CommandOutput> {
     let program = FFMPEG;
-    let args = [sub_cmd.as_ref(), service.as_ref()];
-    let title = format!(
-        "supervisorctl_{:?}_{:?}",
-        sub_cmd.as_ref(),
-        service.as_ref()
-    );
-    run_command(program, args, &title)
+    let args = args.as_ref().split(' ').collect::<Vec<&str>>();
+    run_command(program, args, "FFMPEG")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ffmpeg() {
+        let args = "-version";
+        let output = ffmpeg(args);
+        assert!(output.is_some());
+        let output = output.unwrap();
+        assert!(output.success);
+        assert!(output.stdout.contains("ffmpeg version"));
+    }
 }

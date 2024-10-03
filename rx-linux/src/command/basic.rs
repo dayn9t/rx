@@ -20,7 +20,7 @@ pub const SUDO: &str = "/usr/bin/sudo";
 
 pub const SUPER_CTL: &str = "/usr/bin/supervisorctl";
 
-pub const FFMPEG: &str = "/usr/local/bin/ffmpeg";
+pub const FFMPEG: &str = "/usr/bin/ffmpeg";
 
 /// 命令输出
 #[derive(Debug, Default, Clone)]

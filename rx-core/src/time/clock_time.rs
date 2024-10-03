@@ -1,9 +1,9 @@
-use core::str::FromStr;
-use std::fmt;
-
-use serde::{Deserialize, Deserializer, Serializer};
-
 use crate::serde_export::Serialize;
+use chrono::NaiveTime;
+use chrono::Timelike;
+use core::str::FromStr;
+use serde::{Deserialize, Deserializer, Serializer};
+use std::fmt;
 
 /// 时钟时间（时分秒）
 #[derive(PartialEq, Copy, Clone, Default, Debug)]
@@ -16,6 +16,7 @@ impl ClockTime {
     pub fn from_secs(secs: u32) -> Self {
         ClockTime { secs }
     }
+
 
     /// 获取从零点到本时钟时间的秒数
     pub fn to_secs(&self) -> u32 {
@@ -38,6 +39,18 @@ impl ClockTime {
     }
 }
 
+impl ClockTime {
+    /// 转换为字符串标识
+    pub fn to_str_id(&self) -> String {
+        format!(
+            "{:02}-{:02}-{:02}",
+            self.hour(),
+            self.minute(),
+            self.second()
+        )
+    }
+}
+
 impl fmt::Display for ClockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -49,6 +62,15 @@ impl fmt::Display for ClockTime {
         )
     }
 }
+
+impl From<NaiveTime> for ClockTime {
+    fn from(naive: NaiveTime) -> Self {
+        ClockTime {
+            secs: naive.num_seconds_from_midnight(),
+        }
+    }
+}
+
 
 impl FromStr for ClockTime {
     type Err = Box<dyn std::error::Error>;
@@ -89,6 +111,12 @@ impl<'de> Deserialize<'de> for ClockTime {
     }
 }
 
+impl Into<NaiveTime> for ClockTime {
+    fn into(self) -> NaiveTime {
+        NaiveTime::from_hms_opt(self.hour(), self.minute(), self.second()).unwrap()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -116,5 +144,12 @@ mod tests {
         assert_eq!(clock_time.hour(), 12);
         assert_eq!(clock_time.minute(), 34);
         assert_eq!(clock_time.second(), 56);
+    }
+
+    #[test]
+    fn test_into_naive_time() {
+        let clock_time = ClockTime::from_secs(12 * 3600 + 34 * 60 + 56);
+        let naive_time: NaiveTime = clock_time.into();
+        assert_eq!(naive_time, NaiveTime::from_hms_opt(12, 34, 56).unwrap());
     }
 }

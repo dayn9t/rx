@@ -44,3 +44,5 @@ rand_core = "*"
 ring = "*"
 linked-hash-map="*"
 tempfile = "*"
+
+clap = { version = "*", features = ["derive"] }
