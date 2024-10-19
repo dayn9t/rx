@@ -17,7 +17,6 @@ impl ClockTime {
         ClockTime { secs }
     }
 
-
     /// 获取从零点到本时钟时间的秒数
     pub fn to_secs(&self) -> u32 {
         self.secs
@@ -70,7 +69,6 @@ impl From<NaiveTime> for ClockTime {
         }
     }
 }
-
 
 impl FromStr for ClockTime {
     type Err = Box<dyn std::error::Error>;
