@@ -389,6 +389,13 @@ pub fn temp_file_with(ext: &str) -> PathBuf {
     file.path().to_path_buf()
 }
 
+/// 路径替换
+pub fn path_replace(path: &Path, src: &str, dst: &str) -> PathBuf {
+    let path_str = path.to_str().unwrap();
+    let new_path_str = path_str.replace(src, dst);
+    PathBuf::from(new_path_str)
+}
+
 #[cfg(test)]
 mod tests {
     use path_macro::path;
@@ -516,5 +523,23 @@ mod tests {
         assert_eq!(p2, p2);
         assert_eq!(to_dir_string(p1), s2);
         assert_eq!(to_dir_string(p2), s2);
+    }
+
+    #[test]
+    fn test_path_replace() {
+        let original_path = Path::new("/path/to/snap/directory");
+        let expected_path = Path::new("/path/to/img/directory");
+        let result_path = path_replace(&original_path, "snap", "img");
+        assert_eq!(result_path, expected_path);
+
+        let original_path = Path::new("/snap/path/to/snap/directory");
+        let expected_path = Path::new("/img/path/to/img/directory");
+        let result_path = path_replace(&original_path, "snap", "img");
+        assert_eq!(result_path, expected_path);
+
+        let original_path = Path::new("/path/to/directory");
+        let expected_path = Path::new("/path/to/directory");
+        let result_path = path_replace(&original_path, "snap", "img");
+        assert_eq!(result_path, expected_path);
     }
 }
