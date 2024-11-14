@@ -4,9 +4,9 @@ use std::io::{BufReader, BufWriter};
 pub use serde_json::from_str;
 pub use serde_json::to_string_pretty as to_pretty;
 
-use crate::serde_export::*;
-
 pub use super::basic::*;
+use crate::serde_export::*;
+use crate::sys::fs::make_parent;
 
 /// 从JSON文件加载类型
 pub fn load<T, P>(path: P) -> BoxResult<T>
@@ -26,6 +26,7 @@ where
     T: Serialize,
     P: AsRef<Path>,
 {
+    make_parent(&path)?;
     let writer = BufWriter::new(File::create(path)?);
     serde_json::to_writer_pretty(writer, value)?;
     Ok(())
