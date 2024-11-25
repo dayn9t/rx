@@ -60,6 +60,17 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         }
     }
 
+    pub async fn find<P>(&self, predicate: P) -> Result<CodeResponse<Vec<R>>>
+    where
+        P: Fn(&R) -> bool,
+    {
+        let mut tab = self.table.lock().await;
+        match tab.find(RecordId::default(), usize::MAX, predicate) {
+            Ok(rs) => Ok(CodeResponse::Ok(Json(rs))),
+            Err(_) => Ok(CodeResponse::NotFound),
+        }
+    }
+
     /// 删除元素
     pub async fn delete(&self, id: UrlPath<u64>) -> Result<CodeResponse<R>> {
         // FIXME: 不返回删除的元素, 好像是poem的BUG

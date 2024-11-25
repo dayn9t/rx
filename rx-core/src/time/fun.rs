@@ -1,6 +1,6 @@
-use chrono::format::strftime::StrftimeItems;
-
 use super::types::*;
+use crate::text::BoxResult;
+use chrono::format::strftime::StrftimeItems;
 
 /// 获取纪元到现在秒数
 pub fn secs_since_epoch() -> f64 {
@@ -99,6 +99,12 @@ pub fn round_to_seconds(datetime: LocalDateTime) -> LocalDateTime {
     Local.timestamp_opt(secs, 0).unwrap()
 }
 
+/// 解析RFC3339时间字符串并转为 NaiveDateTime
+pub fn parse_rfc3339_to_naive(date_str: &str) -> BoxResult<NaiveDateTime> {
+    let datetime_with_tz: DateTime<FixedOffset> = DateTime::parse_from_rfc3339(date_str)?;
+    Ok(datetime_with_tz.naive_local())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -146,5 +152,17 @@ mod tests {
         let datetime_str = "invalid-datetime";
         let result = parse_datetime_from_naive(datetime_str);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_rfc3339_to_naive_valid() {
+        let date_str = "2024-07-29T12:00:00+00:00";
+        let result = parse_rfc3339_to_naive(date_str).unwrap();
+        assert_eq!(result.year(), 2024);
+        assert_eq!(result.month(), 7);
+        assert_eq!(result.day(), 29);
+        assert_eq!(result.hour(), 12);
+        assert_eq!(result.minute(), 0);
+        assert_eq!(result.second(), 0);
     }
 }
