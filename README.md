@@ -10,3 +10,13 @@ rx-net  网络相关
 rx-rest REST相关
 rx-web  WEB相关
 
+## 越来
+
+```bash
+sudo apt install libssl-dev
+sudo apt install libssl-dev build-essential cmake
+ffmpeg
+ sudo apt install libavfilter-dev libavdevice-dev
+sudo apt install clang
+
+```
