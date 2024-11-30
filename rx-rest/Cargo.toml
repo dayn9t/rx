@@ -2,7 +2,7 @@
 name = "rx-rest"
 version = "0.1.0"
 authors = ["dayn9t <dayn9t@gmail.com>"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 rx-core = { version = "*", path = "../rx-core" }
