@@ -1,5 +1,5 @@
 use core::str::Utf8Error;
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 use std::io::ErrorKind;
 use std::path::Path;
 use std::{io, ptr};

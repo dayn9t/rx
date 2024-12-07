@@ -1,7 +1,7 @@
-use std::path::PathBuf;
-
+use path_macro::path;
 use rx_core::sys::fs;
 use rx_core::text::*;
+use std::path::PathBuf;
 
 use crate::{IRecord, ITable, IVariant, RecordId};
 
@@ -9,6 +9,14 @@ use super::table::*;
 use super::variant::*;
 
 //pub type BoxResult<T> = std::io::Result<T>;
+
+/// ID变量名
+pub fn id_var_name<S>(name: S) -> String
+where
+    S: AsRef<str>,
+{
+    format!("{}_id", name.as_ref())
+}
 
 pub struct DirDb {
     path: PathBuf,
@@ -78,7 +86,7 @@ impl DirDb {
     where
         S: AsRef<str>,
     {
-        let mut path = fs::join(&self.path(), &name.as_ref());
+        let mut path = path!(&self.path() / "variant" / &name.as_ref());
         path.set_extension("json");
         path
     }
@@ -113,6 +121,7 @@ impl DirDb {
     where
         S: AsRef<str>,
     {
+        self.remove_variant(&id_var_name(name.as_ref()))?;
         Ok(fs::remove(&self.table_path(name))?)
     }
 

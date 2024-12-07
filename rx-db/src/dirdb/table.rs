@@ -1,15 +1,16 @@
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
+use super::db::*;
+use crate::DirVariant;
 use crate::interface::*;
 use rx_core::sys::fs::SortOrder;
 use rx_core::{sys::fs, text::*};
 
-use super::db::*;
-
 //#[derive(Size)]
 pub struct DirTable<T> {
     path: PathBuf,
+    last_id: DirVariant<RecordId>,
     _p: PhantomData<T>,
 }
 
@@ -19,11 +20,15 @@ impl<T: IRecord> DirTable<T> {
     where
         S: AsRef<str>,
     {
+        let last_id_name = format!("{}_id", name.as_ref());
         let path = db.table_path(name);
         fs::ensure_dir_exist(&path)?;
 
+        let last_id = DirVariant::open_or_default(&db, last_id_name)?;
+
         Ok(DirTable::<T> {
             path,
+            last_id,
             _p: PhantomData::<T>,
         })
     }
@@ -77,6 +82,10 @@ impl<T: IRecord> ITable for DirTable<T> {
     fn put(&mut self, id: RecordId, record: &mut Self::Record) -> BoxResult<()> {
         record.set_id(id);
         json::save(&record, &self.record_path(id))?;
+        let last_id = self.last_id.get_or_default();
+        if id > last_id {
+            self.last_id.set(&id)?;
+        }
         Ok(())
     }
 
@@ -145,10 +154,10 @@ impl<T: IRecord> ITable for DirTable<T> {
     }
 
     fn next_id(&mut self) -> BoxResult<RecordId> {
-        let ids = self.find_ids(0)?;
-
-        let next = if let Some(id) = ids.last() { id + 1 } else { 1 };
-        Ok(next)
+        let mut id = self.last_id.get_or_default();
+        id += 1;
+        self.last_id.set(&id)?;
+        Ok(id)
     }
 }
 

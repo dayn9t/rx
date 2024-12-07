@@ -6,7 +6,7 @@ pub use serde::de::DeserializeOwned;
 pub use serde::{Deserialize, Serialize};
 pub use serde_ron::de::from_str as from_serde_ron;
 pub use serde_ron::ser::to_string;
-use serde_ron::ser::{to_string_pretty, PrettyConfig};
+use serde_ron::ser::{PrettyConfig, to_string_pretty};
 
 pub use super::basic::*;
 

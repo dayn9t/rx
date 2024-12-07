@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use path_macro::path;
 use tracing::{error, info};
 
-use crate::sys::fs::{file_name, files_in, SortOrder};
+use crate::sys::fs::{SortOrder, file_name, files_in};
 use crate::text::BoxResult;
 
 /// 两个目录中文件主干差集, 限定文件扩展名

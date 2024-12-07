@@ -12,7 +12,7 @@ pub struct DirVariant<T> {
     default_value: Option<T>,
 }
 
-impl<T> DirVariant<T> {
+impl<T: Default> DirVariant<T> {
     /// 打开变量
     pub fn open<S>(db: &DirDb, name: S, default_value: Option<T>) -> BoxResult<Self>
     where
@@ -23,6 +23,15 @@ impl<T> DirVariant<T> {
             path: db.variant_path(name),
             default_value,
         })
+    }
+
+    /// 获取变量值/缺省值
+    /// 打开变量
+    pub fn open_or_default<S>(db: &DirDb, name: S) -> BoxResult<Self>
+    where
+        S: AsRef<str>,
+    {
+        Self::open(db, name, Some(T::default()))
     }
 }
 
@@ -59,7 +68,7 @@ mod tests {
     #[test]
     fn var_works() {
         let db = DirDb::open(&"/tmp/test/dirdb1").unwrap();
-        let name = "var";
+        let name = "var1";
         db.remove_variant(name).unwrap();
         let mut var = DirVariant::open(&db, name, None).unwrap();
 

@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{copy, Read};
+use std::io::{Read, copy};
 use std::path::Path;
 
 pub fn save_bytes<R: ?Sized>(reader: &mut R, path: impl AsRef<Path>)

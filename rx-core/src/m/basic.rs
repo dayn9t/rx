@@ -13,18 +13,10 @@ pub fn mul_round_f64<T1: CoordNum, T2: CoordNum, D: CoordNum>(a: T1, b: T2) -> O
 
 /// 偏序最小值
 pub fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
-    if a <= b {
-        a
-    } else {
-        b
-    }
+    if a <= b { a } else { b }
 }
 
 /// 偏序最大值
 pub fn partial_max<T: PartialOrd>(a: T, b: T) -> T {
-    if b >= a {
-        b
-    } else {
-        a
-    }
+    if b >= a { b } else { a }
 }
