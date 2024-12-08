@@ -169,9 +169,9 @@ mod tests {
         let mut s2 = { Student::new(2, "John") };
         let _s3 = { Student::new(3, "Joel") };
 
-        let mut db = DirDb::open(&"/tmp/test/dirdb1").unwrap();
+        let mut db = DirDb::open(&"/tmp/test/dir_db1").unwrap();
 
-        assert_eq!(db.name(), "dirdb1");
+        assert_eq!(db.name(), "dir_db1");
 
         let mut var = db.open_variant(&"var", None).unwrap();
         var.set(&s1).unwrap();

@@ -195,7 +195,7 @@ mod tests {
 
     #[test]
     fn tab_works() {
-        let dir = "/tmp/test/dirdb1";
+        let dir = "/tmp/test/dir_db2";
         let name = "student";
         let db = DirDb::open(dir).unwrap();
         db.remove_table(name).unwrap();
@@ -204,7 +204,8 @@ mod tests {
 
         let mut tab = DirTable::open(&db, &"student").unwrap();
         println!("tab.find_ids: {:?}", tab.find_ids(0));
-        assert_eq!(tab.find_ids(0).unwrap().is_empty(), true);
+        println!("tab.is_empty: {:?}", tab.find_ids(0).unwrap().is_empty());
+        assert!(tab.find_ids(0).unwrap().is_empty());
 
         let mut s1 = { Student::new(1, "Jack") };
         let mut s2 = { Student::new(2, "John") };
