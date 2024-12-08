@@ -156,6 +156,22 @@ impl DirDb {
     }
 }
 
+/// 打开数据库，加入记录
+pub fn db_put_record<T, S>(
+    db_path: &Path,
+    table_name: S,
+    id: RecordId,
+    record: &mut T,
+) -> BoxResult<()>
+where
+    T: IRecord,
+    S: AsRef<str>,
+{
+    let db = DirDb::open(&db_path)?;
+    let mut table = DirTable::<T>::open(&db, table_name)?;
+    table.put(id, record)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::interface::*;
