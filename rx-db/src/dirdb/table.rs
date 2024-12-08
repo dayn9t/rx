@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use super::db::*;
 use crate::DirVariant;
 use crate::interface::*;
+use rx_core::log::info;
 use rx_core::sys::fs::SortOrder;
 use rx_core::{sys::fs, text::*};
 
@@ -21,10 +22,15 @@ impl<T: IRecord> DirTable<T> {
         S: AsRef<str>,
     {
         let last_id_name = format!("{}_id", name.as_ref());
-        let path = db.table_path(name);
+        let path = db.table_path(&name);
         fs::ensure_dir_exist(&path)?;
 
-        let last_id = DirVariant::open_or_default(&db, last_id_name)?;
+        let mut last_id = DirVariant::open(&db, last_id_name, None)?;
+        if !last_id.exist() {
+            let max_id = find_max_record_id(&path, 0)?;
+            last_id.set(&max_id)?;
+            info!("{}: last_id set to {}", name.as_ref(), max_id);
+        }
 
         Ok(DirTable::<T> {
             path,
@@ -140,17 +146,7 @@ impl<T: IRecord> ITable for DirTable<T> {
     }
 
     fn find_ids(&mut self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
-        let mut ids = Vec::new();
-        let names = fs::file_stems_in(&self.path, &"json", SortOrder::None)?;
-        for stem in names {
-            if let Ok(id) = stem.parse::<RecordId>() {
-                if id >= min_id {
-                    ids.push(id);
-                }
-            }
-        }
-        ids.sort();
-        Ok(ids)
+        find_record_ids(&self.path, min_id)
     }
 
     fn next_id(&mut self) -> BoxResult<RecordId> {
@@ -159,6 +155,35 @@ impl<T: IRecord> ITable for DirTable<T> {
         self.last_id.set(&id)?;
         Ok(id)
     }
+}
+
+/// 从路径中查找记录ID
+fn find_record_ids(path: &Path, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
+    let mut ids = Vec::new();
+    let names = fs::file_stems_in(path, &"json", SortOrder::None)?;
+    for stem in names {
+        if let Ok(id) = stem.parse::<RecordId>() {
+            if id >= min_id {
+                ids.push(id);
+            }
+        }
+    }
+    ids.sort();
+    Ok(ids)
+}
+
+/// 从路径中查找最大记录ID
+fn find_max_record_id(path: &Path, min_id: RecordId) -> BoxResult<RecordId> {
+    let mut max_id = 0;
+    let names = fs::file_stems_in(path, &"json", SortOrder::None)?;
+    for stem in names {
+        if let Ok(id) = stem.parse::<RecordId>() {
+            if id >= min_id && id > max_id {
+                max_id = id;
+            }
+        }
+    }
+    Ok(max_id)
 }
 
 #[cfg(test)]
@@ -178,6 +203,7 @@ mod tests {
         assert!(!p.exists());
 
         let mut tab = DirTable::open(&db, &"student").unwrap();
+        println!("tab.find_ids: {:?}", tab.find_ids(0));
         assert_eq!(tab.find_ids(0).unwrap().is_empty(), true);
 
         let mut s1 = { Student::new(1, "Jack") };

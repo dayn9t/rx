@@ -507,10 +507,22 @@ mod tests {
 
     #[test]
     fn test_copy_tree() {
-        let _tmp = tempdir().unwrap();
-        let src = path!("/opt/howell/iws/v0.9/ias/domain/shws/template/");
-        let dst = path!("/opt/howell/iws/v0.9/ias/domain/shws/test1/");
+        let tmp = tempdir().unwrap();
+        let src = tmp.path().join("src");
+        let dst = tmp.path().join("dst");
+
+        // Create source directory and a file in it
+        fs::create_dir_all(&src).unwrap();
+        let src_file = src.join("test.txt");
+        let mut file = File::create(&src_file).unwrap();
+        writeln!(file, "Hello, world!").unwrap();
+
+        // Perform the copy
         copy_tree(&src, &dst).unwrap();
+
+        // Check if the file exists in the destination directory
+        let dst_file = dst.join("test.txt");
+        assert!(dst_file.exists());
     }
 
     #[test]
