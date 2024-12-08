@@ -7,7 +7,7 @@ pub mod http;
 pub mod ip;
 pub mod mqtt;
 pub mod prelude;
-pub mod util;
+pub mod url;
 
 #[cfg(test)]
 mod tests {

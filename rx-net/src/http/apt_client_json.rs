@@ -4,7 +4,7 @@ use serde::de::DeserializeOwned;
 
 use rx_core::text::BoxResult;
 
-use crate::util::split_url2;
+use crate::url::split_url2;
 
 /// HTTP API Client 使用 JSON 格式
 pub struct ApiClientJson {
