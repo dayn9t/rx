@@ -1,7 +1,7 @@
 use aes::Aes128;
 use block_modes::block_padding::Pkcs7;
 use block_modes::{BlockMode, Cbc};
-use hex_literal::hex;
+
 use std::str;
 
 type Aes128Cbc = Cbc<Aes128, Pkcs7>;
@@ -34,7 +34,7 @@ impl AesEncryptor {
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    use hex_literal::hex;
     #[test]
     fn test_encryption_decryption() {
         let key = hex!("000102030405060708090a0b0c0d0e0f").to_vec();

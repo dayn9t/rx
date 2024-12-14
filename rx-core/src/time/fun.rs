@@ -129,6 +129,8 @@ mod tests {
         let _s1 = to_local_iso_str(t1);
         //let r1 = 1..5;
         //assert_eq!(v.binary_search(&6), Ok(16));
+        let d1 = t1.date();
+        println!("{}", d1.to_string())
     }
 
     #[test]
