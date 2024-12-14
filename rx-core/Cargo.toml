@@ -45,4 +45,9 @@ ring = "*"
 linked-hash-map="*"
 tempfile = "*"
 
+aes = "0.7"
+block-modes = "0.8"
+hex-literal = "*"
+hex = "0.4.3"
+
 clap = { version = "*", features = ["derive"] }
