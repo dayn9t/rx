@@ -33,6 +33,7 @@ tracing-subscriber = { version = "*", features = ["time"] }
 
 uuid = { version = "*", features = ["serde", "v5"] }
 chrono = { version = "*", features = ["serde"] }
+time = "*"
 
 dirs = "*"
 fs_extra = "*"
