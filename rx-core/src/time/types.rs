@@ -8,7 +8,7 @@ pub type UtcDateTime = DateTime<Utc>;
 pub type LocalDateTime = DateTime<Local>;
 
 /// 时间段
-pub use time::Duration;
+pub use std::time::Duration;
 
 /// 时间范围
 pub type TimeRange = Range<LocalDateTime>;
