@@ -53,8 +53,7 @@ impl RedisDb {
         S: AsRef<str>,
     {
         let mut conn = self.client.get_connection()?;
-        conn.del(name.as_ref())?;
-        Ok(())
+        Ok(conn.del(name.as_ref())?)
     }
 }
 

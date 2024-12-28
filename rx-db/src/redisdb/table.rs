@@ -37,8 +37,8 @@ impl<T> RedisTable<T> {
 impl<T: IRecord> ITable for RedisTable<T> {
     type Record = T;
 
-    fn name(&self) -> &str {
-        &self.name
+    fn name(&self) -> String {
+        self.name.clone()
     }
 
     fn len(&self) -> usize {
@@ -63,13 +63,11 @@ impl<T: IRecord> ITable for RedisTable<T> {
 
     fn put(&mut self, id: RecordId, record: &mut Self::Record) -> BoxResult<()> {
         let s = json::to_pretty(record).unwrap();
-        self.conn.borrow_mut().hset(&self.name, id, &s)?;
-        Ok(())
+        Ok(self.conn.borrow_mut().hset(&self.name, id, &s)?)
     }
 
     fn delete(&mut self, id: RecordId) -> BoxResult<()> {
-        self.conn.borrow_mut().hdel(&self.name, id)?;
-        Ok(())
+        Ok(self.conn.borrow_mut().hdel(&self.name, id)?)
     }
 
     fn find<P>(
@@ -135,8 +133,8 @@ impl<T: IRecord> ITable for RedisTable<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test::tests::*;
     use crate::RedisDb;
+    use crate::test::tests::*;
 
     #[test]
     fn tab_works() {

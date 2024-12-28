@@ -46,15 +46,14 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for RedisVarian
 
     fn set(&mut self, record: &Self::Record) -> BoxResult<()> {
         let s = json::to_pretty(record).unwrap();
-        self.conn.borrow_mut().set(&self.name, &s)?;
-        Ok(())
+        Ok(self.conn.borrow_mut().set(&self.name, &s)?)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::test::tests::*;
     use crate::RedisDb;
+    use crate::test::tests::*;
 
     use super::*;
 
