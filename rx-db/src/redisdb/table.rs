@@ -3,9 +3,8 @@ use std::marker::PhantomData;
 
 use redis::Commands;
 
-use crate::interface::*;
-use crate::{DirVariant, RedisDb, RedisVariant};
 use rx_core::text::*;
+use crate::{IRecord, ITable, RecordId};
 
 pub struct RedisTable<T> {
     name: String,
@@ -42,6 +41,10 @@ impl<T: IRecord> ITable for RedisTable<T> {
         Ok(conn.del(table_name)?)
     }
 
+    fn exists(db_url: &str, table_name: &str) -> BoxResult<bool> {
+        todo!()
+    }
+
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -50,7 +53,7 @@ impl<T: IRecord> ITable for RedisTable<T> {
         self.conn.borrow_mut().hlen(&self.name).unwrap()
     }
 
-    fn exist(&self, id: RecordId) -> bool {
+    fn contains(&self, id: RecordId) -> bool {
         self.conn.borrow_mut().hexists(&self.name, id).unwrap()
     }
 

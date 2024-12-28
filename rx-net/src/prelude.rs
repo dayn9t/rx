@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use url::Url;
 
-use rx_core::serde_export::{Deserialize, Serialize};
+use rx_core::prelude::{Deserialize, Serialize};
 
 /// Endpoint信息
 #[derive(Debug, Default, Clone, Eq, Serialize, Deserialize, PartialEq)]

@@ -1,4 +1,4 @@
-use crate::serde_export::Serialize;
+use crate::prelude::Serialize;
 use chrono::NaiveTime;
 use chrono::Timelike;
 use core::str::FromStr;

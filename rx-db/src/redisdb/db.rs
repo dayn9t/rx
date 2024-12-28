@@ -1,7 +1,7 @@
 use super::table::*;
 use super::variant::*;
 
-use crate::IVariant;
+use crate::{IDatabase, IVariant};
 use rx_core::text::*;
 
 use redis::Commands;
@@ -10,15 +10,21 @@ pub struct RedisDb {
     client: redis::Client,
 }
 
-impl RedisDb {
-    /// 打开数据库
-    pub fn open(url: &str) -> BoxResult<Self> {
-        let client = redis::Client::open(url)?;
-        Ok(RedisDb { client })
-    }
+impl IDatabase for RedisDb {
+
+
+    type Table = RedisTable;
+    type Variant = RedisVariant;
+
+
+    //// 打开数据库
+    //pub fn open(url: &str) -> BoxResult<Self> {
+    //    let client = redis::Client::open(url)?;
+    //    Ok(RedisDb { client })
+    //}
 
     /// 打开数据库变量
-    pub fn open_variant<T, S>(&mut self, name: S) -> BoxResult<RedisVariant<T>>
+    fn open_variant<T, S>(&mut self, name: S) -> BoxResult<RedisVariant<T>>
     where
         T: Default + DeserializeOwned + Serialize,
         S: AsRef<str>,
@@ -28,7 +34,7 @@ impl RedisDb {
     }
 
     /// 加载数据库变量
-    pub fn load_variant<T, S>(&mut self, name: S) -> BoxResult<T>
+    fn load_variant<T, S>(&mut self, name: S) -> BoxResult<T>
     where
         T: Default + Clone + DeserializeOwned + Serialize,
         S: AsRef<str>,
@@ -38,7 +44,7 @@ impl RedisDb {
     }
 
     /// 打开数据库表
-    pub fn open_table<T, S>(&mut self, name: S) -> BoxResult<RedisTable<T>>
+    fn open_table<T, S>(&mut self, name: S) -> BoxResult<RedisTable<T>>
     where
         T: Clone + DeserializeOwned + Serialize,
         S: AsRef<str>,
@@ -49,13 +55,15 @@ impl RedisDb {
     }
 
     /// 删除数据库表/变量
-    pub fn remove<S>(&self, name: S) -> BoxResult<()>
+    fn remove<S>(&self, name: S) -> BoxResult<()>
     where
         S: AsRef<str>,
     {
         let mut conn = self.client.get_connection()?;
         Ok(conn.del(name.as_ref())?)
     }
+
+
 }
 
 #[cfg(test)]

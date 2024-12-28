@@ -4,9 +4,7 @@ use std::io::{BufReader, BufWriter};
 pub use serde_yaml::from_str;
 pub use serde_yaml::to_string;
 
-use crate::serde_export::*;
-
-pub use super::basic::*;
+use crate::prelude::*;
 
 /// 从YAML文件加载类型
 pub fn load<T, P>(path: P) -> BoxResult<T>

@@ -1,12 +1,11 @@
-use std::marker::PhantomData;
-use std::path::PathBuf;
-
-use super::db::*;
-use crate::DirVariant;
-use crate::interface::*;
-use rx_core::log::info;
+use crate::{DirVariant, IRecord, ITable, IVariant, RecordId};
+use anyhow::anyhow;
+use path_macro::path;
 use rx_core::sys::fs::SortOrder;
 use rx_core::{sys::fs, text::*};
+use std::marker::PhantomData;
+use std::path::PathBuf;
+use url::Url;
 
 //#[derive(Size)]
 pub struct DirTable<T> {
@@ -16,6 +15,7 @@ pub struct DirTable<T> {
 }
 
 impl<T: IRecord> DirTable<T> {
+    /*
     /// 打开表
     pub fn open<S>(db: &DirDb, name: S) -> BoxResult<Self>
     where
@@ -47,6 +47,19 @@ impl<T: IRecord> DirTable<T> {
         let mut table = DirTable::<T>::open(&db, table_name).unwrap();
         table.find_all()
     }
+
+     */
+
+    /// 从URL和表名解析路径
+    fn parse_path(db_url: &str, table_name: &str) -> BoxResult<PathBuf> {
+        let uri = Url::parse(db_url)?;
+        if uri.scheme() != "jddb" {
+            return Err(anyhow!("Invalid scheme"));
+        }
+        let path = path!(uri.path() / table_name);
+        Ok(path.into())
+    }
+
     /// 数据库表路径
     pub fn path(&self) -> &Path {
         self.path.as_path()
@@ -62,14 +75,26 @@ impl<T: IRecord> ITable for DirTable<T> {
     type Record = T;
 
     fn open(db_url: &str, table_name: &str) -> BoxResult<Self> {
-        todo!()
+        let path = Self::parse_path(db_url, table_name)?;
+        fs::ensure_dir_exist(&path)?;
+        let meta_url = format!("{}/{}/meta", db_url, table_name);
+        let last_id = DirVariant::open(&meta_url, "last_id")?;
+        Ok(DirTable::<T> {
+            path,
+            last_id,
+            _p: PhantomData::<T>,
+        })
     }
 
     fn remove(db_url: &str, table_name: &str) -> BoxResult<()> {
-        todo!()
+        let path = Self::parse_path(db_url, table_name)?;
+        Ok(fs::remove(&path)?)
     }
 
-    //type Filter = dyn Fn(&Self::Record) -> bool;
+    fn exists(db_url: &str, table_name: &str) -> BoxResult<bool> {
+        let path = Self::parse_path(db_url, table_name)?;
+        Ok(path.is_dir())
+    }
 
     fn name(&self) -> String {
         fs::file_name(&self.path)
@@ -79,7 +104,7 @@ impl<T: IRecord> ITable for DirTable<T> {
         unimplemented!()
     }
 
-    fn exist(&self, id: RecordId) -> bool {
+    fn contains(&self, id: RecordId) -> bool {
         self.record_path(id).exists()
     }
 
@@ -197,18 +222,18 @@ fn find_max_record_id(path: &Path, min_id: RecordId) -> BoxResult<RecordId> {
 #[cfg(test)]
 mod tests {
     use crate::test::tests::*;
-    use path_macro::path;
 
     use super::*;
 
     #[test]
     fn tab_works() {
-        let dir = "/tmp/test/dir_db2";
+        let url = "jddb:///tmp/jddb-test";
         let name = "student";
-        let db = DirDb::open(dir).unwrap();
-        db.remove_table(name).unwrap();
-        let p = path!(dir / name);
-        assert!(!p.exists());
+
+        DirTable::remove(url, name).unwrap();
+        assert!(!DirTable::exists(url, name));
+
+        let db = DirTable::open(url, name).unwrap();
 
         let mut tab = DirTable::open(&db, &"student").unwrap();
         println!("tab.find_ids: {:?}", tab.find_ids(0));

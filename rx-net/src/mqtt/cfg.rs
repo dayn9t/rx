@@ -5,7 +5,7 @@ use std::time::Duration;
 use url::Url;
 use uuid::Uuid;
 
-use rx_core::serde_export::*;
+use rx_core::prelude::*;
 use rx_core::sys::fs::to_string;
 
 /// Mqtt配置信息

@@ -1,17 +1,14 @@
 use std::path::PathBuf;
 
 use rx_core::text::*;
-
-use crate::interface::*;
-
-use super::db::DirDb;
+use crate::IVariant;
 
 pub struct DirVariant<T> {
     name: String,
     path: PathBuf,
     default_value: Option<T>,
 }
-
+/*
 impl<T: Default> DirVariant<T> {
     /// 打开变量
     pub fn open<S>(db: &DirDb, name: S, default_value: Option<T>) -> BoxResult<Self>
@@ -34,9 +31,24 @@ impl<T: Default> DirVariant<T> {
         Self::open(db, name, Some(T::default()))
     }
 }
-
+*/
 impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for DirVariant<T> {
     type Record = T;
+
+    fn open(db_url: &str, variant_name: &str) -> BoxResult<Self>
+    where
+        Self: Sized
+    {
+        todo!()
+    }
+
+    fn remove(db_url: &str, variant_name: &str) -> BoxResult<()> {
+        todo!()
+    }
+
+    fn exists(db_url: &str, variant_name: &str) -> BoxResult<bool> {
+        todo!()
+    }
 
     fn name(&self) -> &str {
         &self.name

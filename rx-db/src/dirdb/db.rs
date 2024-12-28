@@ -174,7 +174,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::interface::*;
+    use crate::db::*;
     use crate::test::tests::*;
 
     use super::*;

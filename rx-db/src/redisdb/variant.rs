@@ -4,8 +4,7 @@ use std::marker::PhantomData;
 use redis::Commands;
 
 use rx_core::text::*;
-
-use crate::interface::*;
+use crate::IVariant;
 
 pub struct RedisVariant<T> {
     name: String,
@@ -29,6 +28,21 @@ impl<T> RedisVariant<T> {
 
 impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for RedisVariant<T> {
     type Record = T;
+
+    fn open(db_url: &str, variant_name: &str) -> BoxResult<Self>
+    where
+        Self: Sized
+    {
+        todo!()
+    }
+
+    fn remove(db_url: &str, variant_name: &str) -> BoxResult<()> {
+        todo!()
+    }
+
+    fn exists(db_url: &str, variant_name: &str) -> BoxResult<bool> {
+        todo!()
+    }
 
     fn name(&self) -> &str {
         &self.name

@@ -4,8 +4,7 @@ use std::io::{BufReader, BufWriter};
 pub use serde_json::from_str;
 pub use serde_json::to_string_pretty as to_pretty;
 
-pub use super::basic::*;
-use crate::serde_export::*;
+use crate::prelude::*;
 use crate::sys::fs::make_parent;
 
 /// 从JSON文件加载类型

@@ -5,9 +5,7 @@ use std::io::{Read, Write};
 pub use serde_json5::from_str;
 pub use serde_json5::to_string as to_pretty;
 
-use crate::serde_export::*;
-
-pub use super::basic::*;
+use crate::prelude::*;
 
 /// 从JSON文件加载类型
 pub fn load<T, P>(path: P) -> BoxResult<T>

@@ -2,7 +2,7 @@ use anyhow::anyhow;
 use reqwest::StatusCode;
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
-use rx_core::serde_export::{Deserialize, Serialize};
+use rx_core::prelude::{Deserialize, Serialize};
 use rx_core::text::BoxResult;
 use std::fs;
 use std::path::Path;

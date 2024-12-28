@@ -85,7 +85,7 @@ mod tests {
 */
 #[cfg(test)]
 mod tests {
-    use crate::serde_export::*;
+    use crate::prelude::*;
 
     use crate::text::json;
     use std::mem::size_of;
