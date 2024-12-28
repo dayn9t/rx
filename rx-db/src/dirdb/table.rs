@@ -61,6 +61,14 @@ impl<T: IRecord> DirTable<T> {
 impl<T: IRecord> ITable for DirTable<T> {
     type Record = T;
 
+    fn open(db_url: &str, table_name: &str) -> BoxResult<Self> {
+        todo!()
+    }
+
+    fn remove(db_url: &str, table_name: &str) -> BoxResult<()> {
+        todo!()
+    }
+
     //type Filter = dyn Fn(&Self::Record) -> bool;
 
     fn name(&self) -> String {

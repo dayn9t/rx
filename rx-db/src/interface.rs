@@ -27,6 +27,14 @@ pub trait ITable {
     //type Filter: ?Sized; //: Default = Fn(&Self::Record) -> bool;
     //type Filter: ?Sized;
 
+    /// 打开表
+    fn open(db_url: &str, table_name: &str) -> BoxResult<Self>
+    where
+        Self: Sized;
+
+    /// 删除表
+    fn remove(db_url: &str, table_name: &str) -> BoxResult<()>;
+
     /// 获取表名
     fn name(&self) -> String;
 
@@ -136,7 +144,6 @@ pub trait IVariant {
     fn set(&mut self, record: &Self::Record) -> BoxResult<()>;
 }
 
-/*
 /// 数据库
 pub trait IDatabase {
     /// 数据库表类型
@@ -166,12 +173,12 @@ pub trait IDatabase {
 
     /// 加载数据库变量
     fn load_variant<T, S>(&mut self, name: S) -> Result<T, Self::Err>
-        where
-            T: Default + DeserializeOwned + Serialize,
-            S: AsRef<str>,
+    where
+        T: Default + DeserializeOwned + Serialize,
+        S: AsRef<str>,
     {
-        let mut v = self.open_variant(name)?;
-        v.get()
+        let mut v = self.open_variant::<T, S>(name)?;
+        //v.get()
+        todo!("load_variant")
     }
 }
-*/

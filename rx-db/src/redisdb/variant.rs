@@ -15,15 +15,15 @@ pub struct RedisVariant<T> {
 
 impl<T> RedisVariant<T> {
     /// 打开变量
-    pub fn open<S>(conn: redis::Connection, name: S) -> Self
+    pub fn open<S>(conn: redis::Connection, name: S) -> BoxResult<Self>
     where
         S: AsRef<str>,
     {
-        RedisVariant::<T> {
+        Ok(RedisVariant::<T> {
             name: name.as_ref().to_string(),
             conn: RefCell::new(conn),
             _p: PhantomData::<T>,
-        }
+        })
     }
 }
 

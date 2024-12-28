@@ -3,39 +3,44 @@ use std::marker::PhantomData;
 
 use redis::Commands;
 
-use rx_core::text::*;
-
 use crate::interface::*;
+use crate::{DirVariant, RedisDb, RedisVariant};
+use rx_core::text::*;
 
 pub struct RedisTable<T> {
     name: String,
+    meta_name: String,
     conn: RefCell<redis::Connection>,
     _p: PhantomData<T>,
 }
 
-impl<T> RedisTable<T> {
-    /// 打开表
-    pub fn open<S>(conn: redis::Connection, name: S) -> Self
-    where
-        S: AsRef<str>,
-    {
-        let name = name.as_ref().to_string();
-        RedisTable::<T> {
-            name,
-            conn: RefCell::new(conn),
-            _p: PhantomData::<T>,
-        }
-    }
-
-    /*
-    /// 记录文件全路径
-    fn record_path(&self, id: usize) -> PathBuf {
-        self.path.join(format!("{}.json", id))
-    }*/
-}
+impl<T> RedisTable<T> {}
 
 impl<T: IRecord> ITable for RedisTable<T> {
     type Record = T;
+
+    fn open(db_url: &str, name: &str) -> BoxResult<Self>
+    where
+        Self: Sized,
+    {
+        let client = redis::Client::open(db_url)?;
+        let conn = client.get_connection()?;
+
+        let name = name.to_owned();
+        let meta_name = format!("{}_meta", name);
+        Ok(Self {
+            name,
+            meta_name,
+            conn: RefCell::new(conn),
+            _p: PhantomData::<T>,
+        })
+    }
+
+    fn remove(db_url: &str, table_name: &str) -> BoxResult<()> {
+        let client = redis::Client::open(db_url)?;
+        let mut conn = client.get_connection()?;
+        Ok(conn.del(table_name)?)
+    }
 
     fn name(&self) -> String {
         self.name.clone()
@@ -62,6 +67,7 @@ impl<T: IRecord> ITable for RedisTable<T> {
     }
 
     fn put(&mut self, id: RecordId, record: &mut Self::Record) -> BoxResult<()> {
+        record.set_id(id);
         let s = json::to_pretty(record).unwrap();
         Ok(self.conn.borrow_mut().hset(&self.name, id, &s)?)
     }
@@ -138,7 +144,7 @@ mod tests {
 
     #[test]
     fn tab_works() {
-        let url = "redis://:howell.net.cn@127.0.0.1/";
+        let url = "redis://127.0.0.1/";
         let name = "student";
         let mut db = RedisDb::open(url).unwrap();
         db.remove(name).unwrap();
@@ -172,7 +178,7 @@ mod tests {
         let v = tab.find(0, 1, |s| s.name == name).unwrap();
         assert_eq!(v, vec![s1.clone()]);
 
-        for _ in 1..100 {
+        for i in 1..200 {
             let _id1 = tab.post(&mut s1).unwrap();
         }
     }

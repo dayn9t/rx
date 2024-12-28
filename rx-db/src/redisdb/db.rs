@@ -24,7 +24,7 @@ impl RedisDb {
         S: AsRef<str>,
     {
         let conn = self.client.get_connection()?;
-        Ok(RedisVariant::open(conn, name))
+        RedisVariant::open(conn, name)
     }
 
     /// 加载数据库变量
@@ -44,7 +44,8 @@ impl RedisDb {
         S: AsRef<str>,
     {
         let conn = self.client.get_connection()?;
-        Ok(RedisTable::open(conn, name))
+        //Ok(RedisTable::open(conn, name))
+        todo!("open_table")
     }
 
     /// 删除数据库表/变量
