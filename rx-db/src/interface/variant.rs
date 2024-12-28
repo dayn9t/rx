@@ -15,14 +15,17 @@ pub trait IVariant<T: Default + Clone> {
         Self::open_with_default(db_url, name, T::default())
     }
 
-    /// 删除变量
-    fn remove(db_url: &str, name: &str) -> BoxResult<()>;
+    //// 删除变量
+    //fn remove(db_url: &str, name: &str) -> BoxResult<()>;
 
     /// 获取变量名
     fn name(&self) -> &str;
 
     /// 判断变量是否存在
     fn exist(&self) -> bool;
+
+    /// 获取缺省值
+    fn get_default(&self) -> &T;
 
     /// 获取变量值
     fn get(&self) -> BoxResult<T>;

@@ -7,7 +7,7 @@ use std::collections::HashMap;
 pub type RecordId = usize;
 
 /// 带有Id的记录
-pub trait IRecord: Default + Serialize + DeserializeOwned {
+pub trait IRecord: Default + Serialize + DeserializeOwned + Sized {
     fn get_id(&self) -> Option<RecordId>;
     fn set_id(&mut self, id: RecordId);
 }
@@ -18,14 +18,14 @@ pub fn vec_to_map<R: IRecord>(rs: Vec<R>) -> HashMap<RecordId, R> {
 }
 
 /// 数据库表
-pub trait ITable<T: IRecord> {
+pub trait ITableDyn<T: IRecord> {
     /// 打开表
     fn open(db_url: &str, table_name: &str) -> BoxResult<Self>
     where
         Self: Sized;
 
-    /// 删除表
-    fn remove(db_url: &str, table_name: &str) -> BoxResult<()>;
+    //// 删除表
+    //fn remove(db_url: &str, table_name: &str) -> BoxResult<()>;
 
     /// 获取表名
     fn name(&self) -> String;
@@ -76,14 +76,39 @@ pub trait ITable<T: IRecord> {
         }
         Ok(())
     }
+
+    /// 查询记录集
+    fn find_all(&self) -> BoxResult<Vec<T>>;
+
+    /// 查询K/V对
+    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>>;
+
+    /// 查询Id集
+    fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>>;
+
+    /// 获取下一个ID
+    fn next_id(&mut self) -> BoxResult<RecordId>;
+}
+
+/// 数据库表
+pub trait ITable<T: IRecord>: ITableDyn<T> {
     /// 查询记录集
     fn find<P>(&self, min_id: RecordId, limit: usize, predicate: P) -> BoxResult<Vec<T>>
     where
-        P: Fn(&T) -> bool;
-
-    /// 查询记录集
-    fn find_all(&self) -> BoxResult<Vec<T>> {
-        self.find(RecordId::default(), usize::MAX, |_| true)
+        P: Fn(&T) -> bool,
+    {
+        let mut vec = Vec::new();
+        let ids = self.find_ids(min_id)?;
+        for id in ids {
+            let r = self.get(id)?;
+            if predicate(&r) {
+                vec.push(r);
+                if vec.len() >= limit {
+                    break;
+                }
+            }
+        }
+        Ok(vec)
     }
 
     /// 查询K/V对
@@ -94,16 +119,13 @@ pub trait ITable<T: IRecord> {
         predicate: P,
     ) -> BoxResult<Vec<(RecordId, T)>>
     where
-        P: Fn(&T) -> bool;
-
-    /// 查询K/V对
-    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>> {
-        self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
+        P: Fn(&T) -> bool,
+    {
+        let records = self.find(min_id, limit, predicate)?;
+        let pairs = records
+            .into_iter()
+            .map(|record| (record.get_id().unwrap(), record))
+            .collect();
+        Ok(pairs)
     }
-
-    /// 查询Id集
-    fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>>;
-
-    /// 获取下一个ID
-    fn next_id(&mut self) -> BoxResult<RecordId>;
 }

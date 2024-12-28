@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::marker::PhantomData;
 
 use redis::Commands;
 
@@ -9,40 +8,27 @@ use rx_core::text::*;
 pub struct RedisVariant<T> {
     name: String,
     conn: RefCell<redis::Connection>,
-    _p: PhantomData<T>,
+    default_value: T,
 }
 
-impl<T> RedisVariant<T> {
-    /// 打开变量
-    pub fn open<S>(conn: redis::Connection, name: S) -> BoxResult<Self>
-    where
-        S: AsRef<str>,
-    {
-        Ok(RedisVariant::<T> {
-            name: name.as_ref().to_string(),
-            conn: RefCell::new(conn),
-            _p: PhantomData::<T>,
-        })
-    }
-}
-
-impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for RedisVariant<T> {
-    type Record = T;
-
-    fn open(db_url: &str, variant_name: &str) -> BoxResult<Self>
+impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for RedisVariant<T> {
+    fn open_with_default(db_url: &str, name: &str, default_value: T) -> BoxResult<Self>
     where
         Self: Sized,
     {
-        todo!()
+        let client = redis::Client::open(db_url)?;
+        let conn = client.get_connection()?;
+
+        Ok(Self {
+            name: name.to_owned(),
+            conn: RefCell::new(conn),
+            default_value,
+        })
     }
 
-    fn remove(db_url: &str, variant_name: &str) -> BoxResult<()> {
+    /*fn remove(db_url: &str, variant_name: &str) -> BoxResult<()> {
         todo!()
-    }
-
-    fn exists(db_url: &str, variant_name: &str) -> BoxResult<bool> {
-        todo!()
-    }
+    }*/
 
     fn name(&self) -> &str {
         &self.name
@@ -52,13 +38,17 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for RedisVarian
         self.conn.borrow_mut().exists(&self.name).unwrap()
     }
 
-    fn get(&self) -> BoxResult<Self::Record> {
+    fn get_default(&self) -> &T {
+        todo!()
+    }
+
+    fn get(&self) -> BoxResult<T> {
         let s: String = self.conn.borrow_mut().get(&self.name)?;
-        let v: Self::Record = json::from_str(&s).unwrap();
+        let v: T = json::from_str(&s).unwrap();
         Ok(v)
     }
 
-    fn set(&mut self, record: &Self::Record) -> BoxResult<()> {
+    fn set(&mut self, record: &T) -> BoxResult<()> {
         let s = json::to_pretty(record).unwrap();
         Ok(self.conn.borrow_mut().set(&self.name, &s)?)
     }

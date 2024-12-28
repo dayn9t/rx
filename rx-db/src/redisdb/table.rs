@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use redis::Commands;
 
-use crate::{IRecord, ITable, RecordId};
+use crate::{IRecord, ITable, ITableDyn, RecordId};
 use rx_core::text::*;
 
 pub struct RedisTable<T> {
@@ -15,9 +15,7 @@ pub struct RedisTable<T> {
 
 impl<T> RedisTable<T> {}
 
-impl<T: IRecord> ITable for RedisTable<T> {
-    type Record = T;
-
+impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
     fn open(db_url: &str, name: &str) -> BoxResult<Self>
     where
         Self: Sized,
@@ -35,15 +33,11 @@ impl<T: IRecord> ITable for RedisTable<T> {
         })
     }
 
-    fn remove(db_url: &str, table_name: &str) -> BoxResult<()> {
+    /*fn remove(db_url: &str, table_name: &str) -> BoxResult<()> {
         let client = redis::Client::open(db_url)?;
         let mut conn = client.get_connection()?;
         Ok(conn.del(table_name)?)
-    }
-
-    fn exists(db_url: &str, table_name: &str) -> BoxResult<bool> {
-        todo!()
-    }
+    }*/
 
     fn name(&self) -> String {
         self.name.clone()
@@ -57,15 +51,13 @@ impl<T: IRecord> ITable for RedisTable<T> {
         self.conn.borrow_mut().hexists(&self.name, id).unwrap()
     }
 
-    fn get(&self, id: RecordId) -> BoxResult<Self::Record> {
+    fn get(&self, id: RecordId) -> BoxResult<T> {
         let s: String = self.conn.borrow_mut().hget(&self.name, id)?;
-        let v: Self::Record = json::from_str(&s).unwrap();
+        let v: T = json::from_str(&s).unwrap();
         Ok(v)
     }
 
-
-
-    fn put(&mut self, id: RecordId, record: &mut Self::Record) -> BoxResult<()> {
+    fn put(&mut self, id: RecordId, record: &mut T) -> BoxResult<()> {
         record.set_id(id);
         let s = json::to_pretty(record).unwrap();
         Ok(self.conn.borrow_mut().hset(&self.name, id, &s)?)
@@ -75,53 +67,7 @@ impl<T: IRecord> ITable for RedisTable<T> {
         Ok(self.conn.borrow_mut().hdel(&self.name, id)?)
     }
 
-    fn find<P>(
-        &mut self,
-        min_id: RecordId,
-        limit: usize,
-        predicate: P,
-    ) -> BoxResult<Vec<Self::Record>>
-    where
-        P: Fn(&Self::Record) -> bool,
-    {
-        let mut vec = Vec::new();
-        let ids = self.find_ids(min_id)?;
-        for id in ids {
-            let r = self.get(id)?;
-            if predicate(&r) {
-                vec.push(r);
-                if vec.len() >= limit {
-                    break;
-                }
-            }
-        }
-        Ok(vec)
-    }
-
-    fn find_pairs<P>(
-        &mut self,
-        min_id: RecordId,
-        limit: usize,
-        predicate: P,
-    ) -> BoxResult<Vec<(RecordId, Self::Record)>>
-    where
-        P: Fn(&Self::Record) -> bool,
-    {
-        let mut vec = Vec::new();
-        let ids = self.find_ids(min_id)?;
-        for id in ids {
-            let r = self.get(id)?;
-            if predicate(&r) {
-                vec.push((id, r));
-                if vec.len() >= limit {
-                    break;
-                }
-            }
-        }
-        Ok(vec)
-    }
-
-    fn find_ids(&mut self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
+    fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
         let ids: Vec<RecordId> = self.conn.borrow_mut().hkeys(&self.name)?;
         let mut ids: Vec<_> = ids.into_iter().filter(|id| *id >= min_id).collect();
         ids.sort();
@@ -133,7 +79,19 @@ impl<T: IRecord> ITable for RedisTable<T> {
         let next = ids.last().unwrap_or(&0) + 1;
         Ok(next)
     }
+
+    /// 查询记录集
+    fn find_all(&self) -> BoxResult<Vec<T>> {
+        self.find(RecordId::default(), usize::MAX, |_| true)
+    }
+
+    /// 查询K/V对
+    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>> {
+        self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
+    }
 }
+impl<T: IRecord> ITable<T> for RedisTable<T> {}
+
 /*
 #[cfg(test)]
 mod tests {

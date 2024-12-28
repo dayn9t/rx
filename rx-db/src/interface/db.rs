@@ -1,40 +1,85 @@
-/*
+use crate::{IRecord, ITableDyn, IVariant, RecordId};
+use rx_core::prelude::*;
+
 /// 数据库
 pub trait IDatabase {
-    /// 数据库表类型
-    type Table: ITable; //TODO: Table是可变泛型，不能在这里确定，可能要把ITable改成泛型形式才可以
-
-    /// 数据库变量类型
-    type Variant: IVariant;
-
-    //// 数据库错误类型
-    //type Err;
-
-    /// 打开数据库表
-    fn open_table<T, S>(&mut self, name: S) -> BoxResult<Self::Table>
+    /// 打开数据库
+    fn open(db_url: &str) -> BoxResult<Self>
     where
-        S: AsRef<str>;
+        Self: Sized;
 
-    /// 删除数据库表/变量
-    fn remove<S>(&self, name: S) -> BoxResult<()>
+    /// 删除数据库变量
+    fn remove_variant(&self, variant_name: &str) -> BoxResult<()>;
+
+    /// 获取数据库变量
+    fn get_variant<T>(&self, variant_name: &str) -> BoxResult<T>
     where
-        S: AsRef<str>;
+        T: Default + DeserializeOwned + Serialize + Clone,
+    {
+        self.open_variant(variant_name)?.get()
+    }
+
+    /// 设置数据库变量
+    fn set_variant<T>(&self, variant_name: &str, value: &T) -> BoxResult<()>
+    where
+        T: Default + DeserializeOwned + Serialize + Clone,
+    {
+        let mut v = self.open_variant(variant_name)?;
+        v.set(value)
+    }
 
     /// 打开数据库变量
-    fn open_variant<T, S>(&mut self, name: S) -> BoxResult<Self::Variant>
+    fn open_variant<T>(&self, variant_name: &str) -> BoxResult<Box<dyn IVariant<T>>>
     where
         T: Default + DeserializeOwned + Serialize,
-        S: AsRef<str>;
-
-    /// 加载数据库变量
-    fn load_variant<T, S>(&mut self, name: S) -> BoxResult<T>
-    where
-        T: Default + DeserializeOwned + Serialize,
-        S: AsRef<str>,
     {
-        let mut v = self.open_variant::<T, S>(name)?;
-        //v.get()
-        todo!("load_variant")
+        self.open_variant_with_default(variant_name, T::default())
+    }
+
+    /// 打开数据库变量 - 指定默认值
+    fn open_variant_with_default<T>(
+        &self,
+        variant_name: &str,
+        default: T,
+    ) -> BoxResult<Box<dyn IVariant<T>>>
+    where
+        T: Default + DeserializeOwned + Serialize;
+
+    /// 删除数据库表
+    fn remove_table(&self, table_name: &str) -> BoxResult<()>;
+
+    /// 打开数据库表
+    fn open_table<R: IRecord>(&self, table_name: &str) -> BoxResult<Box<dyn ITableDyn<R>>>;
+
+    /// 查找数据库表所有记录
+    fn find_all_records<R: IRecord>(&self, table_name: &str) -> BoxResult<Vec<R>> {
+        self.find_records(table_name, RecordId::default(), usize::MAX, |_| true)
+    }
+
+    /// 从数据库表中查找记录集合
+    fn find_records<R, P>(
+        &self,
+        table_name: &str,
+        min_id: RecordId,
+        limit: usize,
+        predicate: P,
+    ) -> BoxResult<Vec<R>>
+    where
+        R: IRecord,
+        P: Fn(&R) -> bool;
+
+    /// 从数据库表获取指定记录
+    fn get_record<R: IRecord>(&self, table_name: &str, id: RecordId) -> BoxResult<R> {
+        self.open_table(table_name)?.get(id)
+    }
+
+    /// 更新数据库表中指定记录
+    fn put_record<R: IRecord>(
+        &self,
+        table_name: &str,
+        id: RecordId,
+        record: &mut R,
+    ) -> BoxResult<()> {
+        self.open_table(table_name)?.put(id, record)
     }
 }
-*/

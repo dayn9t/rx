@@ -1,5 +1,7 @@
+use crate::{IDatabase, IRecord, ITableDyn, IVariant, RecordId};
 use anyhow::anyhow;
 use path_macro::path;
+use rx_core::sys::fs;
 use rx_core::text::*;
 use std::path::PathBuf;
 use url::Url;
@@ -25,37 +27,89 @@ pub fn dbo_path(db_url: &str, name: &str) -> BoxResult<PathBuf> {
     Ok(path.into())
 }
 
+/// 获取数据库对象路径，从URL和表名解析路径
+pub fn db_path(db_url: &str) -> BoxResult<PathBuf> {
+    let uri = Url::parse(db_url)?;
+    if uri.scheme() != SCHEME {
+        return Err(anyhow!("Invalid scheme"));
+    }
+    Ok(path!(uri.path()))
+}
+
 /// 数据库变量路径
 pub fn variant_path(db_url: &str, name: &str) -> BoxResult<PathBuf> {
     let path = dbo_path(db_url, name)?;
     Ok(path.with_extension(EXT))
 }
 
-/*
 pub struct DirDb {
     path: PathBuf,
 }
 
-impl DirDb {
-    /// 打开数据库
-    pub fn open<P>(path: P) -> BoxResult<Self>
+impl IDatabase for DirDb {
+    fn open(db_url: &str) -> BoxResult<Self>
     where
-        P: AsRef<Path>,
+        Self: Sized,
     {
+        let path = db_path(db_url)?;
         fs::ensure_dir_exist(&path)?;
-        Ok(DirDb {
-            path: path.as_ref().to_owned(),
-        })
+        Ok(DirDb { path })
     }
 
-    /// 打开数据库
-    pub fn open_name<P, S>(path: &P, name: &S) -> BoxResult<Self>
+    fn remove_variant(&self, variant_name: &str) -> BoxResult<()> {
+        let path = self.variant_path(variant_name);
+        if path.exists() && !path.is_file() {
+            return Err(anyhow!("Table path not dir"));
+        }
+        Ok(fs::remove(&path)?)
+    }
+
+    fn open_variant_with_default<T>(
+        &self,
+        variant_name: &str,
+        default: T,
+    ) -> BoxResult<Box<dyn IVariant<T>>>
     where
-        P: AsRef<Path>,
-        S: AsRef<str>,
+        T: Default + DeserializeOwned + Serialize,
     {
-        let path = fs::join(&path, &name.as_ref());
-        Self::open(&path)
+        todo!()
+    }
+
+    fn remove_table(&self, table_name: &str) -> BoxResult<()> {
+        let path = self.table_path(table_name);
+        if path.exists() && !path.is_dir() {
+            return Err(anyhow!("Table path not dir"));
+        }
+        Ok(fs::remove(&path)?)
+    }
+
+    fn open_table<R: IRecord>(&self, table_name: &str) -> BoxResult<Box<dyn ITableDyn<R>>> {
+        todo!()
+    }
+
+    fn find_records<R, P>(
+        &self,
+        table_name: &str,
+        min_id: RecordId,
+        limit: usize,
+        predicate: P,
+    ) -> BoxResult<Vec<R>>
+    where
+        R: IRecord,
+        P: Fn(&R) -> bool,
+    {
+        todo!()
+    }
+}
+impl DirDb {
+    /// 表路径
+    pub fn table_path(&self, table_name: &str) -> PathBuf {
+        path!(self.path / table_name)
+    }
+
+    /// 变量路径
+    pub fn variant_path(&self, variant_name: &str) -> PathBuf {
+        path!(self.path / format!("{variant_name}.{EXT}"))
     }
 
     /// 数据库名称
@@ -95,16 +149,6 @@ impl DirDb {
         DirVariant::open(self, name, default)?.get()
     }
 
-    /// 数据库变量路径
-    pub fn variant_path<S>(&self, name: S) -> PathBuf
-    where
-        S: AsRef<str>,
-    {
-        let mut path = path!(&self.path() / "variant" / &name.as_ref());
-        path.set_extension("json");
-        path
-    }
-
     /// 删除数据库变量
     pub fn remove_variant<S>(&self, name: S) -> BoxResult<()>
     where
@@ -122,19 +166,8 @@ impl DirDb {
         DirTable::open(self, name)
     }
 
-    /// 数据库表路径
-    pub fn table_path<S>(&self, name: S) -> PathBuf
-    where
-        S: AsRef<str>,
-    {
-        fs::join(&self.path(), &name.as_ref())
-    }
-
     /// 删除数据库表
-    pub fn remove_table<S>(&self, name: S) -> BoxResult<()>
-    where
-        S: AsRef<str>,
-    {
+    pub fn remove_table<S>(&self, name: &str) -> BoxResult<()> {
         self.remove_variant(&id_var_name(name.as_ref()))?;
         Ok(fs::remove(&self.table_path(name))?)
     }
@@ -150,10 +183,9 @@ impl DirDb {
             P: Fn(&Self::Record) -> bool;
     */
     /// 加载表中的记录
-    pub fn load_records<T, S, P>(&self, name: S, predicate: P) -> BoxResult<Vec<T>>
+    pub fn load_records<T, S, P>(&self, name: &str, predicate: P) -> BoxResult<Vec<T>>
     where
         T: IRecord,
-        S: AsRef<str>,
         P: Fn(&T) -> bool,
     {
         let mut table = DirTable::<T>::open(self, name)?;
@@ -169,8 +201,6 @@ impl DirDb {
         self.load_records(name, |_: &T| true)
     }
 }
-
- */
 
 /*
 

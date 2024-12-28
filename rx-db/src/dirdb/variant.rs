@@ -1,5 +1,6 @@
 use crate::IVariant;
 use crate::dirdb::variant_path;
+use path_macro::path;
 use rx_core::sys::fs;
 use rx_core::text::*;
 use std::path::PathBuf;
@@ -8,6 +9,17 @@ pub struct DirVariant<T> {
     name: String,
     path: PathBuf,
     default_value: T,
+}
+
+impl<T> DirVariant<T> {
+    pub fn open_path(db_path: &PathBuf, name: &str) -> BoxResult<Self> {
+        let path = path!(db_path / name);
+        Ok(DirVariant::<T> {
+            name: name.to_owned(),
+            path,
+            default_value: Default::default(),
+        })
+    }
 }
 
 impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for DirVariant<T> {
@@ -24,11 +36,6 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for DirVaria
         })
     }
 
-    fn remove(db_url: &str, name: &str) -> BoxResult<()> {
-        let path = variant_path(db_url, name)?;
-        Ok(fs::remove(&path)?)
-    }
-
     fn name(&self) -> &str {
         &self.name
     }
@@ -37,9 +44,13 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for DirVaria
         self.path.exists()
     }
 
+    fn get_default(&self) -> &T {
+        &self.default_value
+    }
+
     fn get(&self) -> BoxResult<T> {
         if !self.exist() {
-            Ok(self.default_value.clone()) // TODO: 处理default空
+            Ok(self.get_default().clone())
         } else {
             json::load(&self.path)
         }

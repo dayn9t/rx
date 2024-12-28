@@ -1,5 +1,6 @@
 use crate::dirdb::{DirVariant, EXT, dbo_path};
-use crate::{IRecord, ITable, IVariant, RecordId};
+use crate::{IRecord, ITable, ITableDyn, IVariant, RecordId};
+use path_macro::path;
 use rx_core::sys::fs::SortOrder;
 use rx_core::{sys::fs, text::*};
 use std::marker::PhantomData;
@@ -14,40 +15,19 @@ pub struct DirTable<T> {
 }
 
 impl<T: IRecord> DirTable<T> {
-    /*
     /// 打开表
-    pub fn open<S>(db: &DirDb, name: S) -> BoxResult<Self>
-    where
-        S: AsRef<str>,
-    {
-        let last_id_name = format!("{}_id", name.as_ref());
-        let path = db.table_path(&name);
+    pub fn open_path<S>(db_path: &Path, name: &str) -> BoxResult<Self> {
+        let path = path!(db_path, name);
         fs::ensure_dir_exist(&path)?;
-
-        let mut last_id = DirVariant::open(&db, last_id_name, None)?;
-        if !last_id.exist() {
-            let max_id = find_max_record_id(&path, 0)?;
-            last_id.set(&max_id)?;
-            info!("{}: last_id set to {}", name.as_ref(), max_id);
-        }
-
+        let meta_path = path!(path / ".meta");
+        let last_id = DirVariant::open_path(&meta_path, "last_id")?;
         Ok(DirTable::<T> {
+            name: name.to_owned(),
             path,
             last_id,
             _p: PhantomData::<T>,
         })
     }
-
-    /// 加载全部记录
-    pub fn load_records<S>(db: &DirDb, table_name: &S) -> BoxResult<Vec<T>>
-    where
-        S: AsRef<str>,
-    {
-        let mut table = DirTable::<T>::open(&db, table_name).unwrap();
-        table.find_all()
-    }
-
-     */
 
     /// 数据库表路径
     pub fn path(&self) -> &Path {
@@ -60,7 +40,7 @@ impl<T: IRecord> DirTable<T> {
     }
 }
 
-impl<T: IRecord> ITable<T> for DirTable<T> {
+impl<T: IRecord> ITableDyn<T> for DirTable<T> {
     fn open(db_url: &str, name: &str) -> BoxResult<Self> {
         let path = dbo_path(db_url, name)?;
         fs::ensure_dir_exist(&path)?;
@@ -72,11 +52,6 @@ impl<T: IRecord> ITable<T> for DirTable<T> {
             last_id,
             _p: PhantomData::<T>,
         })
-    }
-
-    fn remove(db_url: &str, table_name: &str) -> BoxResult<()> {
-        let path = dbo_path(db_url, table_name)?;
-        Ok(fs::remove(&path)?)
     }
 
     fn name(&self) -> String {
@@ -105,6 +80,29 @@ impl<T: IRecord> ITable<T> for DirTable<T> {
         Ok(fs::remove(&self.record_path(id))?)
     }
 
+    fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
+        find_record_ids(&self.path, min_id)
+    }
+
+    fn next_id(&mut self) -> BoxResult<RecordId> {
+        let mut id = self.last_id.get_or_default();
+        id += 1;
+        self.last_id.set(&id)?;
+        Ok(id)
+    }
+
+    /// 查询记录集
+    fn find_all(&self) -> BoxResult<Vec<T>> {
+        self.find(RecordId::default(), usize::MAX, |_| true)
+    }
+
+    /// 查询K/V对
+    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>> {
+        self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
+    }
+}
+
+impl<T: IRecord> ITable<T> for DirTable<T> {
     fn find<P>(&self, min_id: RecordId, limit: usize, predicate: P) -> BoxResult<Vec<T>>
     where
         P: Fn(&T) -> bool,
@@ -121,40 +119,6 @@ impl<T: IRecord> ITable<T> for DirTable<T> {
             }
         }
         Ok(vec)
-    }
-
-    fn find_pairs<P>(
-        &self,
-        min_id: RecordId,
-        limit: usize,
-        predicate: P,
-    ) -> BoxResult<Vec<(RecordId, T)>>
-    where
-        P: Fn(&T) -> bool,
-    {
-        let mut vec = Vec::new();
-        let ids = self.find_ids(min_id)?;
-        for id in ids {
-            let r = self.get(id)?;
-            if predicate(&r) {
-                vec.push((id, r));
-                if vec.len() >= limit {
-                    break;
-                }
-            }
-        }
-        Ok(vec)
-    }
-
-    fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
-        find_record_ids(&self.path, min_id)
-    }
-
-    fn next_id(&mut self) -> BoxResult<RecordId> {
-        let mut id = self.last_id.get_or_default();
-        id += 1;
-        self.last_id.set(&id)?;
-        Ok(id)
     }
 }
 

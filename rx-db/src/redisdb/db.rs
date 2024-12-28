@@ -1,22 +1,61 @@
-use super::table::*;
-use super::variant::*;
-
-use crate::{IDatabase, IVariant};
+use crate::{IDatabase, IRecord, ITableDyn, IVariant, RecordId};
 use rx_core::text::*;
 
 use redis::Commands;
+
+pub const SCHEME: &str = "redis";
 
 pub struct RedisDb {
     client: redis::Client,
 }
 
 impl IDatabase for RedisDb {
+    fn open(db_url: &str) -> BoxResult<Self>
+    where
+        Self: Sized,
+    {
+        todo!()
+    }
 
+    fn remove_variant(&self, variant_name: &str) -> BoxResult<()> {
+        todo!()
+    }
 
-    type Table = RedisTable;
-    type Variant = RedisVariant;
+    fn open_variant_with_default<T>(
+        &self,
+        variant_name: &str,
+        default: T,
+    ) -> BoxResult<Box<dyn IVariant<T>>>
+    where
+        T: Default + DeserializeOwned + Serialize,
+    {
+        todo!()
+    }
 
+    fn remove_table(&self, table_name: &str) -> BoxResult<()> {
+        todo!()
+    }
 
+    fn open_table<R: IRecord>(&self, table_name: &str) -> BoxResult<Box<dyn ITableDyn<R>>> {
+        todo!()
+    }
+
+    fn find_records<R, P>(
+        &self,
+        table_name: &str,
+        min_id: RecordId,
+        limit: usize,
+        predicate: P,
+    ) -> BoxResult<Vec<R>>
+    where
+        R: IRecord,
+        P: Fn(&R) -> bool,
+    {
+        todo!()
+    }
+}
+
+impl RedisDb {
     //// 打开数据库
     //pub fn open(url: &str) -> BoxResult<Self> {
     //    let client = redis::Client::open(url)?;
@@ -62,17 +101,13 @@ impl IDatabase for RedisDb {
         let mut conn = self.client.get_connection()?;
         Ok(conn.del(name.as_ref())?)
     }
-
-
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn db_works() {
-        let url = "redis://:howell.net.cn@127.0.0.1/";
-        let _db = RedisDb::open(url).unwrap();
+        //let url = "redis://:howell.net.cn@127.0.0.1/";
+        //let _db = RedisDb::open(url).unwrap();
     }
 }

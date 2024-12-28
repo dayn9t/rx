@@ -2,7 +2,7 @@ use tokio::sync::Mutex;
 use tokio::sync::MutexGuard;
 
 pub use rx_db::RecordId;
-use rx_db::{DirDb, DirTable, IRecord, ITable};
+use rx_db::{DirDb, DirTable, IRecord, ITableDyn};
 
 use super::common::*;
 

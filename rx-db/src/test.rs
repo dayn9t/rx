@@ -39,7 +39,7 @@ pub mod tests {
         assert_eq!(var.get().unwrap(), s2);
     }
 
-    pub fn test_table<T: ITable<Student>>(db_url: &str, name: &str) {
+    pub fn test_table<T: ITableDyn<Student>>(db_url: &str, name: &str) {
         T::remove(db_url, name).unwrap();
 
         let mut tab = DirTable::open(db_url, name).unwrap();
