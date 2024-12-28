@@ -1,14 +1,13 @@
-use crate::{DirVariant, IRecord, ITable, IVariant, RecordId};
-use anyhow::anyhow;
-use path_macro::path;
+use crate::dirdb::{DirVariant, EXT, dbo_path};
+use crate::{IRecord, ITable, IVariant, RecordId};
 use rx_core::sys::fs::SortOrder;
 use rx_core::{sys::fs, text::*};
 use std::marker::PhantomData;
 use std::path::PathBuf;
-use url::Url;
 
 //#[derive(Size)]
 pub struct DirTable<T> {
+    name: String,
     path: PathBuf,
     last_id: DirVariant<RecordId>,
     _p: PhantomData<T>,
@@ -50,16 +49,6 @@ impl<T: IRecord> DirTable<T> {
 
      */
 
-    /// 从URL和表名解析路径
-    fn parse_path(db_url: &str, table_name: &str) -> BoxResult<PathBuf> {
-        let uri = Url::parse(db_url)?;
-        if uri.scheme() != "jddb" {
-            return Err(anyhow!("Invalid scheme"));
-        }
-        let path = path!(uri.path() / table_name);
-        Ok(path.into())
-    }
-
     /// 数据库表路径
     pub fn path(&self) -> &Path {
         self.path.as_path()
@@ -67,19 +56,18 @@ impl<T: IRecord> DirTable<T> {
 
     /// 记录文件全路径
     fn record_path(&self, id: RecordId) -> PathBuf {
-        self.path.join(format!("{}.json", id))
+        self.path.join(format!("{}.{}", id, EXT))
     }
 }
 
-impl<T: IRecord> ITable for DirTable<T> {
-    type Record = T;
-
-    fn open(db_url: &str, table_name: &str) -> BoxResult<Self> {
-        let path = Self::parse_path(db_url, table_name)?;
+impl<T: IRecord> ITable<T> for DirTable<T> {
+    fn open(db_url: &str, name: &str) -> BoxResult<Self> {
+        let path = dbo_path(db_url, name)?;
         fs::ensure_dir_exist(&path)?;
-        let meta_url = format!("{}/{}/meta", db_url, table_name);
+        let meta_url = format!("{}/{}/.meta", db_url, name);
         let last_id = DirVariant::open(&meta_url, "last_id")?;
         Ok(DirTable::<T> {
+            name: name.to_owned(),
             path,
             last_id,
             _p: PhantomData::<T>,
@@ -87,38 +75,23 @@ impl<T: IRecord> ITable for DirTable<T> {
     }
 
     fn remove(db_url: &str, table_name: &str) -> BoxResult<()> {
-        let path = Self::parse_path(db_url, table_name)?;
+        let path = dbo_path(db_url, table_name)?;
         Ok(fs::remove(&path)?)
     }
 
-    fn exists(db_url: &str, table_name: &str) -> BoxResult<bool> {
-        let path = Self::parse_path(db_url, table_name)?;
-        Ok(path.is_dir())
-    }
-
     fn name(&self) -> String {
-        fs::file_name(&self.path)
-    }
-
-    fn len(&self) -> usize {
-        unimplemented!()
+        self.name.clone()
     }
 
     fn contains(&self, id: RecordId) -> bool {
-        self.record_path(id).exists()
+        self.record_path(id).is_file()
     }
 
-    fn get(&self, id: RecordId) -> BoxResult<Self::Record> {
+    fn get(&self, id: RecordId) -> BoxResult<T> {
         json::load(&self.record_path(id))
     }
 
-    fn post(&mut self, record: &mut Self::Record) -> BoxResult<RecordId> {
-        let id = self.next_id()?;
-        self.put(id, record)?;
-        Ok(id)
-    }
-
-    fn put(&mut self, id: RecordId, record: &mut Self::Record) -> BoxResult<()> {
+    fn put(&mut self, id: RecordId, record: &mut T) -> BoxResult<()> {
         record.set_id(id);
         json::save(&record, &self.record_path(id))?;
         let last_id = self.last_id.get_or_default();
@@ -132,14 +105,9 @@ impl<T: IRecord> ITable for DirTable<T> {
         Ok(fs::remove(&self.record_path(id))?)
     }
 
-    fn find<P>(
-        &mut self,
-        min_id: RecordId,
-        limit: usize,
-        predicate: P,
-    ) -> BoxResult<Vec<Self::Record>>
+    fn find<P>(&self, min_id: RecordId, limit: usize, predicate: P) -> BoxResult<Vec<T>>
     where
-        P: Fn(&Self::Record) -> bool,
+        P: Fn(&T) -> bool,
     {
         let mut vec = Vec::new();
         let ids = self.find_ids(min_id)?;
@@ -156,13 +124,13 @@ impl<T: IRecord> ITable for DirTable<T> {
     }
 
     fn find_pairs<P>(
-        &mut self,
+        &self,
         min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> BoxResult<Vec<(RecordId, Self::Record)>>
+    ) -> BoxResult<Vec<(RecordId, T)>>
     where
-        P: Fn(&Self::Record) -> bool,
+        P: Fn(&T) -> bool,
     {
         let mut vec = Vec::new();
         let ids = self.find_ids(min_id)?;
@@ -178,7 +146,7 @@ impl<T: IRecord> ITable for DirTable<T> {
         Ok(vec)
     }
 
-    fn find_ids(&mut self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
+    fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
         find_record_ids(&self.path, min_id)
     }
 
@@ -193,7 +161,7 @@ impl<T: IRecord> ITable for DirTable<T> {
 /// 从路径中查找记录ID
 fn find_record_ids(path: &Path, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
     let mut ids = Vec::new();
-    let names = fs::file_stems_in(path, &"json", SortOrder::None)?;
+    let names = fs::file_stems_in(path, EXT, SortOrder::None)?;
     for stem in names {
         if let Ok(id) = stem.parse::<RecordId>() {
             if id >= min_id {
@@ -206,9 +174,9 @@ fn find_record_ids(path: &Path, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
 }
 
 /// 从路径中查找最大记录ID
-fn find_max_record_id(path: &Path, min_id: RecordId) -> BoxResult<RecordId> {
+fn _find_max_record_id(path: &Path, min_id: RecordId) -> BoxResult<RecordId> {
     let mut max_id = 0;
-    let names = fs::file_stems_in(path, &"json", SortOrder::None)?;
+    let names = fs::file_stems_in(path, EXT, SortOrder::None)?;
     for stem in names {
         if let Ok(id) = stem.parse::<RecordId>() {
             if id >= min_id && id > max_id {
@@ -228,42 +196,8 @@ mod tests {
     #[test]
     fn tab_works() {
         let url = "jddb:///tmp/jddb-test";
-        let name = "student";
+        let name = "student1";
 
-        DirTable::remove(url, name).unwrap();
-        assert!(!DirTable::exists(url, name));
-
-        let db = DirTable::open(url, name).unwrap();
-
-        let mut tab = DirTable::open(&db, &"student").unwrap();
-        println!("tab.find_ids: {:?}", tab.find_ids(0));
-        println!("tab.is_empty: {:?}", tab.find_ids(0).unwrap().is_empty());
-        assert!(tab.find_ids(0).unwrap().is_empty());
-
-        let mut s1 = { Student::new(1, "Jack") };
-        let mut s2 = { Student::new(2, "John") };
-        let mut s3 = { Student::new(3, "Joel") };
-
-        let id1 = tab.post(&mut s1).unwrap();
-        assert_eq!(tab.get(id1).unwrap(), s1);
-        assert_eq!(tab.find_ids(0).unwrap(), vec![id1]);
-
-        let id2 = tab.post(&mut s2).unwrap();
-        assert_eq!(tab.get(id2).unwrap(), s2);
-        assert_eq!(tab.find_ids(0).unwrap(), vec![id1, id2]);
-
-        tab.put(id2, &mut s3).unwrap();
-        assert_eq!(tab.get(id2).unwrap(), s3);
-        assert_eq!(tab.find_ids(0).unwrap(), vec![id1, id2]);
-
-        let all = tab.find_all().unwrap();
-        assert_eq!(all, vec![s1.clone(), s3.clone()]);
-
-        let v = tab.find(2, 1, |_| true).unwrap();
-        assert_eq!(v, vec![s3.clone()]);
-
-        let name = s1.name.clone();
-        let v = tab.find(0, 1, |s| s.name == name).unwrap();
-        assert_eq!(v, vec![s1.clone()]);
+        test_table::<DirTable<Student>>(url, name);
     }
 }

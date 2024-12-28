@@ -18,10 +18,7 @@ pub fn vec_to_map<R: IRecord>(rs: Vec<R>) -> HashMap<RecordId, R> {
 }
 
 /// 数据库表
-pub trait ITable {
-    /// 记录类型
-    type Record: IRecord;
-
+pub trait ITable<T: IRecord> {
     /// 打开表
     fn open(db_url: &str, table_name: &str) -> BoxResult<Self>
     where
@@ -30,14 +27,13 @@ pub trait ITable {
     /// 删除表
     fn remove(db_url: &str, table_name: &str) -> BoxResult<()>;
 
-    /// 判定表是否存在
-    fn exists(db_url: &str, table_name: &str) -> BoxResult<bool>;
-
     /// 获取表名
     fn name(&self) -> String;
 
     /// 获取表长度
-    fn len(&self) -> usize;
+    fn len(&self) -> usize {
+        self.find_ids(0).unwrap().len()
+    }
 
     /// 获取表是否为空
     fn is_empty(&self) -> bool {
@@ -48,23 +44,26 @@ pub trait ITable {
     fn contains(&self, id: RecordId) -> bool;
 
     /// 获取记录
-    fn get(&self, id: RecordId) -> BoxResult<Self::Record>;
+    fn get(&self, id: RecordId) -> BoxResult<T>;
 
     /// 获取变量值/缺省值
-    fn get_or(&mut self, id: RecordId, record: Self::Record) -> Self::Record {
+    fn get_or(&self, id: RecordId, record: T) -> T {
         self.get(id).unwrap_or(record)
     }
 
     /// 获取变量值/缺省值
-    fn get_or_default(&mut self, id: RecordId) -> Self::Record {
-        self.get_or(id, Self::Record::default())
+    fn get_or_default(&self, id: RecordId) -> T {
+        self.get_or(id, T::default())
     }
 
     /// 添加记录
-    fn post(&mut self, record: &mut Self::Record) -> BoxResult<RecordId>;
-
+    fn post(&mut self, record: &mut T) -> BoxResult<RecordId> {
+        let id = self.next_id()?;
+        self.put(id, record)?;
+        Ok(id)
+    }
     /// 更新记录
-    fn put(&mut self, id: RecordId, record: &mut Self::Record) -> BoxResult<()>;
+    fn put(&mut self, id: RecordId, record: &mut T) -> BoxResult<()>;
 
     /// 删除记录(幂等)
     fn delete(&mut self, id: RecordId) -> BoxResult<()>;
@@ -78,37 +77,32 @@ pub trait ITable {
         Ok(())
     }
     /// 查询记录集
-    fn find<P>(
-        &mut self,
-        min_id: RecordId,
-        limit: usize,
-        predicate: P,
-    ) -> BoxResult<Vec<Self::Record>>
+    fn find<P>(&self, min_id: RecordId, limit: usize, predicate: P) -> BoxResult<Vec<T>>
     where
-        P: Fn(&Self::Record) -> bool;
+        P: Fn(&T) -> bool;
 
     /// 查询记录集
-    fn find_all(&mut self) -> BoxResult<Vec<Self::Record>> {
+    fn find_all(&self) -> BoxResult<Vec<T>> {
         self.find(RecordId::default(), usize::MAX, |_| true)
     }
 
     /// 查询K/V对
     fn find_pairs<P>(
-        &mut self,
+        &self,
         min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> BoxResult<Vec<(RecordId, Self::Record)>>
+    ) -> BoxResult<Vec<(RecordId, T)>>
     where
-        P: Fn(&Self::Record) -> bool;
+        P: Fn(&T) -> bool;
 
     /// 查询K/V对
-    fn find_all_pairs(&mut self) -> BoxResult<Vec<(RecordId, Self::Record)>> {
+    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>> {
         self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
     }
 
     /// 查询Id集
-    fn find_ids(&mut self, min_id: RecordId) -> BoxResult<Vec<RecordId>>;
+    fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>>;
 
     /// 获取下一个ID
     fn next_id(&mut self) -> BoxResult<RecordId>;

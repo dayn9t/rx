@@ -1,20 +1,22 @@
 use rx_core::text::BoxResult;
 
 /// 数据库变量
-pub trait IVariant {
-    /// 记录类型
-    type Record: Default + Clone;
-
-    /// 打开变量
-    fn open(db_url: &str, variant_name: &str) -> BoxResult<Self>
+pub trait IVariant<T: Default + Clone> {
+    /// 打开变量，如果不存在则使用默认值
+    fn open_with_default(db_url: &str, name: &str, default_value: T) -> BoxResult<Self>
     where
         Self: Sized;
 
-    /// 删除变量
-    fn remove(db_url: &str, variant_name: &str) -> BoxResult<()>;
+    /// 打开变量
+    fn open(db_url: &str, name: &str) -> BoxResult<Self>
+    where
+        Self: Sized,
+    {
+        Self::open_with_default(db_url, name, T::default())
+    }
 
-    /// 判定变量是否存在
-    fn exists(db_url: &str, variant_name: &str) -> BoxResult<bool>;
+    /// 删除变量
+    fn remove(db_url: &str, name: &str) -> BoxResult<()>;
 
     /// 获取变量名
     fn name(&self) -> &str;
@@ -23,18 +25,18 @@ pub trait IVariant {
     fn exist(&self) -> bool;
 
     /// 获取变量值
-    fn get(&self) -> BoxResult<Self::Record>;
+    fn get(&self) -> BoxResult<T>;
 
     /// 获取变量值/缺省值
-    fn get_or(&self, record: Self::Record) -> Self::Record {
+    fn get_or(&self, record: T) -> T {
         self.get().unwrap_or(record)
     }
 
     /// 获取变量值/缺省值
-    fn get_or_default(&self) -> Self::Record {
-        self.get_or(Self::Record::default())
+    fn get_or_default(&self) -> T {
+        self.get_or(T::default())
     }
 
     /// 设置变量值
-    fn set(&mut self, record: &Self::Record) -> BoxResult<()>;
+    fn set(&mut self, record: &T) -> BoxResult<()>;
 }

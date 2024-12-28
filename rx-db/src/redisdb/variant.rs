@@ -64,6 +64,7 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for RedisVarian
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use crate::RedisDb;
@@ -94,3 +95,4 @@ mod tests {
         assert_eq!(var.get().unwrap(), s2);
     }
 }
+*/

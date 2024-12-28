@@ -1,8 +1,7 @@
 #[cfg(test)]
 pub mod tests {
-
+    use crate::dirdb::{DirTable, DirVariant};
     use crate::*;
-    use serde::{Deserialize, Serialize};
 
     #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize, Record)]
     pub struct Student {
@@ -17,5 +16,60 @@ pub mod tests {
                 name: name.to_string(),
             }
         }
+    }
+
+    pub fn test_var<V: IVariant<Student>>(db_url: &str, name: &str) {
+        V::remove(db_url, name).unwrap();
+
+        let mut var = DirVariant::open(db_url, name).unwrap();
+        assert_eq!(var.name(), name);
+        assert!(!var.exist());
+
+        let s1 = { Student::new(1, "Jack") };
+        let s2 = { Student::new(2, "John") };
+        let _s3 = { Student::new(3, "Joel") };
+
+        assert_eq!(var.get_or_default(), Student::default());
+
+        var.set(&s1).unwrap();
+        assert!(var.exist());
+        assert_eq!(var.get().unwrap(), s1);
+
+        var.set(&s2).unwrap();
+        assert_eq!(var.get().unwrap(), s2);
+    }
+
+    pub fn test_table<T: ITable<Student>>(db_url: &str, name: &str) {
+        T::remove(db_url, name).unwrap();
+
+        let mut tab = DirTable::open(db_url, name).unwrap();
+        assert!(tab.is_empty());
+        assert!(tab.find_ids(0).unwrap().is_empty());
+
+        let mut s1 = { Student::new(1, "Jack") };
+        let mut s2 = { Student::new(2, "John") };
+        let mut s3 = { Student::new(3, "Joel") };
+
+        let id1 = tab.post(&mut s1).unwrap();
+        assert_eq!(tab.get(id1).unwrap(), s1);
+        assert_eq!(tab.find_ids(0).unwrap(), vec![id1]);
+
+        let id2 = tab.post(&mut s2).unwrap();
+        assert_eq!(tab.get(id2).unwrap(), s2);
+        assert_eq!(tab.find_ids(0).unwrap(), vec![id1, id2]);
+
+        tab.put(id2, &mut s3).unwrap();
+        assert_eq!(tab.get(id2).unwrap(), s3);
+        assert_eq!(tab.find_ids(0).unwrap(), vec![id1, id2]);
+
+        let all = tab.find_all().unwrap();
+        assert_eq!(all, vec![s1.clone(), s3.clone()]);
+
+        let v = tab.find(2, 1, |_| true).unwrap();
+        assert_eq!(v, vec![s3.clone()]);
+
+        let name = s1.name.clone();
+        let v = tab.find(0, 1, |s| s.name == name).unwrap();
+        assert_eq!(v, vec![s1.clone()]);
     }
 }

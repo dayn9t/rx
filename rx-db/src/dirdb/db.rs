@@ -1,14 +1,11 @@
+use anyhow::anyhow;
 use path_macro::path;
-use rx_core::sys::fs;
 use rx_core::text::*;
 use std::path::PathBuf;
+use url::Url;
 
-use crate::{IRecord, ITable, IVariant, RecordId};
-
-use super::table::*;
-use super::variant::*;
-
-//pub type BoxResult<T> = std::io::Result<T>;
+pub const SCHEME: &str = "jddb";
+pub const EXT: &str = "json";
 
 /// ID变量名
 pub fn id_var_name<S>(name: S) -> String
@@ -18,6 +15,23 @@ where
     format!("{}_id", name.as_ref())
 }
 
+/// 获取数据库对象路径，从URL和表名解析路径
+pub fn dbo_path(db_url: &str, name: &str) -> BoxResult<PathBuf> {
+    let uri = Url::parse(db_url)?;
+    if uri.scheme() != SCHEME {
+        return Err(anyhow!("Invalid scheme"));
+    }
+    let path = path!(uri.path() / name);
+    Ok(path.into())
+}
+
+/// 数据库变量路径
+pub fn variant_path(db_url: &str, name: &str) -> BoxResult<PathBuf> {
+    let path = dbo_path(db_url, name)?;
+    Ok(path.with_extension(EXT))
+}
+
+/*
 pub struct DirDb {
     path: PathBuf,
 }
@@ -156,6 +170,10 @@ impl DirDb {
     }
 }
 
+ */
+
+/*
+
 /// 打开数据库，加入记录
 pub fn db_put_record<T, S>(
     db_path: &Path,
@@ -196,3 +214,4 @@ mod tests {
         tab.put(1, &mut s2).unwrap();
     }
 }
+*/

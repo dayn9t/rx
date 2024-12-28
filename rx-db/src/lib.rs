@@ -1,14 +1,12 @@
-pub use dirdb::*;
 pub use interface::*;
-pub use redisdb::*;
 pub use rx_core::prelude::*;
 pub use rx_db_derive::Record;
 
 //#![feature(associated_type_defaults)]
-mod dirdb;
+pub mod dirdb;
 
 mod interface;
-mod redisdb;
+//pub mod redisdb;
 mod test;
 
 #[cfg(test)]

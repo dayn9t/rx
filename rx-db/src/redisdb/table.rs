@@ -63,11 +63,7 @@ impl<T: IRecord> ITable for RedisTable<T> {
         Ok(v)
     }
 
-    fn post(&mut self, record: &mut Self::Record) -> BoxResult<RecordId> {
-        let id = self.next_id()?;
-        self.put(id, record)?;
-        Ok(id)
-    }
+
 
     fn put(&mut self, id: RecordId, record: &mut Self::Record) -> BoxResult<()> {
         record.set_id(id);
@@ -138,7 +134,7 @@ impl<T: IRecord> ITable for RedisTable<T> {
         Ok(next)
     }
 }
-
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -186,3 +182,4 @@ mod tests {
         }
     }
 }
+*/
