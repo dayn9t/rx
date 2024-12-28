@@ -3,8 +3,8 @@ use std::marker::PhantomData;
 
 use redis::Commands;
 
-use rx_core::text::*;
 use crate::{IRecord, ITable, RecordId};
+use rx_core::text::*;
 
 pub struct RedisTable<T> {
     name: String,

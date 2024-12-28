@@ -3,8 +3,8 @@ use std::marker::PhantomData;
 
 use redis::Commands;
 
-use rx_core::text::*;
 use crate::IVariant;
+use rx_core::text::*;
 
 pub struct RedisVariant<T> {
     name: String,
@@ -31,7 +31,7 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant for RedisVarian
 
     fn open(db_url: &str, variant_name: &str) -> BoxResult<Self>
     where
-        Self: Sized
+        Self: Sized,
     {
         todo!()
     }
