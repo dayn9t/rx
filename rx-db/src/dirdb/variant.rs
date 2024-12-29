@@ -1,6 +1,5 @@
 use crate::IVariant;
-use crate::dirdb::variant_path;
-use path_macro::path;
+use crate::dirdb::{db_path, variant_path};
 use rx_core::sys::fs;
 use rx_core::text::*;
 use std::path::PathBuf;
@@ -13,7 +12,8 @@ pub struct DirVariant<T> {
 
 impl<T: Default> DirVariant<T> {
     pub fn open_path_with_default(db_path: &PathBuf, name: &str, default: T) -> BoxResult<Self> {
-        let path = path!(db_path / name);
+        let path = variant_path(db_path, name);
+        fs::make_parent(&path)?;
         Ok(DirVariant::<T> {
             name: name.to_owned(),
             path,
@@ -30,13 +30,8 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for DirVaria
     where
         Self: Sized,
     {
-        let path = variant_path(db_url, name)?;
-        fs::make_parent(&path)?;
-        Ok(DirVariant::<T> {
-            name: name.to_owned(),
-            path,
-            default_value,
-        })
+        let path = db_path(db_url)?;
+        Self::open_path_with_default(&path, name, default_value)
     }
 
     fn name(&self) -> &str {

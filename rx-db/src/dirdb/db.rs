@@ -10,24 +10,6 @@ use url::Url;
 pub const SCHEME: &str = "jddb";
 pub const EXT: &str = "json";
 
-/// ID变量名
-pub fn id_var_name<S>(name: S) -> String
-where
-    S: AsRef<str>,
-{
-    format!("{}_id", name.as_ref())
-}
-
-/// 获取数据库对象路径，从URL和表名解析路径
-pub fn dbo_path(db_url: &str, name: &str) -> BoxResult<PathBuf> {
-    let uri = Url::parse(db_url)?;
-    if uri.scheme() != SCHEME {
-        return Err(anyhow!("Invalid scheme"));
-    }
-    let path = path!(uri.path() / name);
-    Ok(path.into())
-}
-
 /// 获取数据库对象路径，从URL和表名解析路径
 pub fn db_path(db_url: &str) -> BoxResult<PathBuf> {
     let uri = Url::parse(db_url)?;
@@ -37,10 +19,22 @@ pub fn db_path(db_url: &str) -> BoxResult<PathBuf> {
     Ok(path!(uri.path()))
 }
 
-/// 数据库变量路径
-pub fn variant_path(db_url: &str, name: &str) -> BoxResult<PathBuf> {
-    let path = dbo_path(db_url, name)?;
-    Ok(path.with_extension(EXT))
+pub fn meta_path(db_path: &Path) -> PathBuf {
+    path!(db_path / ".meta")
+}
+
+pub fn table_meta_path(db_path: &Path, table_name: &str) -> PathBuf {
+    variant_path(&meta_path(db_path), table_name)
+}
+
+/// 表路径
+pub fn table_path(db_path: &Path, table_name: &str) -> PathBuf {
+    path!(db_path / table_name)
+}
+
+/// 变量路径
+pub fn variant_path(db_path: &Path, variant_name: &str) -> PathBuf {
+    path!(db_path / format!("{variant_name}.{EXT}"))
 }
 
 pub struct DirDb {
@@ -58,11 +52,8 @@ impl IDatabase for DirDb {
     }
 
     fn remove_variant(&self, variant_name: &str) -> BoxResult<()> {
-        let path = self.variant_path(variant_name);
-        if path.exists() && !path.is_file() {
-            return Err(anyhow!("Table path not dir"));
-        }
-        Ok(fs::remove(&path)?)
+        let path = variant_path(&self.path, variant_name);
+        Self::remove_file(&path)
     }
 
     fn open_variant_with_default<T>(
@@ -78,18 +69,17 @@ impl IDatabase for DirDb {
     }
 
     fn remove_table(&self, table_name: &str) -> BoxResult<()> {
-        let path = self.table_path(table_name);
-        if path.exists() && !path.is_dir() {
-            return Err(anyhow!("Table path not dir"));
-        }
-        Ok(fs::remove(&path)?)
+        let path = table_path(&self.path, table_name);
+        Self::remove_dir(&path)?;
+        let meta_path = table_meta_path(&self.path, table_name);
+        Self::remove_file(&meta_path)
     }
 
     fn open_table<R: IRecord + 'static>(
         &self,
         table_name: &str,
     ) -> BoxResult<Box<dyn ITableDyn<R>>> {
-        let tab = DirTable::<R>::open_path(&self.path, table_name)?;
+        let tab = DirTable::<R>::new(table_name.to_owned(), &self.path)?;
         Ok(Box::new(tab))
     }
 
@@ -104,21 +94,11 @@ impl IDatabase for DirDb {
         R: IRecord,
         P: Fn(&R) -> bool,
     {
-        let table = DirTable::<R>::open_path(&self.path, table_name)?;
+        let table = DirTable::<R>::new(table_name.to_owned(), &self.path)?;
         table.find(min_id, limit, predicate)
     }
 }
 impl DirDb {
-    /// 表路径
-    pub fn table_path(&self, table_name: &str) -> PathBuf {
-        path!(self.path / table_name)
-    }
-
-    /// 变量路径
-    pub fn variant_path(&self, variant_name: &str) -> PathBuf {
-        path!(self.path / format!("{variant_name}.{EXT}"))
-    }
-
     /// 数据库名称
     pub fn name(&self) -> &str {
         self.path.file_name().unwrap().to_str().unwrap()
@@ -127,6 +107,20 @@ impl DirDb {
     /// 数据库路径
     pub fn path(&self) -> &Path {
         self.path.as_path()
+    }
+
+    pub fn remove_file(path: &Path) -> BoxResult<()> {
+        if path.exists() && !path.is_file() {
+            return Err(anyhow!("File path not file"));
+        }
+        Ok(fs::remove(&path)?)
+    }
+
+    pub fn remove_dir(path: &Path) -> BoxResult<()> {
+        if path.exists() && !path.is_dir() {
+            return Err(anyhow!("File path not dir"));
+        }
+        Ok(fs::remove(&path)?)
     }
 }
 

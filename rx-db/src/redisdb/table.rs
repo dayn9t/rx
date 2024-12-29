@@ -3,22 +3,46 @@ use std::marker::PhantomData;
 
 use redis::{Commands, Connection};
 
-use crate::{IRecord, ITable, ITableDyn, RecordId};
+use crate::{IRecord, ITable, ITableDyn, RecordId, TableMeta};
 use rx_core::text::*;
+
+/// Redis依附变量
+pub struct RedisVar<T> {
+    pub name: String,
+    _p: PhantomData<T>,
+}
+impl<T: Default + Clone + Serialize + DeserializeOwned> RedisVar<T> {
+    pub fn new(name: String) -> Self {
+        Self {
+            name,
+            _p: Default::default(),
+        }
+    }
+    pub fn get(&self, conn: &RefCell<Connection>) -> BoxResult<T> {
+        let s: String = conn.borrow_mut().get(&self.name)?;
+        let v: T = json::from_str(&s).unwrap();
+        Ok(v)
+    }
+    fn set(&self, conn: &RefCell<Connection>, record: &T) -> BoxResult<()> {
+        let s = json::to_pretty(record).unwrap();
+        Ok(conn.borrow_mut().set(&self.name, &s)?)
+    }
+}
 
 pub struct RedisTable<T> {
     name: String,
-    meta_name: String,
+    meta: RedisVar<TableMeta>,
     conn: RefCell<Connection>,
     _p: PhantomData<T>,
 }
 
 impl<T> RedisTable<T> {
-    pub fn new(conn: Connection, name: String) -> Self {
+    pub fn new(name: String, conn: Connection) -> Self {
         let meta_name = format!("{}_meta", name);
+        let meta = RedisVar::new(meta_name);
         Self {
             name,
-            meta_name,
+            meta,
             conn: RefCell::new(conn),
             _p: PhantomData::<T>,
         }
@@ -33,22 +57,22 @@ impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
         let client = redis::Client::open(db_url)?;
         let conn = client.get_connection()?;
 
-        let name = name.to_owned();
-        let meta_name = format!("{}_meta", name);
-        Ok(Self {
-            name,
-            meta_name,
-            conn: RefCell::new(conn),
-            _p: PhantomData::<T>,
-        })
+        Ok(Self::new(name.to_owned(), conn))
     }
 
     fn name(&self) -> String {
         self.name.clone()
     }
-
     fn len(&self) -> usize {
         self.conn.borrow_mut().hlen(&self.name).unwrap()
+    }
+
+    fn get_meta(&self) -> BoxResult<TableMeta> {
+        self.meta.get(&self.conn)
+    }
+
+    fn set_meta(&mut self, meta: &TableMeta) -> BoxResult<()> {
+        self.meta.set(&self.conn, meta)
     }
 
     fn contains(&self, id: RecordId) -> bool {
@@ -64,6 +88,7 @@ impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
     fn put(&mut self, id: RecordId, record: &mut T) -> BoxResult<()> {
         record.set_id(id);
         let s = json::to_pretty(record).unwrap();
+        self.update_last_id(id)?;
         Ok(self.conn.borrow_mut().hset(&self.name, id, &s)?)
     }
 
@@ -86,12 +111,6 @@ impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
         let mut ids: Vec<_> = ids.into_iter().filter(|id| *id >= min_id).collect();
         ids.sort();
         Ok(ids)
-    }
-
-    fn next_id(&mut self) -> BoxResult<RecordId> {
-        let ids = self.find_ids(0)?;
-        let next = ids.last().unwrap_or(&0) + 1;
-        Ok(next)
     }
 }
 impl<T: IRecord> ITable<T> for RedisTable<T> {}

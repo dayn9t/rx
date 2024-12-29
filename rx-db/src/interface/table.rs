@@ -1,3 +1,4 @@
+use crate::Deserialize;
 use rx_core::text::BoxResult;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -11,10 +12,20 @@ pub trait IRecord: Default + Serialize + DeserializeOwned + Sized {
     fn get_id(&self) -> Option<RecordId>;
     fn set_id(&mut self, id: RecordId);
 }
-
 /// Vec<Record> => HasMap<ID, Record>
 pub fn vec_to_map<R: IRecord>(rs: Vec<R>) -> HashMap<RecordId, R> {
     rs.into_iter().map(|r| (r.get_id().unwrap(), r)).collect()
+}
+/// 表元数据
+#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
+pub struct TableMeta {
+    pub last_id: RecordId,
+}
+
+impl TableMeta {
+    pub fn new1() -> Self {
+        Self { last_id: 1 }
+    }
 }
 
 /// 数据库表
@@ -38,6 +49,31 @@ pub trait ITableDyn<T: IRecord> {
     /// 获取表是否为空
     fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    /// 获取表元数据
+    fn get_meta(&self) -> BoxResult<TableMeta>;
+
+    /// 设置表元数据，TODO: 禁止外部调用
+    fn set_meta(&mut self, meta: &TableMeta) -> BoxResult<()>;
+
+    /// 更新最后ID，TODO: 禁止外部调用
+    fn update_last_id(&mut self, id: RecordId) -> BoxResult<()> {
+        let mut meta = self.get_meta()?;
+        if id > meta.last_id {
+            meta.last_id = id;
+            self.set_meta(&meta)
+        } else {
+            Ok(())
+        }
+    }
+
+    /// 获取下一个ID
+    fn next_id(&mut self) -> BoxResult<RecordId> {
+        let mut meta = self.get_meta()?;
+        meta.last_id += 1;
+        self.set_meta(&meta)?;
+        Ok(meta.last_id)
     }
 
     /// 判断表中是否包含指定ID的记录
@@ -85,9 +121,6 @@ pub trait ITableDyn<T: IRecord> {
 
     /// 查询Id集
     fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>>;
-
-    /// 获取下一个ID
-    fn next_id(&mut self) -> BoxResult<RecordId>;
 }
 
 /// 数据库表

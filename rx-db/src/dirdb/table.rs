@@ -1,5 +1,5 @@
-use crate::dirdb::{DirVariant, EXT, dbo_path};
-use crate::{IRecord, ITable, ITableDyn, IVariant, RecordId};
+use crate::dirdb::{DirVariant, EXT, db_path, meta_path};
+use crate::{IRecord, ITable, ITableDyn, IVariant, RecordId, TableMeta};
 use path_macro::path;
 use rx_core::sys::fs::SortOrder;
 use rx_core::{sys::fs, text::*};
@@ -10,21 +10,20 @@ use std::path::PathBuf;
 pub struct DirTable<T> {
     name: String,
     path: PathBuf,
-    last_id: DirVariant<RecordId>,
+    meta: DirVariant<TableMeta>,
     _p: PhantomData<T>,
 }
 
 impl<T: IRecord> DirTable<T> {
     /// 打开表
-    pub fn open_path(db_path: &Path, name: &str) -> BoxResult<Self> {
+    pub fn new(name: String, db_path: &Path) -> BoxResult<Self> {
         let path = path!(db_path / name);
         fs::ensure_dir_exist(&path)?;
-        let meta_path = path!(path / ".meta");
-        let last_id = DirVariant::open_path(&meta_path, "last_id")?;
-        Ok(DirTable::<T> {
-            name: name.to_owned(),
+        let meta = DirVariant::open_path(&meta_path(db_path), &name)?;
+        Ok(Self {
+            name,
             path,
-            last_id,
+            meta,
             _p: PhantomData::<T>,
         })
     }
@@ -42,20 +41,20 @@ impl<T: IRecord> DirTable<T> {
 
 impl<T: IRecord> ITableDyn<T> for DirTable<T> {
     fn open(db_url: &str, name: &str) -> BoxResult<Self> {
-        let path = dbo_path(db_url, name)?;
-        fs::ensure_dir_exist(&path)?;
-        let meta_url = format!("{}/{}/.meta", db_url, name);
-        let last_id = DirVariant::open(&meta_url, "last_id")?;
-        Ok(DirTable::<T> {
-            name: name.to_owned(),
-            path,
-            last_id,
-            _p: PhantomData::<T>,
-        })
+        let db_path = db_path(db_url)?;
+        Self::new(name.to_owned(), &db_path)
     }
 
     fn name(&self) -> String {
         self.name.clone()
+    }
+
+    fn get_meta(&self) -> BoxResult<TableMeta> {
+        self.meta.get()
+    }
+
+    fn set_meta(&mut self, meta: &TableMeta) -> BoxResult<()> {
+        self.meta.set(meta)
     }
 
     fn contains(&self, id: RecordId) -> bool {
@@ -69,11 +68,7 @@ impl<T: IRecord> ITableDyn<T> for DirTable<T> {
     fn put(&mut self, id: RecordId, record: &mut T) -> BoxResult<()> {
         record.set_id(id);
         json::save(&record, &self.record_path(id))?;
-        let last_id = self.last_id.get_or_default();
-        if id > last_id {
-            self.last_id.set(&id)?;
-        }
-        Ok(())
+        self.update_last_id(id)
     }
 
     fn delete(&mut self, id: RecordId) -> BoxResult<()> {
@@ -93,34 +88,9 @@ impl<T: IRecord> ITableDyn<T> for DirTable<T> {
     fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
         find_record_ids(&self.path, min_id)
     }
-
-    fn next_id(&mut self) -> BoxResult<RecordId> {
-        let mut id = self.last_id.get_or_default();
-        id += 1;
-        self.last_id.set(&id)?;
-        Ok(id)
-    }
 }
 
-impl<T: IRecord> ITable<T> for DirTable<T> {
-    fn find<P>(&self, min_id: RecordId, limit: usize, predicate: P) -> BoxResult<Vec<T>>
-    where
-        P: Fn(&T) -> bool,
-    {
-        let mut vec = Vec::new();
-        let ids = self.find_ids(min_id)?;
-        for id in ids {
-            let r = self.get(id)?;
-            if predicate(&r) {
-                vec.push(r);
-                if vec.len() >= limit {
-                    break;
-                }
-            }
-        }
-        Ok(vec)
-    }
-}
+impl<T: IRecord> ITable<T> for DirTable<T> {}
 
 /// 从路径中查找记录ID
 fn find_record_ids(path: &Path, min_id: RecordId) -> BoxResult<Vec<RecordId>> {

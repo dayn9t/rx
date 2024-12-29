@@ -1,4 +1,4 @@
-use crate::{IDatabase, IRecord, ITableDyn, IVariant, RecordId};
+use crate::{IDatabase, IRecord, ITable, ITableDyn, IVariant, RecordId};
 use anyhow::anyhow;
 use rx_core::text::*;
 
@@ -51,7 +51,7 @@ impl IDatabase for RedisDb {
         table_name: &str,
     ) -> BoxResult<Box<dyn ITableDyn<R>>> {
         let conn = self.get_connection()?;
-        let v = RedisTable::new(conn, table_name.to_owned());
+        let v = RedisTable::new(table_name.to_owned(), conn);
         Ok(Box::new(v))
     }
 
@@ -66,7 +66,9 @@ impl IDatabase for RedisDb {
         R: IRecord,
         P: Fn(&R) -> bool,
     {
-        todo!()
+        let conn = self.get_connection()?;
+        let table = RedisTable::<R>::new(table_name.to_owned(), conn);
+        table.find(min_id, limit, predicate)
     }
 }
 
