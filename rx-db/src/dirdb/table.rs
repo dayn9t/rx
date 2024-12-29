@@ -80,6 +80,16 @@ impl<T: IRecord> ITableDyn<T> for DirTable<T> {
         Ok(fs::remove(&self.record_path(id))?)
     }
 
+    /// 查询记录集
+    fn find_all(&self) -> BoxResult<Vec<T>> {
+        self.find(RecordId::default(), usize::MAX, |_| true)
+    }
+
+    /// 查询K/V对
+    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>> {
+        self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
+    }
+
     fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
         find_record_ids(&self.path, min_id)
     }
@@ -89,16 +99,6 @@ impl<T: IRecord> ITableDyn<T> for DirTable<T> {
         id += 1;
         self.last_id.set(&id)?;
         Ok(id)
-    }
-
-    /// 查询记录集
-    fn find_all(&self) -> BoxResult<Vec<T>> {
-        self.find(RecordId::default(), usize::MAX, |_| true)
-    }
-
-    /// 查询K/V对
-    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>> {
-        self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
     }
 }
 

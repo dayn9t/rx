@@ -71,6 +71,16 @@ impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
         Ok(self.conn.borrow_mut().hdel(&self.name, id)?)
     }
 
+    /// 查询记录集
+    fn find_all(&self) -> BoxResult<Vec<T>> {
+        self.find(RecordId::default(), usize::MAX, |_| true)
+    }
+
+    /// 查询K/V对
+    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>> {
+        self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
+    }
+
     fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
         let ids: Vec<RecordId> = self.conn.borrow_mut().hkeys(&self.name)?;
         let mut ids: Vec<_> = ids.into_iter().filter(|id| *id >= min_id).collect();
@@ -82,16 +92,6 @@ impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
         let ids = self.find_ids(0)?;
         let next = ids.last().unwrap_or(&0) + 1;
         Ok(next)
-    }
-
-    /// 查询记录集
-    fn find_all(&self) -> BoxResult<Vec<T>> {
-        self.find(RecordId::default(), usize::MAX, |_| true)
-    }
-
-    /// 查询K/V对
-    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>> {
-        self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
     }
 }
 impl<T: IRecord> ITable<T> for RedisTable<T> {}
