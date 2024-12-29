@@ -1,6 +1,6 @@
 #[cfg(test)]
 pub mod tests {
-    use crate::dirdb::{DirTable, DirVariant};
+
     use crate::*;
 
     #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize, Record)]
@@ -21,7 +21,7 @@ pub mod tests {
     pub fn test_var<V: IVariant<Student>>(db_url: &str, name: &str) {
         remove_variant(db_url, name).unwrap();
 
-        let mut var = DirVariant::open(db_url, name).unwrap();
+        let mut var = V::open(db_url, name).unwrap();
         assert_eq!(var.name(), name);
         assert!(!var.exist());
 
@@ -39,10 +39,10 @@ pub mod tests {
         assert_eq!(var.get().unwrap(), s2);
     }
 
-    pub fn test_table<T: ITableDyn<Student>>(db_url: &str, name: &str) {
+    pub fn test_table<T: ITable<Student>>(db_url: &str, name: &str) {
         remove_table(db_url, name).unwrap();
 
-        let mut tab = DirTable::open(db_url, name).unwrap();
+        let mut tab = T::open(db_url, name).unwrap();
         assert!(tab.is_empty());
         assert!(tab.find_ids(0).unwrap().is_empty());
 

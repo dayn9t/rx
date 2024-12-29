@@ -1,8 +1,9 @@
+use anyhow::anyhow;
+use redis::{Commands, Connection};
 use std::cell::RefCell;
 use std::marker::PhantomData;
 
-use redis::{Commands, Connection};
-
+use crate::redisdb::table_meta_key;
 use crate::{IRecord, ITable, ITableDyn, RecordId, TableMeta};
 use rx_core::text::*;
 
@@ -19,9 +20,13 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> RedisVar<T> {
         }
     }
     pub fn get(&self, conn: &RefCell<Connection>) -> BoxResult<T> {
-        let s: String = conn.borrow_mut().get(&self.name)?;
-        let v: T = json::from_str(&s).unwrap();
-        Ok(v)
+        let s: Option<String> = conn.borrow_mut().get(&self.name)?;
+        if let Some(s) = s {
+            let v: T = json::from_str(&s).unwrap();
+            Ok(v)
+        } else {
+            Ok(Default::default())
+        }
     }
     fn set(&self, conn: &RefCell<Connection>, record: &T) -> BoxResult<()> {
         let s = json::to_pretty(record).unwrap();
@@ -38,8 +43,7 @@ pub struct RedisTable<T> {
 
 impl<T> RedisTable<T> {
     pub fn new(name: String, conn: Connection) -> Self {
-        let meta_name = format!("{}_meta", name);
-        let meta = RedisVar::new(meta_name);
+        let meta = RedisVar::new(table_meta_key(&name));
         Self {
             name,
             meta,
@@ -80,9 +84,13 @@ impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
     }
 
     fn get(&self, id: RecordId) -> BoxResult<T> {
-        let s: String = self.conn.borrow_mut().hget(&self.name, id)?;
-        let v: T = json::from_str(&s).unwrap();
-        Ok(v)
+        let s: Option<String> = self.conn.borrow_mut().hget(&self.name, id)?;
+        if let Some(s) = s {
+            let v: T = json::from_str(&s)?;
+            Ok(v)
+        } else {
+            Err(anyhow!("Record not found"))
+        }
     }
 
     fn put(&mut self, id: RecordId, record: &mut T) -> BoxResult<()> {
@@ -115,52 +123,16 @@ impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
 }
 impl<T: IRecord> ITable<T> for RedisTable<T> {}
 
-/*
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::RedisDb;
     use crate::test::tests::*;
 
     #[test]
     fn tab_works() {
         let url = "redis://127.0.0.1/";
         let name = "student";
-        let mut db = RedisDb::open(url).unwrap();
-        db.remove(name).unwrap();
 
-        let mut tab = db.open_table(name).unwrap();
-        assert_eq!(tab.is_empty(), true);
-
-        let mut s1 = { Student::new(1, "Jack") };
-        let mut s2 = { Student::new(2, "John") };
-        let mut s3 = { Student::new(3, "Joel") };
-
-        let id1 = tab.post(&mut s1).unwrap();
-        assert_eq!(tab.get(id1).unwrap(), s1);
-        assert_eq!(tab.find_ids(0).unwrap(), vec![id1]);
-
-        let id2 = tab.post(&mut s2).unwrap();
-        assert_eq!(tab.get(id2).unwrap(), s2);
-        assert_eq!(tab.find_ids(0).unwrap(), vec![id1, id2]);
-
-        tab.put(id2, &mut s3).unwrap();
-        assert_eq!(tab.get(id2).unwrap(), s3);
-        assert_eq!(tab.find_ids(0).unwrap(), vec![id1, id2]);
-
-        let all = tab.find_all().unwrap();
-        assert_eq!(all, vec![s1.clone(), s3.clone()]);
-
-        let v = tab.find(2, 1, |_| true).unwrap();
-        assert_eq!(v, vec![s3.clone()]);
-
-        let name = s1.name.clone();
-        let v = tab.find(0, 1, |s| s.name == name).unwrap();
-        assert_eq!(v, vec![s1.clone()]);
-
-        for i in 1..200 {
-            let _id1 = tab.post(&mut s1).unwrap();
-        }
+        test_table::<RedisTable<Student>>(url, name);
     }
 }
-*/

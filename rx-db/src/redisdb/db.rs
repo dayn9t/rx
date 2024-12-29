@@ -8,6 +8,10 @@ use url::Url;
 
 pub const SCHEME: &str = "redis";
 
+pub fn table_meta_key(table_name: &str) -> String {
+    format!("{}_meta", table_name)
+}
+
 pub struct RedisDb {
     client: redis::Client,
 }
@@ -43,7 +47,8 @@ impl IDatabase for RedisDb {
     }
 
     fn remove_table(&self, table_name: &str) -> BoxResult<()> {
-        self.del(table_name)
+        self.del(table_name)?;
+        self.del(&table_meta_key(table_name))
     }
 
     fn open_table<R: IRecord + 'static>(

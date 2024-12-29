@@ -46,9 +46,13 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for RedisVar
     }
 
     fn get(&self) -> BoxResult<T> {
-        let s: String = self.conn.borrow_mut().get(&self.name)?;
-        let v: T = json::from_str(&s).unwrap();
-        Ok(v)
+        let s: Option<String> = self.conn.borrow_mut().get(&self.name)?;
+        if let Some(s) = s {
+            let v: T = json::from_str(&s).unwrap();
+            Ok(v)
+        } else {
+            Ok(self.get_default().clone())
+        }
     }
 
     fn set(&mut self, record: &T) -> BoxResult<()> {
@@ -57,35 +61,16 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for RedisVar
     }
 }
 
-/*
 #[cfg(test)]
 mod tests {
-    use crate::RedisDb;
-    use crate::test::tests::*;
-
     use super::*;
+    use crate::test::tests::*;
 
     #[test]
     fn var_works() {
-        let url = "redis://:howell.net.cn@127.0.0.1/";
-        let name = "v\0a\0r";
+        let db_url = "redis://127.0.0.1/";
+        let name = "student";
 
-        let mut db = RedisDb::open(url).unwrap();
-
-        db.remove(name).unwrap();
-        let mut var = db.open_variant(name).unwrap();
-
-        let s1 = { Student::new(1, "Jack") };
-        let s2 = { Student::new(2, "John") };
-        let _s3 = { Student::new(3, "Joel") };
-
-        assert_eq!(var.get_or_default(), Student::default());
-
-        var.set(&s1).unwrap();
-        assert_eq!(var.get().unwrap(), s1);
-
-        var.set(&s2).unwrap();
-        assert_eq!(var.get().unwrap(), s2);
+        test_var::<RedisVariant<Student>>(db_url, name);
     }
 }
-*/
