@@ -11,14 +11,17 @@ pub struct DirVariant<T> {
     default_value: T,
 }
 
-impl<T> DirVariant<T> {
-    pub fn open_path(db_path: &PathBuf, name: &str) -> BoxResult<Self> {
+impl<T: Default> DirVariant<T> {
+    pub fn open_path_with_default(db_path: &PathBuf, name: &str, default: T) -> BoxResult<Self> {
         let path = path!(db_path / name);
         Ok(DirVariant::<T> {
             name: name.to_owned(),
             path,
-            default_value: Default::default(),
+            default_value: default,
         })
+    }
+    pub fn open_path(db_path: &PathBuf, name: &str) -> BoxResult<Self> {
+        Self::open_path_with_default(db_path, name, Default::default())
     }
 }
 

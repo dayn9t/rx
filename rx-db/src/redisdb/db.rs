@@ -1,7 +1,10 @@
 use crate::{IDatabase, IRecord, ITableDyn, IVariant, RecordId};
+use anyhow::anyhow;
 use rx_core::text::*;
 
-use redis::Commands;
+use crate::redisdb::{RedisTable, RedisVariant};
+use redis::{Commands, Connection};
+use url::Url;
 
 pub const SCHEME: &str = "redis";
 
@@ -14,11 +17,16 @@ impl IDatabase for RedisDb {
     where
         Self: Sized,
     {
-        todo!()
+        let uri = Url::parse(db_url)?;
+        if uri.scheme() != SCHEME {
+            return Err(anyhow!("Invalid scheme"));
+        }
+        let client = redis::Client::open(db_url)?;
+        Ok(RedisDb { client })
     }
 
     fn remove_variant(&self, variant_name: &str) -> BoxResult<()> {
-        todo!()
+        self.del(variant_name)
     }
 
     fn open_variant_with_default<T>(
@@ -27,17 +35,24 @@ impl IDatabase for RedisDb {
         default: T,
     ) -> BoxResult<Box<dyn IVariant<T>>>
     where
-        T: Default + DeserializeOwned + Serialize,
+        T: Default + DeserializeOwned + Serialize + Clone + 'static,
     {
-        todo!()
+        let conn = self.get_connection()?;
+        let v = RedisVariant::new(conn, variant_name.to_owned(), default);
+        Ok(Box::new(v))
     }
 
     fn remove_table(&self, table_name: &str) -> BoxResult<()> {
-        todo!()
+        self.del(table_name)
     }
 
-    fn open_table<R: IRecord>(&self, table_name: &str) -> BoxResult<Box<dyn ITableDyn<R>>> {
-        todo!()
+    fn open_table<R: IRecord + 'static>(
+        &self,
+        table_name: &str,
+    ) -> BoxResult<Box<dyn ITableDyn<R>>> {
+        let conn = self.get_connection()?;
+        let v = RedisTable::new(conn, table_name.to_owned());
+        Ok(Box::new(v))
     }
 
     fn find_records<R, P>(
@@ -56,50 +71,15 @@ impl IDatabase for RedisDb {
 }
 
 impl RedisDb {
-    //// 打开数据库
-    //pub fn open(url: &str) -> BoxResult<Self> {
-    //    let client = redis::Client::open(url)?;
-    //    Ok(RedisDb { client })
-    //}
-
-    /// 打开数据库变量
-    fn open_variant<T, S>(&mut self, name: S) -> BoxResult<RedisVariant<T>>
-    where
-        T: Default + DeserializeOwned + Serialize,
-        S: AsRef<str>,
-    {
+    /// 获取连接
+    pub fn get_connection(&self) -> BoxResult<Connection> {
         let conn = self.client.get_connection()?;
-        RedisVariant::open(conn, name)
+        Ok(conn)
     }
 
-    /// 加载数据库变量
-    fn load_variant<T, S>(&mut self, name: S) -> BoxResult<T>
-    where
-        T: Default + Clone + DeserializeOwned + Serialize,
-        S: AsRef<str>,
-    {
-        let v: RedisVariant<T> = self.open_variant(name)?;
-        v.get()
-    }
-
-    /// 打开数据库表
-    fn open_table<T, S>(&mut self, name: S) -> BoxResult<RedisTable<T>>
-    where
-        T: Clone + DeserializeOwned + Serialize,
-        S: AsRef<str>,
-    {
-        let conn = self.client.get_connection()?;
-        //Ok(RedisTable::open(conn, name))
-        todo!("open_table")
-    }
-
-    /// 删除数据库表/变量
-    fn remove<S>(&self, name: S) -> BoxResult<()>
-    where
-        S: AsRef<str>,
-    {
+    fn del(&self, key: &str) -> BoxResult<()> {
         let mut conn = self.client.get_connection()?;
-        Ok(conn.del(name.as_ref())?)
+        Ok(conn.del(key)?)
     }
 }
 

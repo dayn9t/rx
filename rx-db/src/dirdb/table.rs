@@ -16,8 +16,8 @@ pub struct DirTable<T> {
 
 impl<T: IRecord> DirTable<T> {
     /// 打开表
-    pub fn open_path<S>(db_path: &Path, name: &str) -> BoxResult<Self> {
-        let path = path!(db_path, name);
+    pub fn open_path(db_path: &Path, name: &str) -> BoxResult<Self> {
+        let path = path!(db_path / name);
         fs::ensure_dir_exist(&path)?;
         let meta_path = path!(path / ".meta");
         let last_id = DirVariant::open_path(&meta_path, "last_id")?;

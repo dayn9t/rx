@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::marker::PhantomData;
 
-use redis::Commands;
+use redis::{Commands, Connection};
 
 use crate::{IRecord, ITable, ITableDyn, RecordId};
 use rx_core::text::*;
@@ -9,11 +9,21 @@ use rx_core::text::*;
 pub struct RedisTable<T> {
     name: String,
     meta_name: String,
-    conn: RefCell<redis::Connection>,
+    conn: RefCell<Connection>,
     _p: PhantomData<T>,
 }
 
-impl<T> RedisTable<T> {}
+impl<T> RedisTable<T> {
+    pub fn new(conn: Connection, name: String) -> Self {
+        let meta_name = format!("{}_meta", name);
+        Self {
+            name,
+            meta_name,
+            conn: RefCell::new(conn),
+            _p: PhantomData::<T>,
+        }
+    }
+}
 
 impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
     fn open(db_url: &str, name: &str) -> BoxResult<Self>
@@ -32,12 +42,6 @@ impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
             _p: PhantomData::<T>,
         })
     }
-
-    /*fn remove(db_url: &str, table_name: &str) -> BoxResult<()> {
-        let client = redis::Client::open(db_url)?;
-        let mut conn = client.get_connection()?;
-        Ok(conn.del(table_name)?)
-    }*/
 
     fn name(&self) -> String {
         self.name.clone()

@@ -14,7 +14,7 @@ pub trait IDatabase {
     /// 获取数据库变量
     fn get_variant<T>(&self, variant_name: &str) -> BoxResult<T>
     where
-        T: Default + DeserializeOwned + Serialize + Clone,
+        T: Default + DeserializeOwned + Serialize + Clone + 'static,
     {
         self.open_variant(variant_name)?.get()
     }
@@ -22,7 +22,7 @@ pub trait IDatabase {
     /// 设置数据库变量
     fn set_variant<T>(&self, variant_name: &str, value: &T) -> BoxResult<()>
     where
-        T: Default + DeserializeOwned + Serialize + Clone,
+        T: Default + DeserializeOwned + Serialize + Clone + 'static,
     {
         let mut v = self.open_variant(variant_name)?;
         v.set(value)
@@ -31,7 +31,7 @@ pub trait IDatabase {
     /// 打开数据库变量
     fn open_variant<T>(&self, variant_name: &str) -> BoxResult<Box<dyn IVariant<T>>>
     where
-        T: Default + DeserializeOwned + Serialize,
+        T: Default + DeserializeOwned + Serialize + Clone + 'static,
     {
         self.open_variant_with_default(variant_name, T::default())
     }
@@ -43,13 +43,16 @@ pub trait IDatabase {
         default: T,
     ) -> BoxResult<Box<dyn IVariant<T>>>
     where
-        T: Default + DeserializeOwned + Serialize;
+        T: Default + DeserializeOwned + Serialize + Clone + 'static;
 
     /// 删除数据库表
     fn remove_table(&self, table_name: &str) -> BoxResult<()>;
 
     /// 打开数据库表
-    fn open_table<R: IRecord>(&self, table_name: &str) -> BoxResult<Box<dyn ITableDyn<R>>>;
+    fn open_table<R: IRecord + 'static>(
+        &self,
+        table_name: &str,
+    ) -> BoxResult<Box<dyn ITableDyn<R>>>;
 
     /// 查找数据库表所有记录
     fn find_all_records<R: IRecord>(&self, table_name: &str) -> BoxResult<Vec<R>> {
@@ -69,12 +72,12 @@ pub trait IDatabase {
         P: Fn(&R) -> bool;
 
     /// 从数据库表获取指定记录
-    fn get_record<R: IRecord>(&self, table_name: &str, id: RecordId) -> BoxResult<R> {
+    fn get_record<R: IRecord + 'static>(&self, table_name: &str, id: RecordId) -> BoxResult<R> {
         self.open_table(table_name)?.get(id)
     }
 
     /// 更新数据库表中指定记录
-    fn put_record<R: IRecord>(
+    fn put_record<R: IRecord + 'static>(
         &self,
         table_name: &str,
         id: RecordId,

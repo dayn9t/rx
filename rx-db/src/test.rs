@@ -19,7 +19,7 @@ pub mod tests {
     }
 
     pub fn test_var<V: IVariant<Student>>(db_url: &str, name: &str) {
-        V::remove(db_url, name).unwrap();
+        remove_variant(db_url, name).unwrap();
 
         let mut var = DirVariant::open(db_url, name).unwrap();
         assert_eq!(var.name(), name);
@@ -40,7 +40,7 @@ pub mod tests {
     }
 
     pub fn test_table<T: ITableDyn<Student>>(db_url: &str, name: &str) {
-        T::remove(db_url, name).unwrap();
+        remove_table(db_url, name).unwrap();
 
         let mut tab = DirTable::open(db_url, name).unwrap();
         assert!(tab.is_empty());

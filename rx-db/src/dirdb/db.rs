@@ -1,4 +1,5 @@
-use crate::{IDatabase, IRecord, ITableDyn, IVariant, RecordId};
+use crate::dirdb::{DirTable, DirVariant};
+use crate::{IDatabase, IRecord, ITable, ITableDyn, IVariant, RecordId};
 use anyhow::anyhow;
 use path_macro::path;
 use rx_core::sys::fs;
@@ -70,9 +71,10 @@ impl IDatabase for DirDb {
         default: T,
     ) -> BoxResult<Box<dyn IVariant<T>>>
     where
-        T: Default + DeserializeOwned + Serialize,
+        T: Default + DeserializeOwned + Serialize + Clone + 'static,
     {
-        todo!()
+        let tab = DirVariant::<T>::open_path_with_default(&self.path, variant_name, default)?;
+        Ok(Box::new(tab))
     }
 
     fn remove_table(&self, table_name: &str) -> BoxResult<()> {
@@ -83,8 +85,12 @@ impl IDatabase for DirDb {
         Ok(fs::remove(&path)?)
     }
 
-    fn open_table<R: IRecord>(&self, table_name: &str) -> BoxResult<Box<dyn ITableDyn<R>>> {
-        todo!()
+    fn open_table<R: IRecord + 'static>(
+        &self,
+        table_name: &str,
+    ) -> BoxResult<Box<dyn ITableDyn<R>>> {
+        let tab = DirTable::<R>::open_path(&self.path, table_name)?;
+        Ok(Box::new(tab))
     }
 
     fn find_records<R, P>(
@@ -98,7 +104,8 @@ impl IDatabase for DirDb {
         R: IRecord,
         P: Fn(&R) -> bool,
     {
-        todo!()
+        let table = DirTable::<R>::open_path(&self.path, table_name)?;
+        table.find(min_id, limit, predicate)
     }
 }
 impl DirDb {
@@ -121,104 +128,9 @@ impl DirDb {
     pub fn path(&self) -> &Path {
         self.path.as_path()
     }
-
-    /// 打开数据库变量
-    pub fn open_variant<T, S>(&mut self, name: S, default: Option<T>) -> BoxResult<DirVariant<T>>
-    where
-        T: Default + DeserializeOwned + Serialize,
-        S: AsRef<str>,
-    {
-        DirVariant::open(self, name, default)
-    }
-
-    /// 打开数据库变量
-    pub fn open_variant_default<T, S>(&mut self, name: S) -> BoxResult<DirVariant<T>>
-    where
-        T: Default + DeserializeOwned + Serialize,
-        S: AsRef<str>,
-    {
-        DirVariant::open(self, name, Some(T::default()))
-    }
-
-    /// 加载数据库变量
-    pub fn load_variant<T, S>(&mut self, name: S, default: Option<T>) -> BoxResult<T>
-    where
-        T: Default + Clone + DeserializeOwned + Serialize,
-        S: AsRef<str>,
-    {
-        DirVariant::open(self, name, default)?.get()
-    }
-
-    /// 删除数据库变量
-    pub fn remove_variant<S>(&self, name: S) -> BoxResult<()>
-    where
-        S: AsRef<str>,
-    {
-        Ok(fs::remove(&self.variant_path(name))?)
-    }
-
-    /// 打开数据库表
-    pub fn open_table<T, S>(&mut self, name: S) -> BoxResult<DirTable<T>>
-    where
-        T: IRecord,
-        S: AsRef<str>,
-    {
-        DirTable::open(self, name)
-    }
-
-    /// 删除数据库表
-    pub fn remove_table<S>(&self, name: &str) -> BoxResult<()> {
-        self.remove_variant(&id_var_name(name.as_ref()))?;
-        Ok(fs::remove(&self.table_path(name))?)
-    }
-
-    /*
-        fn find<P>(
-            &mut self,
-            min_id: RecordId,
-            limit: usize,
-            predicate: P,
-        ) -> Result<Vec<Self::Record>, Self::Err>
-        where
-            P: Fn(&Self::Record) -> bool;
-    */
-    /// 加载表中的记录
-    pub fn load_records<T, S, P>(&self, name: &str, predicate: P) -> BoxResult<Vec<T>>
-    where
-        T: IRecord,
-        P: Fn(&T) -> bool,
-    {
-        let mut table = DirTable::<T>::open(self, name)?;
-        table.find(0, RecordId::MAX, predicate)
-    }
-
-    /// 加载表中的记录
-    pub fn load_all_records<T, S>(&self, name: S) -> BoxResult<Vec<T>>
-    where
-        T: IRecord,
-        S: AsRef<str>,
-    {
-        self.load_records(name, |_: &T| true)
-    }
 }
 
 /*
-
-/// 打开数据库，加入记录
-pub fn db_put_record<T, S>(
-    db_path: &Path,
-    table_name: S,
-    id: RecordId,
-    record: &mut T,
-) -> BoxResult<()>
-where
-    T: IRecord,
-    S: AsRef<str>,
-{
-    let db = DirDb::open(&db_path)?;
-    let mut table = DirTable::<T>::open(&db, table_name)?;
-    table.put(id, record)
-}
 
 #[cfg(test)]
 mod tests {

@@ -1,14 +1,25 @@
 use std::cell::RefCell;
 
-use redis::Commands;
+use redis::{Commands, Connection};
 
-use crate::IVariant;
+use crate::redisdb::RedisDb;
+use crate::{IDatabase, IVariant};
 use rx_core::text::*;
 
 pub struct RedisVariant<T> {
     name: String,
-    conn: RefCell<redis::Connection>,
+    conn: RefCell<Connection>,
     default_value: T,
+}
+
+impl<T: Default + Clone + Serialize + DeserializeOwned> RedisVariant<T> {
+    pub fn new(conn: Connection, name: String, default_value: T) -> Self {
+        Self {
+            name,
+            conn: RefCell::new(conn),
+            default_value,
+        }
+    }
 }
 
 impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for RedisVariant<T> {
@@ -16,19 +27,11 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for RedisVar
     where
         Self: Sized,
     {
-        let client = redis::Client::open(db_url)?;
-        let conn = client.get_connection()?;
+        let db = RedisDb::open(db_url)?;
+        let conn = db.get_connection()?;
 
-        Ok(Self {
-            name: name.to_owned(),
-            conn: RefCell::new(conn),
-            default_value,
-        })
+        Ok(Self::new(conn, name.to_owned(), default_value))
     }
-
-    /*fn remove(db_url: &str, variant_name: &str) -> BoxResult<()> {
-        todo!()
-    }*/
 
     fn name(&self) -> &str {
         &self.name
@@ -39,7 +42,7 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for RedisVar
     }
 
     fn get_default(&self) -> &T {
-        todo!()
+        &self.default_value
     }
 
     fn get(&self) -> BoxResult<T> {
