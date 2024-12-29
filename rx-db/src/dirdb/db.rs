@@ -79,7 +79,7 @@ impl IDatabase for DirDb {
         &self,
         table_name: &str,
     ) -> BoxResult<Box<dyn ITableDyn<R>>> {
-        let tab = DirTable::<R>::new(table_name.to_owned(), &self.path)?;
+        let tab = DirTable::<R>::open_path(&self.path, table_name)?;
         Ok(Box::new(tab))
     }
 
@@ -94,7 +94,7 @@ impl IDatabase for DirDb {
         R: IRecord,
         P: Fn(&R) -> bool,
     {
-        let table = DirTable::<R>::new(table_name.to_owned(), &self.path)?;
+        let table = DirTable::<R>::open_path(&self.path, table_name)?;
         table.find(min_id, limit, predicate)
     }
 }

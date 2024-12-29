@@ -16,12 +16,12 @@ pub struct DirTable<T> {
 
 impl<T: IRecord> DirTable<T> {
     /// 打开表
-    pub fn new(name: String, db_path: &Path) -> BoxResult<Self> {
+    pub fn open_path(db_path: &Path, name: &str) -> BoxResult<Self> {
         let path = path!(db_path / name);
         fs::ensure_dir_exist(&path)?;
         let meta = DirVariant::open_path(&meta_path(db_path), &name)?;
         Ok(Self {
-            name,
+            name: name.to_owned(),
             path,
             meta,
             _p: PhantomData::<T>,
@@ -42,7 +42,7 @@ impl<T: IRecord> DirTable<T> {
 impl<T: IRecord> ITableDyn<T> for DirTable<T> {
     fn open(db_url: &str, name: &str) -> BoxResult<Self> {
         let db_path = db_path(db_url)?;
-        Self::new(name.to_owned(), &db_path)
+        Self::open_path(&db_path, name)
     }
 
     fn name(&self) -> String {

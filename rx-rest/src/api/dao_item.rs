@@ -1,7 +1,7 @@
-use tokio::sync::Mutex;
-
+use rx_db::IVariant;
 pub use rx_db::RecordId;
-use rx_db::{DirDb, DirVariant, IVariant};
+use rx_db::dirdb::DirVariant;
+use tokio::sync::Mutex;
 
 use super::common::*;
 
@@ -12,13 +12,10 @@ pub struct DaoItem<R> {
 
 impl<R: Default + Clone + Serialize + DeserializeOwned + ToJSON> DaoItem<R> {
     /// 打开单个数据条目
-    pub fn open_name<P, S>(db_path: P, var_name: &S, default: Option<R>) -> BoxResult<Self>
-    where
-        P: AsRef<Path>,
-        S: AsRef<str>,
-    {
-        let db = DirDb::open(db_path).unwrap();
-        let variant = Mutex::new(DirVariant::open(&db, var_name, default).unwrap());
+    pub fn open_name(db_path: &Path, var_name: &str, default: Option<R>) -> BoxResult<Self> {
+        let default = default.unwrap_or_default();
+        let variant = DirVariant::open_path_with_default(db_path, var_name, default).unwrap();
+        let variant = Mutex::new(variant);
         Ok(Self { variant })
     }
 

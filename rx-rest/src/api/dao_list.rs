@@ -1,10 +1,10 @@
 use tokio::sync::Mutex;
 use tokio::sync::MutexGuard;
 
-pub use rx_db::RecordId;
-use rx_db::{DirDb, DirTable, IRecord, ITableDyn};
-
 use super::common::*;
+pub use rx_db::RecordId;
+use rx_db::dirdb::DirTable;
+use rx_db::{IRecord, ITable, ITableDyn};
 
 //#[derive(Default)]
 pub struct DaoList<R> {
@@ -13,13 +13,9 @@ pub struct DaoList<R> {
 
 impl<R: IRecord + ToJSON> DaoList<R> {
     /// 打开数据库表
-    pub fn open_name<P, S>(db_path: P, table_name: &S) -> BoxResult<Self>
-    where
-        P: AsRef<Path>,
-        S: AsRef<str>,
-    {
-        let db = DirDb::open(db_path).unwrap();
-        let table = Mutex::new(DirTable::open(&db, table_name).unwrap());
+    pub fn open_name(db_path: &Path, table_name: &str) -> BoxResult<Self> {
+        let tab = DirTable::open_path(db_path, table_name).unwrap();
+        let table = Mutex::new(tab);
         Ok(Self { table })
     }
 
@@ -30,7 +26,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
 
     /// 获取记录集合
     pub async fn get_rs(&self) -> Result<Vec<R>> {
-        let mut tab = self.table.lock().await;
+        let tab = self.table.lock().await;
         let rs = tab.find_all()?;
         Ok(rs)
     }
@@ -53,7 +49,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
 
     /// 获取记录集合
     pub async fn get_all(&self) -> Result<CodeResponse<Vec<R>>> {
-        let mut tab = self.table.lock().await;
+        let tab = self.table.lock().await;
         match tab.find_all() {
             Ok(rs) => Ok(CodeResponse::Ok(Json(rs))),
             Err(_) => Ok(CodeResponse::NotFound),
@@ -64,7 +60,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     where
         P: Fn(&R) -> bool,
     {
-        let mut tab = self.table.lock().await;
+        let tab = self.table.lock().await;
         match tab.find(RecordId::default(), usize::MAX, predicate) {
             Ok(rs) => Ok(CodeResponse::Ok(Json(rs))),
             Err(_) => Ok(CodeResponse::NotFound),
