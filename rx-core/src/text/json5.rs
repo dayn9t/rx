@@ -8,7 +8,7 @@ pub use serde_json5::to_string as to_pretty;
 use crate::prelude::*;
 
 /// 从JSON文件加载类型
-pub fn load<T, P>(path: P) -> BoxResult<T>
+pub fn load<T, P>(path: P) -> AnyResult<T>
 where
     T: DeserializeOwned,
     P: AsRef<Path>,
@@ -21,7 +21,7 @@ where
 }
 
 /// 对象保存到JSON文件
-pub fn save<T, P>(value: &T, path: P) -> BoxResult<()>
+pub fn save<T, P>(value: &T, path: P) -> AnyResult<()>
 where
     T: Serialize,
     P: AsRef<Path>,

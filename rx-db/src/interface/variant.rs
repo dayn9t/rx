@@ -1,14 +1,14 @@
-use rx_core::text::BoxResult;
+use rx_core::text::AnyResult;
 
 /// 数据库变量
 pub trait IVariant<T: Default + Clone> {
     /// 打开变量，如果不存在则使用默认值
-    fn open_with_default(db_url: &str, name: &str, default_value: T) -> BoxResult<Self>
+    fn open_with_default(db_url: &str, name: &str, default_value: T) -> AnyResult<Self>
     where
         Self: Sized;
 
     /// 打开变量
-    fn open(db_url: &str, name: &str) -> BoxResult<Self>
+    fn open(db_url: &str, name: &str) -> AnyResult<Self>
     where
         Self: Sized,
     {
@@ -16,7 +16,7 @@ pub trait IVariant<T: Default + Clone> {
     }
 
     //// 删除变量
-    //fn remove(db_url: &str, name: &str) -> BoxResult<()>;
+    //fn remove(db_url: &str, name: &str) -> AnyResult<()>;
 
     /// 获取变量名
     fn name(&self) -> &str;
@@ -28,7 +28,7 @@ pub trait IVariant<T: Default + Clone> {
     fn get_default(&self) -> &T;
 
     /// 获取变量值
-    fn get(&self) -> BoxResult<T>;
+    fn get(&self) -> AnyResult<T>;
 
     /// 获取变量值/缺省值
     fn get_or(&self, record: T) -> T {
@@ -41,5 +41,5 @@ pub trait IVariant<T: Default + Clone> {
     }
 
     /// 设置变量值
-    fn set(&mut self, record: &T) -> BoxResult<()>;
+    fn set(&mut self, record: &T) -> AnyResult<()>;
 }

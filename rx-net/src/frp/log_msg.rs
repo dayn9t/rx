@@ -1,10 +1,10 @@
 use crate::prelude::Endpoint;
 use regex::Regex;
-use rx_core::text::BoxResult;
+use rx_core::text::AnyResult;
 use rx_core::time::NaiveDateTime;
 use std::str::FromStr;
 
-pub fn parse_time(datetime_str: &str) -> BoxResult<NaiveDateTime> {
+pub fn parse_time(datetime_str: &str) -> AnyResult<NaiveDateTime> {
     let format = "%Y/%m/%d %H:%M:%S";
     NaiveDateTime::parse_from_str(datetime_str, format).map_err(Into::into)
 }

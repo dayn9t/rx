@@ -12,7 +12,7 @@ use http::uri::Uri;
 //use leg::*;
 use serde::{Deserialize, Serialize};
 
-use rx_core::text::BoxResult;
+use rx_core::text::AnyResult;
 use rx_core::{algo, fs};
 use rx_db::*;
 use rx_web::node::*;
@@ -120,7 +120,7 @@ static TOO_MANY_STORAGE: &'static str = "Too many storage";
 
 impl BookShelf {
     /// 加载
-    pub fn load(path: &Path) -> BoxResult<BookShelf> {
+    pub fn load(path: &Path) -> AnyResult<BookShelf> {
         let mut db = DirDb::open(&path)?;
         Ok(BookShelf {
             _root: path.to_owned(),

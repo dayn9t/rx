@@ -11,7 +11,7 @@ pub const SCHEME: &str = "jddb";
 pub const EXT: &str = "json";
 
 /// 获取数据库对象路径，从URL和表名解析路径
-pub fn db_path(db_url: &str) -> BoxResult<PathBuf> {
+pub fn db_path(db_url: &str) -> AnyResult<PathBuf> {
     let uri = Url::parse(db_url)?;
     if uri.scheme() != SCHEME {
         return Err(anyhow!("Invalid scheme"));
@@ -42,16 +42,15 @@ pub struct DirDb {
 }
 
 impl IDatabase for DirDb {
-    fn open(db_url: &str) -> BoxResult<Self>
+    fn open(db_url: &str) -> AnyResult<Self>
     where
         Self: Sized,
     {
         let path = db_path(db_url)?;
-        fs::ensure_dir_exist(&path)?;
-        Ok(DirDb { path })
+        Self::open_path(&path)
     }
 
-    fn remove_variant(&self, variant_name: &str) -> BoxResult<()> {
+    fn remove_variant(&self, variant_name: &str) -> AnyResult<()> {
         let path = variant_path(&self.path, variant_name);
         Self::remove_file(&path)
     }
@@ -60,7 +59,7 @@ impl IDatabase for DirDb {
         &self,
         variant_name: &str,
         default: T,
-    ) -> BoxResult<Box<dyn IVariant<T>>>
+    ) -> AnyResult<Box<dyn IVariant<T>>>
     where
         T: Default + DeserializeOwned + Serialize + Clone + 'static,
     {
@@ -68,7 +67,7 @@ impl IDatabase for DirDb {
         Ok(Box::new(tab))
     }
 
-    fn remove_table(&self, table_name: &str) -> BoxResult<()> {
+    fn remove_table(&self, table_name: &str) -> AnyResult<()> {
         let path = table_path(&self.path, table_name);
         Self::remove_dir(&path)?;
         let meta_path = table_meta_path(&self.path, table_name);
@@ -78,7 +77,7 @@ impl IDatabase for DirDb {
     fn open_table<R: IRecord + 'static>(
         &self,
         table_name: &str,
-    ) -> BoxResult<Box<dyn ITableDyn<R>>> {
+    ) -> AnyResult<Box<dyn ITableDyn<R>>> {
         let tab = DirTable::<R>::open_path(&self.path, table_name)?;
         Ok(Box::new(tab))
     }
@@ -89,7 +88,7 @@ impl IDatabase for DirDb {
         min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> BoxResult<Vec<R>>
+    ) -> AnyResult<Vec<R>>
     where
         R: IRecord,
         P: Fn(&R) -> bool,
@@ -99,6 +98,16 @@ impl IDatabase for DirDb {
     }
 }
 impl DirDb {
+    pub fn open_path(db_path: &Path) -> AnyResult<Self>
+    where
+        Self: Sized,
+    {
+        fs::ensure_dir_exist(&db_path)?;
+        Ok(DirDb {
+            path: db_path.to_path_buf(),
+        })
+    }
+
     /// 数据库名称
     pub fn name(&self) -> &str {
         self.path.file_name().unwrap().to_str().unwrap()
@@ -109,14 +118,14 @@ impl DirDb {
         self.path.as_path()
     }
 
-    pub fn remove_file(path: &Path) -> BoxResult<()> {
+    pub fn remove_file(path: &Path) -> AnyResult<()> {
         if path.exists() && !path.is_file() {
             return Err(anyhow!("File path not file"));
         }
         Ok(fs::remove(&path)?)
     }
 
-    pub fn remove_dir(path: &Path) -> BoxResult<()> {
+    pub fn remove_dir(path: &Path) -> AnyResult<()> {
         if path.exists() && !path.is_dir() {
             return Err(anyhow!("File path not dir"));
         }

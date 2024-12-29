@@ -7,7 +7,7 @@ pub use serde_yaml::to_string;
 use crate::prelude::*;
 
 /// 从YAML文件加载类型
-pub fn load<T, P>(path: P) -> BoxResult<T>
+pub fn load<T, P>(path: P) -> AnyResult<T>
 where
     T: DeserializeOwned,
     P: AsRef<Path>,
@@ -19,7 +19,7 @@ where
 }
 
 /// 对象保存到yaml文件
-pub fn save<T, P>(value: &T, path: P) -> BoxResult<()>
+pub fn save<T, P>(value: &T, path: P) -> AnyResult<()>
 where
     T: Serialize,
     P: AsRef<Path>,

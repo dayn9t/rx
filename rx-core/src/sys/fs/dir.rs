@@ -5,7 +5,7 @@ use path_macro::path;
 use tracing::{error, info};
 
 use crate::sys::fs::{SortOrder, file_name, files_in};
-use crate::text::BoxResult;
+use crate::text::AnyResult;
 
 /// 两个目录中文件主干差集, 限定文件扩展名
 pub fn dir_stem_diff(
@@ -13,7 +13,7 @@ pub fn dir_stem_diff(
     dst_dir: &Path,
     src_ext: &str,
     dst_ext: &str,
-) -> BoxResult<Vec<PathBuf>> {
+) -> AnyResult<Vec<PathBuf>> {
     let src_files = files_in(src_dir, src_ext, SortOrder::None)?;
     let dst_files = files_in(dst_dir, dst_ext, SortOrder::None)?;
     let dst_stems: HashSet<_> = dst_files.iter().map(|f| f.file_stem().unwrap()).collect();
@@ -28,7 +28,7 @@ pub fn dir_stem_diff(
 }
 
 pub trait FileTranslator {
-    fn translate(&self, src: &Path, dst: &Path) -> BoxResult<()>;
+    fn translate(&self, src: &Path, dst: &Path) -> AnyResult<()>;
 }
 
 /// 目录文件翻译
@@ -43,7 +43,7 @@ impl DirTranslator {
         src_dir: &Path,
         dst_dir: &Path,
         translator: &impl FileTranslator,
-    ) -> BoxResult<usize> {
+    ) -> AnyResult<usize> {
         let diff_files = dir_stem_diff(src_dir, dst_dir, &self.src_ext, &self.dst_ext).unwrap();
         let total = diff_files.len();
         for src_file in diff_files {
@@ -110,7 +110,7 @@ mod tests {
     struct TestFileTranslator;
 
     impl FileTranslator for TestFileTranslator {
-        fn translate(&self, src: &Path, dst: &Path) -> BoxResult<()> {
+        fn translate(&self, src: &Path, dst: &Path) -> AnyResult<()> {
             let mut dst_file = File::create(dst)?;
             writeln!(dst_file, "Translated from {:?}", src)?;
             Ok(())

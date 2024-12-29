@@ -19,7 +19,7 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> RedisVar<T> {
             _p: Default::default(),
         }
     }
-    pub fn get(&self, conn: &RefCell<Connection>) -> BoxResult<T> {
+    pub fn get(&self, conn: &RefCell<Connection>) -> AnyResult<T> {
         let s: Option<String> = conn.borrow_mut().get(&self.name)?;
         if let Some(s) = s {
             let v: T = json::from_str(&s).unwrap();
@@ -28,7 +28,7 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> RedisVar<T> {
             Ok(Default::default())
         }
     }
-    fn set(&self, conn: &RefCell<Connection>, record: &T) -> BoxResult<()> {
+    fn set(&self, conn: &RefCell<Connection>, record: &T) -> AnyResult<()> {
         let s = json::to_pretty(record).unwrap();
         Ok(conn.borrow_mut().set(&self.name, &s)?)
     }
@@ -54,7 +54,7 @@ impl<T> RedisTable<T> {
 }
 
 impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
-    fn open(db_url: &str, name: &str) -> BoxResult<Self>
+    fn open(db_url: &str, name: &str) -> AnyResult<Self>
     where
         Self: Sized,
     {
@@ -71,11 +71,11 @@ impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
         self.conn.borrow_mut().hlen(&self.name).unwrap()
     }
 
-    fn get_meta(&self) -> BoxResult<TableMeta> {
+    fn get_meta(&self) -> AnyResult<TableMeta> {
         self.meta.get(&self.conn)
     }
 
-    fn set_meta(&mut self, meta: &TableMeta) -> BoxResult<()> {
+    fn set_meta(&mut self, meta: &TableMeta) -> AnyResult<()> {
         self.meta.set(&self.conn, meta)
     }
 
@@ -83,7 +83,7 @@ impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
         self.conn.borrow_mut().hexists(&self.name, id).unwrap()
     }
 
-    fn get(&self, id: RecordId) -> BoxResult<T> {
+    fn get(&self, id: RecordId) -> AnyResult<T> {
         let s: Option<String> = self.conn.borrow_mut().hget(&self.name, id)?;
         if let Some(s) = s {
             let v: T = json::from_str(&s)?;
@@ -93,28 +93,28 @@ impl<T: IRecord> ITableDyn<T> for RedisTable<T> {
         }
     }
 
-    fn put(&mut self, id: RecordId, record: &mut T) -> BoxResult<()> {
+    fn put(&mut self, id: RecordId, record: &mut T) -> AnyResult<()> {
         record.set_id(id);
         let s = json::to_pretty(record).unwrap();
         self.update_last_id(id)?;
         Ok(self.conn.borrow_mut().hset(&self.name, id, &s)?)
     }
 
-    fn delete(&mut self, id: RecordId) -> BoxResult<()> {
+    fn delete(&mut self, id: RecordId) -> AnyResult<()> {
         Ok(self.conn.borrow_mut().hdel(&self.name, id)?)
     }
 
     /// 查询记录集
-    fn find_all(&self) -> BoxResult<Vec<T>> {
+    fn find_all(&self) -> AnyResult<Vec<T>> {
         self.find(RecordId::default(), usize::MAX, |_| true)
     }
 
     /// 查询K/V对
-    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>> {
+    fn find_all_pairs(&self) -> AnyResult<Vec<(RecordId, T)>> {
         self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
     }
 
-    fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
+    fn find_ids(&self, min_id: RecordId) -> AnyResult<Vec<RecordId>> {
         let ids: Vec<RecordId> = self.conn.borrow_mut().hkeys(&self.name)?;
         let mut ids: Vec<_> = ids.into_iter().filter(|id| *id >= min_id).collect();
         ids.sort();

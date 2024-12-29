@@ -17,7 +17,7 @@ pub struct RedisDb {
 }
 
 impl IDatabase for RedisDb {
-    fn open(db_url: &str) -> BoxResult<Self>
+    fn open(db_url: &str) -> AnyResult<Self>
     where
         Self: Sized,
     {
@@ -29,7 +29,7 @@ impl IDatabase for RedisDb {
         Ok(RedisDb { client })
     }
 
-    fn remove_variant(&self, variant_name: &str) -> BoxResult<()> {
+    fn remove_variant(&self, variant_name: &str) -> AnyResult<()> {
         self.del(variant_name)
     }
 
@@ -37,7 +37,7 @@ impl IDatabase for RedisDb {
         &self,
         variant_name: &str,
         default: T,
-    ) -> BoxResult<Box<dyn IVariant<T>>>
+    ) -> AnyResult<Box<dyn IVariant<T>>>
     where
         T: Default + DeserializeOwned + Serialize + Clone + 'static,
     {
@@ -46,7 +46,7 @@ impl IDatabase for RedisDb {
         Ok(Box::new(v))
     }
 
-    fn remove_table(&self, table_name: &str) -> BoxResult<()> {
+    fn remove_table(&self, table_name: &str) -> AnyResult<()> {
         self.del(table_name)?;
         self.del(&table_meta_key(table_name))
     }
@@ -54,7 +54,7 @@ impl IDatabase for RedisDb {
     fn open_table<R: IRecord + 'static>(
         &self,
         table_name: &str,
-    ) -> BoxResult<Box<dyn ITableDyn<R>>> {
+    ) -> AnyResult<Box<dyn ITableDyn<R>>> {
         let conn = self.get_connection()?;
         let v = RedisTable::new(table_name.to_owned(), conn);
         Ok(Box::new(v))
@@ -66,7 +66,7 @@ impl IDatabase for RedisDb {
         min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> BoxResult<Vec<R>>
+    ) -> AnyResult<Vec<R>>
     where
         R: IRecord,
         P: Fn(&R) -> bool,
@@ -79,12 +79,12 @@ impl IDatabase for RedisDb {
 
 impl RedisDb {
     /// 获取连接
-    pub fn get_connection(&self) -> BoxResult<Connection> {
+    pub fn get_connection(&self) -> AnyResult<Connection> {
         let conn = self.client.get_connection()?;
         Ok(conn)
     }
 
-    fn del(&self, key: &str) -> BoxResult<()> {
+    fn del(&self, key: &str) -> AnyResult<()> {
         let mut conn = self.client.get_connection()?;
         Ok(conn.del(key)?)
     }

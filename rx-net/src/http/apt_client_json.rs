@@ -2,7 +2,7 @@ use reqwest::blocking;
 use reqwest::header::ACCEPT;
 use serde::de::DeserializeOwned;
 
-use rx_core::text::BoxResult;
+use rx_core::text::AnyResult;
 
 use crate::url::split_url2;
 
@@ -19,7 +19,7 @@ impl ApiClientJson {
     }
 
     /// 从指定的 URL 获取数据(同步), 并转反序列化为指定类型
-    pub fn get<T: DeserializeOwned>(&self, path: impl AsRef<str>) -> BoxResult<T> {
+    pub fn get<T: DeserializeOwned>(&self, path: impl AsRef<str>) -> AnyResult<T> {
         let path = path.as_ref();
         let client = blocking::Client::new();
         let response = client
@@ -33,7 +33,7 @@ impl ApiClientJson {
 }
 
 /// 从指定的 URL 获取数据(同步), 并转反序列化为指定类型
-pub fn get<T: DeserializeOwned>(url: impl AsRef<str>) -> BoxResult<T> {
+pub fn get<T: DeserializeOwned>(url: impl AsRef<str>) -> AnyResult<T> {
     let (url_base, path) = split_url2(url)?;
 
     let client = ApiClientJson::new(&url_base);

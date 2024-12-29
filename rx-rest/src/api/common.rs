@@ -4,7 +4,7 @@ pub use poem::Result;
 pub use poem_openapi::{ApiResponse, Object, param::Path as UrlPath, payload::Json, types::ToJSON};
 
 pub use rx_core::log::*;
-pub use rx_core::text::{BoxResult, Deserialize, DeserializeOwned, Serialize};
+pub use rx_core::text::{AnyResult, Deserialize, DeserializeOwned, Serialize};
 
 #[derive(ApiResponse)]
 pub enum CodeResponse<R: Send + ToJSON> {

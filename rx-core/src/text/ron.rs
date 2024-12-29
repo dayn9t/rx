@@ -12,7 +12,7 @@ pub use crate::prelude::*;
 //use std::io::Read;
 
 /// 从RON文件加载类型
-pub fn load<T, P>(path: P) -> BoxResult<T>
+pub fn load<T, P>(path: P) -> AnyResult<T>
 where
     T: DeserializeOwned,
     P: AsRef<Path>,
@@ -24,7 +24,7 @@ where
 }
 
 /// 对象保存到RON文件
-pub fn save<T, P>(value: &T, path: P) -> BoxResult<()>
+pub fn save<T, P>(value: &T, path: P) -> AnyResult<()>
 where
     T: Serialize,
     P: AsRef<Path>,
@@ -35,7 +35,7 @@ where
 }
 
 /// RON以美化格式表示为字符串
-pub fn to_pretty<T>(value: &T) -> BoxResult<String>
+pub fn to_pretty<T>(value: &T) -> AnyResult<String>
 where
     T: Serialize,
 {
@@ -46,7 +46,7 @@ where
 }
 
 /// RON以美化格式字符串写入
-pub fn to_writer_pretty<W, T>(mut writer: W, value: &T) -> BoxResult<()>
+pub fn to_writer_pretty<W, T>(mut writer: W, value: &T) -> AnyResult<()>
 where
     W: io::Write,
     T: Serialize,
@@ -58,7 +58,7 @@ where
 }
 /*
 /// RON格式化，结果居然是Json？
-pub fn fmt(s: &str) -> BoxResult<String> {
+pub fn fmt(s: &str) -> AnyResult<String> {
     let value = Value::from_str(s)?;
 
     let mut pretty = PrettyConfig::default();
@@ -73,7 +73,7 @@ pub fn fmt(s: &str) -> BoxResult<String> {
 }
 
 /// RON格式化
-pub fn fmt_file(f: &Path) -> BoxResult<String> {
+pub fn fmt_file(f: &Path) -> AnyResult<String> {
     let mut f = File::open(f)?;
     let mut s = String::new();
     f.read_to_string(&mut s)?;

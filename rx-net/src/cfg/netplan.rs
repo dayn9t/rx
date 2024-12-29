@@ -107,12 +107,12 @@ impl NetplanCfg {
     }
 
     /// 保存到配置文件
-    pub fn load(path: impl AsRef<Path>) -> BoxResult<Self> {
+    pub fn load(path: impl AsRef<Path>) -> AnyResult<Self> {
         yaml::load(path)
     }
 
     /// 保存到配置文件
-    pub fn save(&self, path: impl AsRef<Path>) -> BoxResult<()> {
+    pub fn save(&self, path: impl AsRef<Path>) -> AnyResult<()> {
         yaml::save(self, path)
     }
 
@@ -122,7 +122,7 @@ impl NetplanCfg {
     }
 
     /// 更新以太网
-    fn _update_ethernets(&mut self, names: Vec<String>) -> BoxResult<()> {
+    fn _update_ethernets(&mut self, names: Vec<String>) -> AnyResult<()> {
         if names.len() == self.network.ethernets.len() {}
         Ok(())
     }

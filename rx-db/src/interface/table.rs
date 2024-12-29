@@ -1,5 +1,5 @@
 use crate::Deserialize;
-use rx_core::text::BoxResult;
+use rx_core::text::AnyResult;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
@@ -31,12 +31,12 @@ impl TableMeta {
 /// 数据库表
 pub trait ITableDyn<T: IRecord> {
     /// 打开表
-    fn open(db_url: &str, table_name: &str) -> BoxResult<Self>
+    fn open(db_url: &str, table_name: &str) -> AnyResult<Self>
     where
         Self: Sized;
 
     //// 删除表
-    //fn remove(db_url: &str, table_name: &str) -> BoxResult<()>;
+    //fn remove(db_url: &str, table_name: &str) -> AnyResult<()>;
 
     /// 获取表名
     fn name(&self) -> String;
@@ -52,13 +52,13 @@ pub trait ITableDyn<T: IRecord> {
     }
 
     /// 获取表元数据
-    fn get_meta(&self) -> BoxResult<TableMeta>;
+    fn get_meta(&self) -> AnyResult<TableMeta>;
 
     /// 设置表元数据，TODO: 禁止外部调用
-    fn set_meta(&mut self, meta: &TableMeta) -> BoxResult<()>;
+    fn set_meta(&mut self, meta: &TableMeta) -> AnyResult<()>;
 
     /// 更新最后ID，TODO: 禁止外部调用
-    fn update_last_id(&mut self, id: RecordId) -> BoxResult<()> {
+    fn update_last_id(&mut self, id: RecordId) -> AnyResult<()> {
         let mut meta = self.get_meta()?;
         if id > meta.last_id {
             meta.last_id = id;
@@ -69,7 +69,7 @@ pub trait ITableDyn<T: IRecord> {
     }
 
     /// 获取下一个ID
-    fn next_id(&mut self) -> BoxResult<RecordId> {
+    fn next_id(&mut self) -> AnyResult<RecordId> {
         let mut meta = self.get_meta()?;
         meta.last_id += 1;
         self.set_meta(&meta)?;
@@ -80,7 +80,7 @@ pub trait ITableDyn<T: IRecord> {
     fn contains(&self, id: RecordId) -> bool;
 
     /// 获取记录
-    fn get(&self, id: RecordId) -> BoxResult<T>;
+    fn get(&self, id: RecordId) -> AnyResult<T>;
 
     /// 获取变量值/缺省值
     fn get_or(&self, id: RecordId, record: T) -> T {
@@ -93,19 +93,19 @@ pub trait ITableDyn<T: IRecord> {
     }
 
     /// 添加记录
-    fn post(&mut self, record: &mut T) -> BoxResult<RecordId> {
+    fn post(&mut self, record: &mut T) -> AnyResult<RecordId> {
         let id = self.next_id()?;
         self.put(id, record)?;
         Ok(id)
     }
     /// 更新记录
-    fn put(&mut self, id: RecordId, record: &mut T) -> BoxResult<()>;
+    fn put(&mut self, id: RecordId, record: &mut T) -> AnyResult<()>;
 
     /// 删除记录(幂等)
-    fn delete(&mut self, id: RecordId) -> BoxResult<()>;
+    fn delete(&mut self, id: RecordId) -> AnyResult<()>;
 
     /// 删除全部记录(幂等)
-    fn delete_all(&mut self) -> BoxResult<()> {
+    fn delete_all(&mut self) -> AnyResult<()> {
         let ids = self.find_ids(RecordId::default())?;
         for id in ids {
             self.delete(id)?;
@@ -114,19 +114,19 @@ pub trait ITableDyn<T: IRecord> {
     }
 
     /// 查询记录集
-    fn find_all(&self) -> BoxResult<Vec<T>>;
+    fn find_all(&self) -> AnyResult<Vec<T>>;
 
     /// 查询K/V对
-    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>>;
+    fn find_all_pairs(&self) -> AnyResult<Vec<(RecordId, T)>>;
 
     /// 查询Id集
-    fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>>;
+    fn find_ids(&self, min_id: RecordId) -> AnyResult<Vec<RecordId>>;
 }
 
 /// 数据库表
 pub trait ITable<T: IRecord>: ITableDyn<T> {
     /// 查询记录集
-    fn find<P>(&self, min_id: RecordId, limit: usize, predicate: P) -> BoxResult<Vec<T>>
+    fn find<P>(&self, min_id: RecordId, limit: usize, predicate: P) -> AnyResult<Vec<T>>
     where
         P: Fn(&T) -> bool,
     {
@@ -150,7 +150,7 @@ pub trait ITable<T: IRecord>: ITableDyn<T> {
         min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> BoxResult<Vec<(RecordId, T)>>
+    ) -> AnyResult<Vec<(RecordId, T)>>
     where
         P: Fn(&T) -> bool,
     {

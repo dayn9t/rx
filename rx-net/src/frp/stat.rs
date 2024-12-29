@@ -2,7 +2,7 @@ use crate::frp::*;
 use core::range::Range;
 use regex::Regex;
 use rx_core::log::{debug, info};
-use rx_core::text::BoxResult;
+use rx_core::text::AnyResult;
 use rx_core::time::NaiveDateTime;
 use std::collections::HashMap;
 use std::fs::File;
@@ -46,7 +46,7 @@ impl TimeStat {
     }
 
     /// 从日志文件更新统计信息
-    pub fn update_with_log(&mut self, log_file: &Path) -> BoxResult<()> {
+    pub fn update_with_log(&mut self, log_file: &Path) -> AnyResult<()> {
         let file = File::open(log_file)?;
         let reader = BufReader::new(file);
 

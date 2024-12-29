@@ -3,7 +3,7 @@ use reqwest::StatusCode;
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
 use rx_core::prelude::{Deserialize, Serialize};
-use rx_core::text::BoxResult;
+use rx_core::text::AnyResult;
 use std::fs;
 use std::path::Path;
 use url::Url;
@@ -13,7 +13,7 @@ pub const PROTO_HTTPS: &str = "https://";
 pub const PROTO_FILE: &str = "file://";
 
 /// URL 分解成 base 和 path 两部分
-pub fn split_url2(url: impl AsRef<str>) -> BoxResult<(String, String)> {
+pub fn split_url2(url: impl AsRef<str>) -> AnyResult<(String, String)> {
     let parsed_url = Url::parse(url.as_ref())?;
     let base = match (parsed_url.username(), parsed_url.password()) {
         ("", None) => format!(
@@ -52,7 +52,7 @@ pub struct FileMimeInfo {
 }
 
 /// 获取文件信息
-pub fn get_file_mime_info(path: &Path) -> BoxResult<FileMimeInfo> {
+pub fn get_file_mime_info(path: &Path) -> AnyResult<FileMimeInfo> {
     let metadata = fs::metadata(path)?;
 
     let size = metadata.len() as usize;
@@ -64,7 +64,7 @@ pub fn get_file_mime_info(path: &Path) -> BoxResult<FileMimeInfo> {
 }
 
 /// 获取 HTTP 文件信息
-pub fn get_http_mime_info(url: &str) -> BoxResult<FileMimeInfo> {
+pub fn get_http_mime_info(url: &str) -> AnyResult<FileMimeInfo> {
     let client = Client::new();
     let response = client.head(url).send()?;
 
@@ -90,7 +90,7 @@ pub fn get_http_mime_info(url: &str) -> BoxResult<FileMimeInfo> {
 }
 
 /// 获取 URL 文件信息， 目前只支持 HTTP/FILE 协议
-pub fn get_url_mime_info(url: impl AsRef<str>) -> BoxResult<FileMimeInfo> {
+pub fn get_url_mime_info(url: impl AsRef<str>) -> AnyResult<FileMimeInfo> {
     let url_str = url.as_ref();
     if url_str.starts_with(PROTO_HTTP) || url_str.starts_with(PROTO_HTTPS) {
         get_http_mime_info(url_str)

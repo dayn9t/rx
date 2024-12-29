@@ -1,4 +1,4 @@
-pub use common::{BoxResult, CodeResponse, Deserialize, DeserializeOwned, Serialize, UrlPath};
+pub use common::{AnyResult, CodeResponse, Deserialize, DeserializeOwned, Serialize, UrlPath};
 pub use dao_item::*;
 pub use dao_list::*;
 pub use proc::*;

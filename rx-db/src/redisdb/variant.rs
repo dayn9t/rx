@@ -23,7 +23,7 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> RedisVariant<T> {
 }
 
 impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for RedisVariant<T> {
-    fn open_with_default(db_url: &str, name: &str, default_value: T) -> BoxResult<Self>
+    fn open_with_default(db_url: &str, name: &str, default_value: T) -> AnyResult<Self>
     where
         Self: Sized,
     {
@@ -45,7 +45,7 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for RedisVar
         &self.default_value
     }
 
-    fn get(&self) -> BoxResult<T> {
+    fn get(&self) -> AnyResult<T> {
         let s: Option<String> = self.conn.borrow_mut().get(&self.name)?;
         if let Some(s) = s {
             let v: T = json::from_str(&s).unwrap();
@@ -55,7 +55,7 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for RedisVar
         }
     }
 
-    fn set(&mut self, record: &T) -> BoxResult<()> {
+    fn set(&mut self, record: &T) -> AnyResult<()> {
         let s = json::to_pretty(record).unwrap();
         Ok(self.conn.borrow_mut().set(&self.name, &s)?)
     }

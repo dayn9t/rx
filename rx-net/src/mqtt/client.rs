@@ -10,7 +10,7 @@ use serde::de::DeserializeOwned;
 
 use rx_core::sys::fs::to_string;
 use rx_core::text::json::to_pretty;
-use rx_core::text::{BoxResult, json};
+use rx_core::text::{AnyResult, json};
 
 pub type MqttResult<T> = paho_mqtt::Result<T>;
 
@@ -53,7 +53,7 @@ impl MqttClient {
     }
 
     /// 发布消息 - 转换成 Vec<u8
-    pub fn publish_as_bytes<V>(&mut self, topic: &str, payload: V) -> BoxResult<()>
+    pub fn publish_as_bytes<V>(&mut self, topic: &str, payload: V) -> AnyResult<()>
     where
         V: Into<Vec<u8>>,
     {
@@ -67,7 +67,7 @@ impl MqttClient {
     }
 
     /// 发布消息 - 序列换成JSON
-    pub fn publish_as_json(&mut self, topic: &str, ob: &impl Serialize) -> BoxResult<()> {
+    pub fn publish_as_json(&mut self, topic: &str, ob: &impl Serialize) -> AnyResult<()> {
         let s = to_pretty(ob)?;
         self.publish_as_bytes(topic, s)
     }

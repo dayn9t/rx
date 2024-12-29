@@ -5,7 +5,7 @@ use anyhow::anyhow;
 use rx_core::prelude::*;
 use url::Url;
 
-pub fn remove_table(url: &str, name: &str) -> BoxResult<()> {
+pub fn remove_table(url: &str, name: &str) -> AnyResult<()> {
     let uri = Url::parse(url)?;
     let r = match uri.scheme() {
         dirdb::SCHEME => {
@@ -21,7 +21,7 @@ pub fn remove_table(url: &str, name: &str) -> BoxResult<()> {
     Ok(r)
 }
 
-pub fn remove_variant(url: &str, name: &str) -> BoxResult<()> {
+pub fn remove_variant(url: &str, name: &str) -> AnyResult<()> {
     let uri = Url::parse(url)?;
     let r = match uri.scheme() {
         dirdb::SCHEME => {

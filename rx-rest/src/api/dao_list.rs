@@ -13,7 +13,7 @@ pub struct DaoList<R> {
 
 impl<R: IRecord + ToJSON> DaoList<R> {
     /// 打开数据库表
-    pub fn open_name(db_path: &Path, table_name: &str) -> BoxResult<Self> {
+    pub fn open_name(db_path: &Path, table_name: &str) -> AnyResult<Self> {
         let tab = DirTable::open_path(db_path, table_name).unwrap();
         let table = Mutex::new(tab);
         Ok(Self { table })

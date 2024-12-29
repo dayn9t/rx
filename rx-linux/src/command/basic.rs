@@ -5,7 +5,7 @@ use std::io::Write;
 use std::process::{Command, Output, Stdio};
 
 pub use rx_core::log::*;
-pub use rx_core::text::BoxResult;
+pub use rx_core::text::AnyResult;
 
 pub type StrRef = dyn AsRef<str>;
 

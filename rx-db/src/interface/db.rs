@@ -4,15 +4,15 @@ use rx_core::prelude::*;
 /// 数据库
 pub trait IDatabase {
     /// 打开数据库
-    fn open(db_url: &str) -> BoxResult<Self>
+    fn open(db_url: &str) -> AnyResult<Self>
     where
         Self: Sized;
 
     /// 删除数据库变量
-    fn remove_variant(&self, variant_name: &str) -> BoxResult<()>;
+    fn remove_variant(&self, variant_name: &str) -> AnyResult<()>;
 
     /// 获取数据库变量
-    fn get_variant<T>(&self, variant_name: &str) -> BoxResult<T>
+    fn get_variant<T>(&self, variant_name: &str) -> AnyResult<T>
     where
         T: Default + DeserializeOwned + Serialize + Clone + 'static,
     {
@@ -20,7 +20,7 @@ pub trait IDatabase {
     }
 
     /// 设置数据库变量
-    fn set_variant<T>(&self, variant_name: &str, value: &T) -> BoxResult<()>
+    fn set_variant<T>(&self, variant_name: &str, value: &T) -> AnyResult<()>
     where
         T: Default + DeserializeOwned + Serialize + Clone + 'static,
     {
@@ -29,7 +29,7 @@ pub trait IDatabase {
     }
 
     /// 打开数据库变量
-    fn open_variant<T>(&self, variant_name: &str) -> BoxResult<Box<dyn IVariant<T>>>
+    fn open_variant<T>(&self, variant_name: &str) -> AnyResult<Box<dyn IVariant<T>>>
     where
         T: Default + DeserializeOwned + Serialize + Clone + 'static,
     {
@@ -41,21 +41,21 @@ pub trait IDatabase {
         &self,
         variant_name: &str,
         default: T,
-    ) -> BoxResult<Box<dyn IVariant<T>>>
+    ) -> AnyResult<Box<dyn IVariant<T>>>
     where
         T: Default + DeserializeOwned + Serialize + Clone + 'static;
 
     /// 删除数据库表
-    fn remove_table(&self, table_name: &str) -> BoxResult<()>;
+    fn remove_table(&self, table_name: &str) -> AnyResult<()>;
 
     /// 打开数据库表
     fn open_table<R: IRecord + 'static>(
         &self,
         table_name: &str,
-    ) -> BoxResult<Box<dyn ITableDyn<R>>>;
+    ) -> AnyResult<Box<dyn ITableDyn<R>>>;
 
     /// 查找数据库表所有记录
-    fn find_all_records<R: IRecord>(&self, table_name: &str) -> BoxResult<Vec<R>> {
+    fn find_all_records<R: IRecord>(&self, table_name: &str) -> AnyResult<Vec<R>> {
         self.find_records(table_name, RecordId::default(), usize::MAX, |_| true)
     }
 
@@ -66,13 +66,22 @@ pub trait IDatabase {
         min_id: RecordId,
         limit: usize,
         predicate: P,
-    ) -> BoxResult<Vec<R>>
+    ) -> AnyResult<Vec<R>>
     where
         R: IRecord,
         P: Fn(&R) -> bool;
 
+    /// 从数据库表中过滤满足条件的记录集合
+    fn filter_records<R, P>(&self, table_name: &str, predicate: P) -> AnyResult<Vec<R>>
+    where
+        R: IRecord,
+        P: Fn(&R) -> bool,
+    {
+        self.find_records(table_name, 0, RecordId::MAX, predicate)
+    }
+
     /// 从数据库表获取指定记录
-    fn get_record<R: IRecord + 'static>(&self, table_name: &str, id: RecordId) -> BoxResult<R> {
+    fn get_record<R: IRecord + 'static>(&self, table_name: &str, id: RecordId) -> AnyResult<R> {
         self.open_table(table_name)?.get(id)
     }
 
@@ -82,7 +91,7 @@ pub trait IDatabase {
         table_name: &str,
         id: RecordId,
         record: &mut R,
-    ) -> BoxResult<()> {
+    ) -> AnyResult<()> {
         self.open_table(table_name)?.put(id, record)
     }
 }

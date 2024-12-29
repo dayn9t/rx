@@ -16,7 +16,7 @@ pub struct DirTable<T> {
 
 impl<T: IRecord> DirTable<T> {
     /// 打开表
-    pub fn open_path(db_path: &Path, name: &str) -> BoxResult<Self> {
+    pub fn open_path(db_path: &Path, name: &str) -> AnyResult<Self> {
         let path = path!(db_path / name);
         fs::ensure_dir_exist(&path)?;
         let meta = DirVariant::open_path(&meta_path(db_path), &name)?;
@@ -40,7 +40,7 @@ impl<T: IRecord> DirTable<T> {
 }
 
 impl<T: IRecord> ITableDyn<T> for DirTable<T> {
-    fn open(db_url: &str, name: &str) -> BoxResult<Self> {
+    fn open(db_url: &str, name: &str) -> AnyResult<Self> {
         let db_path = db_path(db_url)?;
         Self::open_path(&db_path, name)
     }
@@ -49,11 +49,11 @@ impl<T: IRecord> ITableDyn<T> for DirTable<T> {
         self.name.clone()
     }
 
-    fn get_meta(&self) -> BoxResult<TableMeta> {
+    fn get_meta(&self) -> AnyResult<TableMeta> {
         self.meta.get()
     }
 
-    fn set_meta(&mut self, meta: &TableMeta) -> BoxResult<()> {
+    fn set_meta(&mut self, meta: &TableMeta) -> AnyResult<()> {
         self.meta.set(meta)
     }
 
@@ -61,31 +61,31 @@ impl<T: IRecord> ITableDyn<T> for DirTable<T> {
         self.record_path(id).is_file()
     }
 
-    fn get(&self, id: RecordId) -> BoxResult<T> {
+    fn get(&self, id: RecordId) -> AnyResult<T> {
         json::load(&self.record_path(id))
     }
 
-    fn put(&mut self, id: RecordId, record: &mut T) -> BoxResult<()> {
+    fn put(&mut self, id: RecordId, record: &mut T) -> AnyResult<()> {
         record.set_id(id);
         json::save(&record, &self.record_path(id))?;
         self.update_last_id(id)
     }
 
-    fn delete(&mut self, id: RecordId) -> BoxResult<()> {
+    fn delete(&mut self, id: RecordId) -> AnyResult<()> {
         Ok(fs::remove(&self.record_path(id))?)
     }
 
     /// 查询记录集
-    fn find_all(&self) -> BoxResult<Vec<T>> {
+    fn find_all(&self) -> AnyResult<Vec<T>> {
         self.find(RecordId::default(), usize::MAX, |_| true)
     }
 
     /// 查询K/V对
-    fn find_all_pairs(&self) -> BoxResult<Vec<(RecordId, T)>> {
+    fn find_all_pairs(&self) -> AnyResult<Vec<(RecordId, T)>> {
         self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
     }
 
-    fn find_ids(&self, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
+    fn find_ids(&self, min_id: RecordId) -> AnyResult<Vec<RecordId>> {
         find_record_ids(&self.path, min_id)
     }
 }
@@ -93,7 +93,7 @@ impl<T: IRecord> ITableDyn<T> for DirTable<T> {
 impl<T: IRecord> ITable<T> for DirTable<T> {}
 
 /// 从路径中查找记录ID
-fn find_record_ids(path: &Path, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
+fn find_record_ids(path: &Path, min_id: RecordId) -> AnyResult<Vec<RecordId>> {
     let mut ids = Vec::new();
     let names = fs::file_stems_in(path, EXT, SortOrder::None)?;
     for stem in names {
@@ -108,7 +108,7 @@ fn find_record_ids(path: &Path, min_id: RecordId) -> BoxResult<Vec<RecordId>> {
 }
 
 /// 从路径中查找最大记录ID
-fn _find_max_record_id(path: &Path, min_id: RecordId) -> BoxResult<RecordId> {
+fn _find_max_record_id(path: &Path, min_id: RecordId) -> AnyResult<RecordId> {
     let mut max_id = 0;
     let names = fs::file_stems_in(path, EXT, SortOrder::None)?;
     for stem in names {

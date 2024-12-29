@@ -11,7 +11,7 @@ pub struct DirVariant<T> {
 }
 
 impl<T: Default> DirVariant<T> {
-    pub fn open_path_with_default(db_path: &Path, name: &str, default: T) -> BoxResult<Self> {
+    pub fn open_path_with_default(db_path: &Path, name: &str, default: T) -> AnyResult<Self> {
         let path = variant_path(db_path, name);
         fs::make_parent(&path)?;
         Ok(DirVariant::<T> {
@@ -20,13 +20,13 @@ impl<T: Default> DirVariant<T> {
             default_value: default,
         })
     }
-    pub fn open_path(db_path: &Path, name: &str) -> BoxResult<Self> {
+    pub fn open_path(db_path: &Path, name: &str) -> AnyResult<Self> {
         Self::open_path_with_default(db_path, name, Default::default())
     }
 }
 
 impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for DirVariant<T> {
-    fn open_with_default(db_url: &str, name: &str, default_value: T) -> BoxResult<Self>
+    fn open_with_default(db_url: &str, name: &str, default_value: T) -> AnyResult<Self>
     where
         Self: Sized,
     {
@@ -46,7 +46,7 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for DirVaria
         &self.default_value
     }
 
-    fn get(&self) -> BoxResult<T> {
+    fn get(&self) -> AnyResult<T> {
         if !self.exist() {
             Ok(self.get_default().clone())
         } else {
@@ -54,7 +54,7 @@ impl<T: Default + Clone + Serialize + DeserializeOwned> IVariant<T> for DirVaria
         }
     }
 
-    fn set(&mut self, record: &T) -> BoxResult<()> {
+    fn set(&mut self, record: &T) -> AnyResult<()> {
         json::save(&record, &self.path)
     }
 }

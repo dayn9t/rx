@@ -1,5 +1,5 @@
 use super::types::*;
-use crate::text::BoxResult;
+use crate::text::AnyResult;
 use chrono::format::strftime::StrftimeItems;
 
 /// 获取纪元到现在秒数
@@ -100,7 +100,7 @@ pub fn round_to_seconds(datetime: LocalDateTime) -> LocalDateTime {
 }
 
 /// 解析RFC3339时间字符串并转为 NaiveDateTime
-pub fn parse_rfc3339_to_naive(date_str: &str) -> BoxResult<NaiveDateTime> {
+pub fn parse_rfc3339_to_naive(date_str: &str) -> AnyResult<NaiveDateTime> {
     let datetime_with_tz: DateTime<FixedOffset> = DateTime::parse_from_rfc3339(date_str)?;
     Ok(datetime_with_tz.naive_local())
 }
