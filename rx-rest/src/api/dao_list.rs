@@ -56,12 +56,17 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         }
     }
 
-    pub async fn find<P>(&self, predicate: P) -> Result<CodeResponse<Vec<R>>>
+    pub async fn find<P>(
+        &self,
+        start_id: RecordId,
+        limit: usize,
+        predicate: P,
+    ) -> Result<CodeResponse<Vec<R>>>
     where
         P: Fn(&R) -> bool,
     {
         let tab = self.table.lock().await;
-        match tab.find(RecordId::default(), usize::MAX, predicate) {
+        match tab.find(start_id, limit, predicate) {
             Ok(rs) => Ok(CodeResponse::Ok(Json(rs))),
             Err(_) => Ok(CodeResponse::NotFound),
         }
