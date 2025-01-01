@@ -72,6 +72,23 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         }
     }
 
+    pub async fn find_page<P>(
+        &self,
+        page: Option<usize>,
+        page_size: Option<usize>,
+        predicate: P,
+    ) -> Result<CodeResponse<Vec<R>>>
+    where
+        P: Fn(&R) -> bool,
+    {
+        // FIXME: 检查分页参数
+        let tab = self.table.lock().await;
+        match tab.find(0, usize::MAX, predicate) {
+            Ok(rs) => Ok(CodeResponse::Ok(Json(get_page(rs, page, page_size)))),
+            Err(_) => Ok(CodeResponse::NotFound),
+        }
+    }
+
     /// 删除元素
     pub async fn delete(&self, id: UrlPath<u64>) -> Result<CodeResponse<R>> {
         // FIXME: 不返回删除的元素, 好像是poem的BUG
@@ -92,4 +109,15 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         let mut tab = self.table.lock().await;
         tab.put(id as RecordId, &mut record).unwrap();
     }
+}
+
+/// 分页
+fn get_page<R>(rs:Vec<R>, page: Option<usize>, page_size: Option<usize>) -> Vec<R> {
+    if page.is_none() || page_size.is_none() {
+        return rs;
+    }
+    let page = page.unwrap().max(1);
+    let page_size = page_size.unwrap().max(1);
+    let start = (page - 1) * page_size;
+    rs.into_iter().skip(start).take(page_size).collect()
 }
