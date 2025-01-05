@@ -112,7 +112,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
 }
 
 /// 分页
-fn get_page<R>(rs:Vec<R>, page: Option<usize>, page_size: Option<usize>) -> Vec<R> {
+fn get_page<R>(rs: Vec<R>, page: Option<usize>, page_size: Option<usize>) -> Vec<R> {
     if page.is_none() || page_size.is_none() {
         return rs;
     }

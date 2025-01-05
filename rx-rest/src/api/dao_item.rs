@@ -28,6 +28,11 @@ impl<R: Default + Clone + Serialize + DeserializeOwned + ToJSON> DaoItem<R> {
         }
     }
 
+    pub async fn get_record(&self) -> AnyResult<R> {
+        let var = self.variant.lock().await;
+        var.get()
+    }
+
     /* 语义上有问题
     /// 删除元素
     pub async fn delete(&self) -> Result<CodeResponse<R>> {

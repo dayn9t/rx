@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 
 pub use serde_json::from_str;
+pub use serde_json::to_string;
 pub use serde_json::to_string_pretty as to_pretty;
 
 use crate::prelude::*;
