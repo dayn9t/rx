@@ -10,6 +10,8 @@ pub mod redisdb;
 mod test;
 mod util;
 
+pub const RX_DB_DIR: &str = env!("CARGO_MANIFEST_DIR");
+
 #[cfg(test)]
 mod tests {
     //use super::*;

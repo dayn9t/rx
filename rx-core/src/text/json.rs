@@ -1,7 +1,9 @@
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 
+use serde_json::Serializer;
 pub use serde_json::from_str;
+use serde_json::ser::PrettyFormatter;
 pub use serde_json::to_string;
 pub use serde_json::to_string_pretty as to_pretty;
 
@@ -28,7 +30,9 @@ where
 {
     make_parent(&path)?;
     let writer = BufWriter::new(File::create(path)?);
-    serde_json::to_writer_pretty(writer, value)?;
+    let formatter = PrettyFormatter::with_indent(b"    "); // 4 spaces
+    let mut ser = Serializer::with_formatter(writer, formatter);
+    value.serialize(&mut ser)?;
     Ok(())
 }
 

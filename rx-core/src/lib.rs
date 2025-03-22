@@ -20,3 +20,5 @@ pub mod prelude;
 pub mod sys;
 pub mod text;
 pub mod time;
+
+pub const RX_CORE_DIR: &str = env!("CARGO_MANIFEST_DIR");

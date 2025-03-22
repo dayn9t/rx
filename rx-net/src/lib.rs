@@ -9,6 +9,8 @@ pub mod mqtt;
 pub mod prelude;
 pub mod url;
 
+pub const RX_NET_DIR: &str = env!("CARGO_MANIFEST_DIR");
+
 #[cfg(test)]
 mod tests {
     #[test]
