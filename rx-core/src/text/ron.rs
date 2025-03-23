@@ -40,7 +40,7 @@ where
     T: Serialize,
 {
     let mut pretty = PrettyConfig::default();
-    pretty.indentor = "\t".to_string();
+    pretty.indentor = "\t".to_string().into();
     let s = to_string_pretty(&value, pretty)?;
     Ok(s)
 }
