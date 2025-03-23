@@ -1,11 +1,182 @@
-use std::collections::HashSet;
-use std::path::{Path, PathBuf};
-
+use fs_extra::copy_items;
+use fs_extra::dir::CopyOptions;
 use path_macro::path;
-use tracing::{error, info};
+use std::collections::HashSet;
+use std::io::{Error, ErrorKind};
+use std::path::{Path, PathBuf};
+use std::{env, fs};
+use tracing::{debug, error, info};
 
 use crate::sys::fs::{SortOrder, file_name, files_in};
 use crate::text::AnyResult;
+
+/// 获取当前可执行文件所在目录
+pub fn current_exe_dir() -> PathBuf {
+    env::current_exe().unwrap().parent().unwrap().to_path_buf()
+}
+
+/// 获取路径的指定代祖先
+pub fn ancestor_nth(p: &Path, n: usize) -> &Path {
+    p.ancestors().nth(n).unwrap()
+}
+
+/// 获取当前可执行文件祖先目录
+pub fn current_exe_ancestor_nth(n: usize) -> PathBuf {
+    ancestor_nth(&env::current_exe().unwrap(), n).to_path_buf()
+}
+
+/// 目录文件转换为字符串, 保证以＂/＂结尾
+pub fn to_dir_string(path: impl AsRef<Path>) -> String {
+    let mut path_str = path.as_ref().to_string_lossy().into_owned();
+    if !path_str.ends_with("/") {
+        path_str.push('/');
+    }
+    path_str
+}
+
+/// 配置目录
+pub fn config_dir_of(name: impl AsRef<str>) -> PathBuf {
+    dirs::config_dir().unwrap().join(&name.as_ref())
+}
+
+/// 创建上级目录，幂等
+pub fn make_parent(path: impl AsRef<Path>) -> std::io::Result<()> {
+    if let Some(parent) = path.as_ref().parent() {
+        fs::create_dir_all(parent)?;
+        Ok(())
+    } else {
+        Err(Error::new(ErrorKind::NotFound, "parent not found"))
+    }
+}
+
+/// 确保目录存在，不存在则建立
+pub fn ensure_dir_exist(path: impl AsRef<Path>) -> std::io::Result<()> {
+    let p = path.as_ref();
+    if !p.exists() {
+        fs::create_dir_all(&p)?;
+    }
+    if p.is_dir() {
+        Ok(())
+    } else {
+        Err(Error::new(ErrorKind::AlreadyExists, "path not a dir!"))
+    }
+}
+
+/// 遍历目录访问文件
+pub fn visit_dirs(dir: &Path, cb: &mut dyn FnMut(&Path)) -> std::io::Result<()> {
+    if dir.is_dir() {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir() {
+                visit_dirs(&path, cb)?;
+            } else {
+                cb(&entry.path());
+            }
+        }
+    }
+    Ok(())
+}
+
+/// 遍历目录
+pub fn visit_dir(dir: impl AsRef<Path>, cb: &mut dyn FnMut(&Path)) -> std::io::Result<()> {
+    for entry in fs::read_dir(dir)? {
+        cb(&entry?.path());
+    }
+    Ok(())
+}
+
+/// 获取目录中的目录
+pub fn dirs_in(dir: impl AsRef<Path>) -> std::io::Result<Vec<PathBuf>> {
+    let mut vec = Vec::new();
+    visit_dir(dir.as_ref(), &mut |p: &Path| {
+        if p.is_dir() {
+            vec.push(p.to_owned());
+        }
+    })?;
+    Ok(vec)
+}
+
+/// 获取目录中目录名
+pub fn dir_names_in(dir: impl AsRef<Path>) -> std::io::Result<Vec<String>> {
+    let v = dirs_in(dir)?;
+    let v: Vec<_> = v.iter().map(|p| file_name(p)).collect();
+    Ok(v)
+}
+
+/// 查找MTP设备目录
+pub fn mtp_dirs() -> std::io::Result<Vec<PathBuf>> {
+    dirs_in(&"/run/user/1000/gvfs")
+}
+
+/// 查找第一个目录(广度优先)
+pub fn find_first_dir(
+    dir: impl AsRef<Path>,
+    dir_name: impl AsRef<str>,
+) -> std::io::Result<PathBuf> {
+    let mut dirs = Vec::new();
+
+    for entry in fs::read_dir(dir.as_ref())? {
+        let p = entry?.path();
+        if p.is_dir() {
+            if file_name(&p) == dir_name.as_ref() {
+                return Ok(p);
+            } else {
+                dirs.push(p);
+            }
+        }
+    }
+
+    for dir in dirs {
+        let r = find_first_dir(&dir, dir_name.as_ref());
+        if r.is_ok() {
+            return r;
+        }
+    }
+    Err(Error::from(ErrorKind::NotFound))
+}
+
+/// 把一个目录的内容合并到另一个目录, 子目录不替换
+pub fn merge_dir(src: &Path, dst: &Path) -> std::io::Result<()> {
+    if !src.is_dir() {
+        return Err(Error::new(ErrorKind::Other, "Source is not a directory"));
+    }
+
+    if !dst.exists() {
+        fs::create_dir_all(dst)?;
+    } else if !dst.is_dir() {
+        return Err(Error::new(
+            ErrorKind::Other,
+            "Destination is not a directory",
+        ));
+    }
+
+    for entry_result in src.read_dir()? {
+        let entry = entry_result?;
+        let src_path = entry.path();
+        let dst_path = dst.join(src_path.file_name().unwrap());
+
+        if src_path.is_dir() {
+            merge_dir(&src_path, &dst_path)?;
+        } else {
+            debug!("Copy {:?} => {:?}", src_path, dst_path);
+            fs::copy(&src_path, &dst_path)?;
+        }
+    }
+
+    Ok(())
+}
+
+/// 复制目录树
+pub fn copy_tree(src_dir: &Path, dst_dir: &Path) -> fs_extra::error::Result<u64> {
+    let mut options = CopyOptions::new();
+    options.overwrite = true;
+    options.copy_inside = true;
+
+    let paths_to_copy = vec![src_dir];
+    fs::create_dir_all(dst_dir.parent().unwrap()).unwrap();
+    copy_items(&paths_to_copy, dst_dir, &options)
+}
 
 /// 两个目录中文件主干差集, 限定文件扩展名
 pub fn dir_stem_diff(
@@ -65,14 +236,31 @@ impl DirTranslator {
     }
 }
 
+/// 在路径的各个部分里查找指定路径
+pub fn find_in_parts(folder: &Path, sub_path: &str) -> Option<PathBuf> {
+    let mut folder = folder.canonicalize().ok()?;
+
+    loop {
+        let path = folder.join(sub_path);
+        if path.exists() {
+            return Some(path);
+        }
+        if let Some(parent) = folder.parent() {
+            folder = parent.to_path_buf();
+        } else {
+            break;
+        }
+    }
+
+    None
+}
 #[cfg(test)]
 mod tests {
     use std::fs::{self, File};
     use std::io::Write;
 
-    use tempfile::tempdir;
-
     use super::*;
+    use tempfile::tempdir;
 
     #[test]
     fn test_dir_stem_diff() {
@@ -153,5 +341,26 @@ mod tests {
         assert!(translated_file.exists());
         let content = fs::read_to_string(translated_file).unwrap();
         assert!(content.contains("Translated from"));
+    }
+
+    #[test]
+    fn test_find_in_parts() {
+        let tmp = tempdir().unwrap();
+        let start_path = path!(tmp / "a" / "b");
+        fs::create_dir_all(&start_path).unwrap();
+
+        let a = path!(tmp / "a" / "a.txt");
+        let b = path!(tmp / "a" / "b" / "b.txt");
+        File::create(&a).unwrap();
+        File::create(&b).unwrap();
+
+        let p = find_in_parts(&start_path, "a.txt");
+        assert_eq!(p, Some(a.to_owned()));
+
+        let p = find_in_parts(&start_path, "b.txt");
+        assert_eq!(p, Some(b.to_owned()));
+
+        let p = find_in_parts(&start_path, "c.txt");
+        assert_eq!(p, None);
     }
 }
