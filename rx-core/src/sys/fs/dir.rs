@@ -1,6 +1,8 @@
+use chrono::NaiveDate;
 use fs_extra::copy_items;
 use fs_extra::dir::CopyOptions;
 use path_macro::path;
+use regex::Regex;
 use std::collections::HashSet;
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
@@ -254,6 +256,45 @@ pub fn find_in_parts(folder: &Path, sub_path: &str) -> Option<PathBuf> {
 
     None
 }
+
+/// 递归搜索指定目录下的所有名称和日期匹配的子目录
+pub fn find_date_dirs(root: &Path, date: &NaiveDate) -> Vec<PathBuf> {
+    let date_str = date.format("%Y-%m-%d").to_string();
+    find_matching_dirs(root, &date_str)
+}
+
+/// 递归搜索目录，查找名称匹配的子目录
+pub fn find_matching_dirs(root: &Path, pattern: &str) -> Vec<PathBuf> {
+    let mut result = Vec::new();
+
+    // Compile the regex pattern
+    let regex = match Regex::new(pattern) {
+        Ok(re) => re,
+        Err(_) => return result, // Return empty vector if pattern is invalid
+    };
+
+    if let Ok(entries) = fs::read_dir(root) {
+        for entry in entries.filter_map(Result::ok) {
+            let path = entry.path();
+
+            if path.is_dir() {
+                // Check if directory name matches the regex pattern
+                if let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) {
+                    if regex.is_match(dir_name) {
+                        result.push(path.clone());
+                    }
+                }
+
+                // Recursively search subdirectories
+                let sub_results = find_matching_dirs(&path, pattern);
+                result.extend(sub_results);
+            }
+        }
+    }
+
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use std::fs::{self, File};

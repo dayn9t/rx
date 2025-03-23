@@ -51,3 +51,4 @@ hex-literal = "*"
 hex = "0.4.3"
 
 clap = { version = "*", features = ["derive"] }
+regex = "1.11.1"
