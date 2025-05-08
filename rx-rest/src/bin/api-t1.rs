@@ -1,5 +1,5 @@
-use poem::{listener::TcpListener, Route};
-use poem_openapi::{param::Query, payload::PlainText, OpenApi, OpenApiService};
+use poem::{Route, listener::TcpListener};
+use poem_openapi::{OpenApi, OpenApiService, param::Query, payload::PlainText};
 use rx_rest::api::UrlPath;
 
 struct Api;
@@ -24,8 +24,9 @@ impl Api {
 async fn main() -> Result<(), std::io::Error> {
     let api_service =
         OpenApiService::new(Api, "Hello World", "1.0").server("http://localhost:3000/api");
+
     let ui = api_service.swagger_ui();
-    let app = Route::new().nest("/api", api_service).nest("/", ui);
+    let app = Route::new().nest("/", api_service).nest("/docs", ui);
 
     poem::Server::new(TcpListener::bind("0.0.0.0:3000"))
         .run(app)

@@ -15,8 +15,8 @@ toml = "*"
 
 time = { version = "*", features = ["macros", "formatting"] }
 poem = { version = "3", features = ["anyhow"] }
-#poem-openapi = { version = "5.1.10", features = ["swagger-ui", "time", "uuid", "geo", "url"] }
-poem-openapi = { version = "5.1.10", features = ["swagger-ui", "uuid", "geo", "url"] }
+poem-openapi = { version = "5.1.10", features = ["swagger-ui", "time", "uuid", "geo", "url"] }
+#poem-openapi = { version = "5.1.10", features = ["swagger-ui", "uuid", "geo", "url"] }
 tokio = { version = "1", features = ["full"] }
 
 anyhow = "*"
