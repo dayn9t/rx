@@ -13,8 +13,7 @@ serde_json = "*"
 serde_derive = "*"
 toml = "*"
 
-time = { version = "0.3", features = ["macros", "formatting"] }
-
+time = { version = "*", features = ["macros", "formatting"] }
 poem = { version = "3", features = ["anyhow"] }
 poem-openapi = { version = "5", features = ["swagger-ui", "time", "uuid", "geo", "url"] }
 tokio = { version = "1", features = ["full"] }
