@@ -157,7 +157,7 @@ pub fn reboot(delay: i32) -> Option<CommandOutput> {
 }
 
 /// 利用supervisorctl管理服务
-pub fn run_sh(sh_path: impl AsRef<Path>) -> Option<CommandOutput> {
+pub fn run_sh(sh_path: impl AsRef<FsPath>) -> Option<CommandOutput> {
     let title = "SH".to_string();
     let sh_path = to_string(sh_path.as_ref());
     let args = [sh_path.as_ref()];

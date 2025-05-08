@@ -1,6 +1,9 @@
 use poem::{Route, listener::TcpListener};
-use poem_openapi::{OpenApi, OpenApiService, param::Query, payload::PlainText};
-use rx_rest::api::UrlPath;
+use poem_openapi::{
+    OpenApi, OpenApiService,
+    param::{Path, Query},
+    payload::PlainText,
+};
 
 struct Api;
 
@@ -15,7 +18,7 @@ impl Api {
     }
 
     #[oai(path = "/items/:id", method = "get")]
-    async fn get_item(&self, id: UrlPath<i32>) -> PlainText<String> {
+    async fn get_item(&self, id: Path<i32>) -> PlainText<String> {
         PlainText(format!("{}", id.0))
     }
 }

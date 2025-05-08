@@ -12,7 +12,7 @@ pub struct DaoItem<R> {
 
 impl<R: Default + Clone + Serialize + DeserializeOwned + ToJSON> DaoItem<R> {
     /// 打开单个数据条目
-    pub fn open_name(db_path: &Path, var_name: &str, default: Option<R>) -> AnyResult<Self> {
+    pub fn open_name(db_path: &FsPath, var_name: &str, default: Option<R>) -> AnyResult<Self> {
         let default = default.unwrap_or_default();
         let variant = DirVariant::open_path_with_default(db_path, var_name, default).unwrap();
         let variant = Mutex::new(variant);

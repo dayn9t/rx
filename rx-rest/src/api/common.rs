@@ -1,7 +1,7 @@
-pub use std::path::Path;
+pub use std::path::Path as FsPath;
 
 pub use poem::Result;
-pub use poem_openapi::{ApiResponse, Object, param::Path as UrlPath, payload::Json, types::ToJSON};
+pub use poem_openapi::{ApiResponse, Object, param::Path, payload::Json, types::ToJSON};
 
 pub use rx_core::log::*;
 pub use rx_core::text::{AnyResult, Deserialize, DeserializeOwned, Serialize};

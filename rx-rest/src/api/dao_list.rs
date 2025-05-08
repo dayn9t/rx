@@ -13,7 +13,7 @@ pub struct DaoList<R> {
 
 impl<R: IRecord + ToJSON> DaoList<R> {
     /// 打开数据库表
-    pub fn open_name(db_path: &Path, table_name: &str) -> AnyResult<Self> {
+    pub fn open_name(db_path: &FsPath, table_name: &str) -> AnyResult<Self> {
         let tab = DirTable::open_path(db_path, table_name).unwrap();
         let table = Mutex::new(tab);
         Ok(Self { table })
@@ -39,7 +39,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 获取记录
-    pub async fn get(&self, id: UrlPath<u64>) -> Result<CodeResponse<R>> {
+    pub async fn get(&self, id: Path<u64>) -> Result<CodeResponse<R>> {
         let tab = self.table.lock().await;
         match tab.get(id.0 as RecordId) {
             Ok(r) => Ok(CodeResponse::Ok(Json(r))),
@@ -90,7 +90,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 删除元素
-    pub async fn delete(&self, id: UrlPath<u64>) -> Result<CodeResponse<R>> {
+    pub async fn delete(&self, id: Path<u64>) -> Result<CodeResponse<R>> {
         // FIXME: 不返回删除的元素, 好像是poem的BUG
         let mut tab = self.table.lock().await;
         tab.delete(id.0 as RecordId).unwrap();
@@ -98,7 +98,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 更新元素
-    pub async fn update(&self, id: UrlPath<u64>, mut record: Json<R>) -> Result<CodeResponse<R>> {
+    pub async fn update(&self, id: Path<u64>, mut record: Json<R>) -> Result<CodeResponse<R>> {
         let mut tab = self.table.lock().await;
         tab.put(id.0 as RecordId, &mut record.0).unwrap();
         Ok(CodeResponse::Created(record))
