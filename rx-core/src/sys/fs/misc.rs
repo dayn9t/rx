@@ -48,7 +48,7 @@ pub fn path_replace(path: &Path, src: &str, dst: &str) -> PathBuf {
 mod tests {
     use super::*;
 
-    const A_JSON: &str = "/tmp/a.json";
+    const _A_JSON: &str = "/tmp/a.json";
 
     #[test]
     fn join_works() {
