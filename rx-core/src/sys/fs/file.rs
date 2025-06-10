@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
-use std::fs::DirEntry;
 pub use std::fs::File;
+use std::fs::{DirEntry, create_dir_all};
 pub use std::io::*;
 pub use std::path::{Path, PathBuf};
 
@@ -132,6 +132,17 @@ pub fn file_stems_in(
     let v = files_in(dir, ext, sort_order)?;
     let v: Vec<_> = v.iter().map(|p| file_stem(p)).collect();
     Ok(v)
+}
+
+/// 文件复制到目录
+pub fn copy_file_to_dir(src_file: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> Result<PathBuf> {
+    let src_file = src_file.as_ref();
+    let dst_dir = dst_dir.as_ref();
+    let file_name = file_name(src_file);
+    let dst_file = dst_dir.join(file_name);
+    create_dir_all(&dst_dir).unwrap();
+    std::fs::copy(src_file, &dst_file)?;
+    Ok(dst_file)
 }
 
 /// 合并目录内所有文件到一个文件
