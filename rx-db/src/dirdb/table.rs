@@ -1,7 +1,8 @@
 use crate::dirdb::{DirVariant, EXT, db_path, meta_path};
 use crate::{IRecord, ITable, ITableDyn, IVariant, RecordId, TableMeta};
+use anyhow::anyhow;
 use path_macro::path;
-use rx_core::sys::fs::SortOrder;
+use rx_core::sys::fs::{SortOrder, find_file_by_name};
 use rx_core::{sys::fs, text::*};
 use std::marker::PhantomData;
 use std::path::PathBuf;
@@ -33,9 +34,32 @@ impl<T: IRecord> DirTable<T> {
         self.path.as_path()
     }
 
+    fn record_name(id: RecordId) -> String {
+        format!("{}.{}", id, EXT)
+    }
+
     /// 记录文件全路径
-    fn record_path(&self, id: RecordId) -> PathBuf {
-        self.path.join(format!("{}.{}", id, EXT))
+    fn record_path(&self, id: RecordId, partition_id: Option<u32>) -> PathBuf {
+        let name = Self::record_name(id);
+        let name = if let Some(partition_id) = partition_id {
+            format!("{}/{}", partition_id, name)
+        } else {
+            name
+        };
+        path!(self.path / name)
+    }
+
+    /// 查找记录文件全路径
+    fn find_record_path(&self, id: RecordId) -> AnyResult<PathBuf> {
+        let name = Self::record_name(id);
+        let files = find_file_by_name(&self.path, &name).unwrap_or_default();
+        if files.is_empty() {
+            Err(anyhow!("record not found: {}", id))
+        } else if files.len() > 1 {
+            Err(anyhow!("duplicate record: {} => {:?}", id, files))
+        } else {
+            Ok(files[0].clone())
+        }
     }
 }
 
@@ -58,21 +82,24 @@ impl<T: IRecord> ITableDyn<T> for DirTable<T> {
     }
 
     fn contains(&self, id: RecordId) -> bool {
-        self.record_path(id).is_file()
+        self.find_record_path(id).is_ok()
     }
 
     fn get(&self, id: RecordId) -> AnyResult<T> {
-        json::load(&self.record_path(id))
+        let p = self.find_record_path(id)?;
+        json::load(&p)
     }
 
     fn put(&mut self, id: RecordId, record: &mut T) -> AnyResult<()> {
         record.set_id(id);
-        json::save(&record, &self.record_path(id))?;
+        let partition_id = record.get_partition_id();
+        json::save(&record, &self.record_path(id, partition_id))?;
         self.update_last_id(id)
     }
 
     fn delete(&mut self, id: RecordId) -> AnyResult<()> {
-        Ok(fs::remove(&self.record_path(id))?)
+        let p = self.find_record_path(id)?;
+        Ok(fs::remove(&p)?)
     }
 
     /// 查询记录集

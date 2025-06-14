@@ -11,11 +11,17 @@ pub type RecordId = usize;
 pub trait IRecord: Default + Serialize + DeserializeOwned + Sized {
     fn get_id(&self) -> Option<RecordId>;
     fn set_id(&mut self, id: RecordId);
+
+    fn get_partition_id(&self) -> Option<u32> {
+        None
+    }
 }
+
 /// Vec<Record> => HasMap<ID, Record>
 pub fn vec_to_map<R: IRecord>(rs: Vec<R>) -> HashMap<RecordId, R> {
     rs.into_iter().map(|r| (r.get_id().unwrap(), r)).collect()
 }
+
 /// 表元数据
 #[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct TableMeta {

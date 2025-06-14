@@ -41,15 +41,11 @@ fs_extra = "*"
 num = "*"
 rand = "*"
 
-rand_core = "*"
-ring = "*"
-linked-hash-map="*"
 tempfile = "*"
 
-aes = "0.7"
-block-modes = "0.8"
+aes = "*"
+block-modes = "*"
 hex-literal = "*"
-hex = "0.4.3"
 
 clap = { version = "*", features = ["derive"] }
 regex = "*"
