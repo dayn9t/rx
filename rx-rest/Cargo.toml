@@ -1,7 +1,5 @@
 [package]
 name = "rx-rest"
-version = "0.1.0"
-authors = ["dayn9t <dayn9t@gmail.com>"]
 edition = "2024"
 
 [dependencies]

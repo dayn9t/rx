@@ -1,8 +1,8 @@
-use crate::dirdb::{DirVariant, EXT, db_path, meta_path};
+use crate::dirdb::{db_path, meta_path, DirVariant, EXT};
 use crate::{IRecord, ITable, ITableDyn, IVariant, RecordId, TableMeta};
 use anyhow::anyhow;
 use path_macro::path;
-use rx_core::sys::fs::{SortOrder, find_file_by_name};
+use rx_core::sys::fs::{find_file_by_name, SortOrder};
 use rx_core::{sys::fs, text::*};
 use std::marker::PhantomData;
 use std::path::PathBuf;

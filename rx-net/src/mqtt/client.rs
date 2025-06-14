@@ -5,12 +5,12 @@ use std::time::Duration;
 
 /// MQTT消息&结果
 pub use paho_mqtt::Message;
-use serde::Serialize;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 
 use rx_core::sys::fs::to_string;
 use rx_core::text::json::to_pretty;
-use rx_core::text::{AnyResult, json};
+use rx_core::text::{json, AnyResult};
 
 pub type MqttResult<T> = paho_mqtt::Result<T>;
 

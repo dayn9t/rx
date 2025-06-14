@@ -1,7 +1,7 @@
 use crate::Deserialize;
 use rx_core::text::AnyResult;
-use serde::Serialize;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use std::collections::HashMap;
 
 /// 记录ID类型

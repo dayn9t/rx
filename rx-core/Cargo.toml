@@ -1,9 +1,6 @@
 [package]
 name = "rx-core"
-version = "0.1.4"
-authors = ["dayn9t <dayn9t@gmail.com>"]
 edition = "2024"
-
 build = "build.rs"
 
 [build-dependencies]
@@ -43,8 +40,8 @@ rand = "*"
 
 tempfile = "*"
 
-aes = "*"
-block-modes = "*"
+aes = "0.7"
+block-modes = "0.8"
 hex-literal = "*"
 
 clap = { version = "*", features = ["derive"] }

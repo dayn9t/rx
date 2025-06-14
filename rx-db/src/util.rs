@@ -1,6 +1,6 @@
 use crate::dirdb::DirDb;
 use crate::redisdb::RedisDb;
-use crate::{IDatabase, dirdb, redisdb};
+use crate::{dirdb, redisdb, IDatabase};
 use anyhow::anyhow;
 use rx_core::prelude::*;
 use url::Url;
