@@ -88,13 +88,14 @@ impl IDatabase for DirDb {
         min_id: RecordId,
         limit: usize,
         predicate: P,
+        partition_id: Option<u32>,
     ) -> AnyResult<Vec<R>>
     where
         R: IRecord,
         P: Fn(&R) -> bool,
     {
         let table = DirTable::<R>::open_path(&self.path, table_name)?;
-        table.find(min_id, limit, predicate)
+        table.find(min_id, limit, predicate, partition_id)
     }
 }
 impl DirDb {

@@ -1,5 +1,36 @@
 use crate::{IRecord, ITableDyn, IVariant, RecordId};
 use rx_core::prelude::*;
+use std::fmt;
+
+/// 通用错误类型，包含http状态码
+#[derive(Debug)]
+pub struct HttpError {
+    pub code: u16,       // http状态码
+    pub message: String, // 错误信息
+}
+
+impl HttpError {
+    pub fn not_found(message: String) -> Self {
+        Self { code: 404, message }
+    }
+    pub fn bad_request(message: String) -> Self {
+        Self { code: 400, message }
+    }
+    pub fn internal_server_error(message: String) -> Self {
+        Self { code: 500, message }
+    }
+}
+impl std::error::Error for HttpError {}
+
+impl fmt::Display for HttpError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "HttpError {{ code: {}, message: {} }}",
+            self.code, self.message
+        )
+    }
+}
 
 /// 数据库
 pub trait IDatabase {
@@ -56,7 +87,7 @@ pub trait IDatabase {
 
     /// 查找数据库表所有记录
     fn find_all_records<R: IRecord>(&self, table_name: &str) -> AnyResult<Vec<R>> {
-        self.find_records(table_name, RecordId::default(), usize::MAX, |_| true)
+        self.find_records(table_name, RecordId::default(), usize::MAX, |_| true, None)
     }
 
     /// 从数据库表中查找记录集合
@@ -66,18 +97,24 @@ pub trait IDatabase {
         min_id: RecordId,
         limit: usize,
         predicate: P,
+        partition_id: Option<u32>,
     ) -> AnyResult<Vec<R>>
     where
         R: IRecord,
         P: Fn(&R) -> bool;
 
     /// 从数据库表中过滤满足条件的记录集合
-    fn filter_records<R, P>(&self, table_name: &str, predicate: P) -> AnyResult<Vec<R>>
+    fn filter_records<R, P>(
+        &self,
+        table_name: &str,
+        predicate: P,
+        partition_id: Option<u32>,
+    ) -> AnyResult<Vec<R>>
     where
         R: IRecord,
         P: Fn(&R) -> bool,
     {
-        self.find_records(table_name, 0, RecordId::MAX, predicate)
+        self.find_records(table_name, 0, RecordId::MAX, predicate, partition_id)
     }
 
     /// 从数据库表获取指定记录

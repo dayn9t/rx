@@ -1,7 +1,7 @@
 use crate::Deserialize;
 use rx_core::text::AnyResult;
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 
 /// 记录ID类型
@@ -49,7 +49,7 @@ pub trait ITableDyn<T: IRecord> {
 
     /// 获取表长度
     fn len(&self) -> usize {
-        self.find_ids(0).unwrap().len()
+        self.find_ids(0, None).unwrap().len()
     }
 
     /// 获取表是否为空
@@ -111,8 +111,8 @@ pub trait ITableDyn<T: IRecord> {
     fn delete(&mut self, id: RecordId) -> AnyResult<()>;
 
     /// 删除全部记录(幂等)
-    fn delete_all(&mut self) -> AnyResult<()> {
-        let ids = self.find_ids(RecordId::default())?;
+    fn delete_all(&mut self, partition_id: Option<u32>) -> AnyResult<()> {
+        let ids = self.find_ids(RecordId::default(), partition_id)?;
         for id in ids {
             self.delete(id)?;
         }
@@ -120,24 +120,30 @@ pub trait ITableDyn<T: IRecord> {
     }
 
     /// 查询记录集
-    fn find_all(&self) -> AnyResult<Vec<T>>;
+    fn find_all(&self, partition_id: Option<u32>) -> AnyResult<Vec<T>>;
 
     /// 查询K/V对
-    fn find_all_pairs(&self) -> AnyResult<Vec<(RecordId, T)>>;
+    fn find_all_pairs(&self, partition_id: Option<u32>) -> AnyResult<Vec<(RecordId, T)>>;
 
     /// 查询Id集
-    fn find_ids(&self, min_id: RecordId) -> AnyResult<Vec<RecordId>>;
+    fn find_ids(&self, min_id: RecordId, partition_id: Option<u32>) -> AnyResult<Vec<RecordId>>;
 }
 
 /// 数据库表
 pub trait ITable<T: IRecord>: ITableDyn<T> {
     /// 查询记录集
-    fn find<P>(&self, min_id: RecordId, limit: usize, predicate: P) -> AnyResult<Vec<T>>
+    fn find<P>(
+        &self,
+        min_id: RecordId,
+        limit: usize,
+        predicate: P,
+        partition_id: Option<u32>,
+    ) -> AnyResult<Vec<T>>
     where
         P: Fn(&T) -> bool,
     {
         let mut vec = Vec::new();
-        let ids = self.find_ids(min_id)?;
+        let ids = self.find_ids(min_id, partition_id)?;
         for id in ids {
             let r = self.get(id)?;
             if predicate(&r) {
@@ -156,11 +162,12 @@ pub trait ITable<T: IRecord>: ITableDyn<T> {
         min_id: RecordId,
         limit: usize,
         predicate: P,
+        partition_id: Option<u32>,
     ) -> AnyResult<Vec<(RecordId, T)>>
     where
         P: Fn(&T) -> bool,
     {
-        let records = self.find(min_id, limit, predicate)?;
+        let records = self.find(min_id, limit, predicate, partition_id)?;
         let pairs = records
             .into_iter()
             .map(|record| (record.get_id().unwrap(), record))

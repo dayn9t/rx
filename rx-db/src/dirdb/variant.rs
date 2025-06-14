@@ -1,5 +1,5 @@
-use crate::dirdb::{db_path, variant_path};
 use crate::IVariant;
+use crate::dirdb::{db_path, variant_path};
 use rx_core::sys::fs;
 use rx_core::text::*;
 use std::path::PathBuf;

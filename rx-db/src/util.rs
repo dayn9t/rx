@@ -1,6 +1,7 @@
 use crate::dirdb::DirDb;
-use crate::redisdb::RedisDb;
-use crate::{dirdb, redisdb, IDatabase};
+//use crate::redisdb::RedisDb;
+//use crate::{IDatabase, dirdb, redisdb};
+use crate::{IDatabase, dirdb};
 use anyhow::anyhow;
 use rx_core::prelude::*;
 use url::Url;
@@ -12,10 +13,10 @@ pub fn remove_table(url: &str, name: &str) -> AnyResult<()> {
             let db = DirDb::open(url)?;
             db.remove_table(name)?
         }
-        redisdb::SCHEME => {
+        /*redisdb::SCHEME => {
             let db = RedisDb::open(url)?;
             db.remove_table(name)?
-        }
+        }*/
         _ => return Err(anyhow!("Invalid scheme")),
     };
     Ok(r)
@@ -28,10 +29,10 @@ pub fn remove_variant(url: &str, name: &str) -> AnyResult<()> {
             let db = DirDb::open(url)?;
             db.remove_variant(name)?
         }
-        redisdb::SCHEME => {
+        /*redisdb::SCHEME => {
             let db = RedisDb::open(url)?;
             db.remove_variant(name)?
-        }
+        }*/
         _ => return Err(anyhow!("Invalid scheme")),
     };
     Ok(r)

@@ -6,7 +6,7 @@ pub use util::*;
 pub mod dirdb;
 
 mod interface;
-pub mod redisdb;
+//pub mod redisdb;
 mod test;
 mod util;
 

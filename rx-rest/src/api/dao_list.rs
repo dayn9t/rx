@@ -14,7 +14,7 @@ pub struct DaoList<R> {
 impl<R: IRecord + ToJSON> DaoList<R> {
     /// 打开数据库表
     pub fn open_name(db_path: &FsPath, table_name: &str) -> AnyResult<Self> {
-        let tab = DirTable::open_path(db_path, table_name).unwrap();
+        let tab = DirTable::open_path(db_path, table_name)?;
         let table = Mutex::new(tab);
         Ok(Self { table })
     }
@@ -25,16 +25,16 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 获取记录集合
-    pub async fn get_rs(&self) -> Result<Vec<R>> {
+    pub async fn get_rs(&self, partition: Option<u32>) -> Result<Vec<R>> {
         let tab = self.table.lock().await;
-        let rs = tab.find_all()?;
+        let rs = tab.find_all(partition)?;
         Ok(rs)
     }
 
     /// 添加记录
     pub async fn post(&self, mut record: Json<R>) -> Result<CodeResponse<R>> {
         let mut tab = self.table.lock().await;
-        let _id = tab.post(&mut record.0).unwrap();
+        let _id = tab.post(&mut record.0)?;
         Ok(CodeResponse::Created(record))
     }
 
@@ -48,9 +48,9 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 获取记录集合
-    pub async fn get_all(&self) -> Result<CodeResponse<Vec<R>>> {
+    pub async fn get_all(&self, partition_id: Option<u32>) -> Result<CodeResponse<Vec<R>>> {
         let tab = self.table.lock().await;
-        match tab.find_all() {
+        match tab.find_all(partition_id) {
             Ok(rs) => Ok(CodeResponse::Ok(Json(rs))),
             Err(_) => Ok(CodeResponse::NotFound),
         }
@@ -61,30 +61,14 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         start_id: RecordId,
         limit: usize,
         predicate: P,
+        partition_id: Option<u32>,
     ) -> Result<CodeResponse<Vec<R>>>
     where
         P: Fn(&R) -> bool,
     {
         let tab = self.table.lock().await;
-        match tab.find(start_id, limit, predicate) {
+        match tab.find(start_id, limit, predicate, partition_id) {
             Ok(rs) => Ok(CodeResponse::Ok(Json(rs))),
-            Err(_) => Ok(CodeResponse::NotFound),
-        }
-    }
-
-    pub async fn find_page<P>(
-        &self,
-        page: Option<usize>,
-        page_size: Option<usize>,
-        predicate: P,
-    ) -> Result<CodeResponse<Vec<R>>>
-    where
-        P: Fn(&R) -> bool,
-    {
-        // FIXME: 检查分页参数
-        let tab = self.table.lock().await;
-        match tab.find(0, usize::MAX, predicate) {
-            Ok(rs) => Ok(CodeResponse::Ok(Json(get_page(rs, page, page_size)))),
             Err(_) => Ok(CodeResponse::NotFound),
         }
     }
@@ -93,14 +77,14 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     pub async fn delete(&self, id: Path<u64>) -> Result<CodeResponse<R>> {
         // FIXME: 不返回删除的元素, 好像是poem的BUG
         let mut tab = self.table.lock().await;
-        tab.delete(id.0 as RecordId).unwrap();
+        tab.delete(id.0 as RecordId)?;
         Ok(CodeResponse::NoContent)
     }
 
     /// 更新元素
     pub async fn update(&self, id: Path<u64>, mut record: Json<R>) -> Result<CodeResponse<R>> {
         let mut tab = self.table.lock().await;
-        tab.put(id.0 as RecordId, &mut record.0).unwrap();
+        tab.put(id.0 as RecordId, &mut record.0)?;
         Ok(CodeResponse::Created(record))
     }
 
@@ -109,15 +93,4 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         let mut tab = self.table.lock().await;
         tab.put(id as RecordId, &mut record).unwrap();
     }
-}
-
-/// 分页
-fn get_page<R>(rs: Vec<R>, page: Option<usize>, page_size: Option<usize>) -> Vec<R> {
-    if page.is_none() || page_size.is_none() {
-        return rs;
-    }
-    let page = page.unwrap().max(1);
-    let page_size = page_size.unwrap().max(1);
-    let start = (page - 1) * page_size;
-    rs.into_iter().skip(start).take(page_size).collect()
 }

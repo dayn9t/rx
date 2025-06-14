@@ -1,8 +1,7 @@
-use crate::dirdb::{db_path, meta_path, DirVariant, EXT};
-use crate::{IRecord, ITable, ITableDyn, IVariant, RecordId, TableMeta};
-use anyhow::anyhow;
+use crate::dirdb::{DirVariant, EXT, db_path, meta_path};
+use crate::{HttpError, IRecord, ITable, ITableDyn, IVariant, RecordId, TableMeta};
 use path_macro::path;
-use rx_core::sys::fs::{find_file_by_name, SortOrder};
+use rx_core::sys::fs::{SortOrder, find_file_by_name};
 use rx_core::{sys::fs, text::*};
 use std::marker::PhantomData;
 use std::path::PathBuf;
@@ -54,9 +53,13 @@ impl<T: IRecord> DirTable<T> {
         let name = Self::record_name(id);
         let files = find_file_by_name(&self.path, &name).unwrap_or_default();
         if files.is_empty() {
-            Err(anyhow!("record not found: {}", id))
+            Err(HttpError::not_found(format!("record not found: {}", id)).into())
         } else if files.len() > 1 {
-            Err(anyhow!("duplicate record: {} => {:?}", id, files))
+            Err(HttpError::internal_server_error(format!(
+                "duplicate record: {} => {:?}",
+                id, files
+            ))
+            .into())
         } else {
             Ok(files[0].clone())
         }
@@ -98,31 +101,45 @@ impl<T: IRecord> ITableDyn<T> for DirTable<T> {
     }
 
     fn delete(&mut self, id: RecordId) -> AnyResult<()> {
-        let p = self.find_record_path(id)?;
+        let p = self.find_record_path(id)?; // FIXME：删除不存在的会报错
         Ok(fs::remove(&p)?)
     }
 
     /// 查询记录集
-    fn find_all(&self) -> AnyResult<Vec<T>> {
-        self.find(RecordId::default(), usize::MAX, |_| true)
+    fn find_all(&self, partition_id: Option<u32>) -> AnyResult<Vec<T>> {
+        self.find(RecordId::default(), usize::MAX, |_| true, partition_id)
     }
 
     /// 查询K/V对
-    fn find_all_pairs(&self) -> AnyResult<Vec<(RecordId, T)>> {
-        self.find_pairs(RecordId::default(), usize::max_value(), |_| true)
+    fn find_all_pairs(&self, partition_id: Option<u32>) -> AnyResult<Vec<(RecordId, T)>> {
+        self.find_pairs(RecordId::default(), usize::MAX, |_| true, partition_id)
     }
 
-    fn find_ids(&self, min_id: RecordId) -> AnyResult<Vec<RecordId>> {
-        find_record_ids(&self.path, min_id)
+    fn find_ids(&self, min_id: RecordId, partition_id: Option<u32>) -> AnyResult<Vec<RecordId>> {
+        find_record_ids(&self.path, min_id, partition_id)
     }
 }
 
 impl<T: IRecord> ITable<T> for DirTable<T> {}
 
 /// 从路径中查找记录ID
-fn find_record_ids(path: &Path, min_id: RecordId) -> AnyResult<Vec<RecordId>> {
+fn find_record_ids(
+    path: &Path,
+    min_id: RecordId,
+    partition_id: Option<u32>,
+) -> AnyResult<Vec<RecordId>> {
     let mut ids = Vec::new();
-    let names = fs::file_stems_in(path, EXT, SortOrder::None)?;
+
+    let names = if let Some(partition_id) = partition_id {
+        let path = path!(path / partition_id.to_string());
+        if !path.exists() {
+            return Ok(ids);
+        }
+        fs::file_stems_in(path, EXT, SortOrder::None)?
+    } else {
+        fs::file_stems_in(path, EXT, SortOrder::None)?
+    };
+
     for stem in names {
         if let Ok(id) = stem.parse::<RecordId>() {
             if id >= min_id {
