@@ -23,6 +23,7 @@ pub trait IRecordId:
 {
     fn next(&self) -> Self;
 }
+
 impl IRecordId for usize {
     fn next(&self) -> Self {
         self + 1
@@ -119,7 +120,11 @@ pub trait ITableDyn<R: IRecord> {
 
     /// 添加记录
     fn post(&mut self, record: &mut R) -> AnyResult<R::RecordId> {
-        let id = self.next_id()?;
+        let id = match record.get_id() {
+            None => self.next_id()?,
+            Some(id) => id,
+        };
+
         self.put(&id, record)?;
         Ok(id)
     }

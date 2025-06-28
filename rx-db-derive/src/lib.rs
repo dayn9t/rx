@@ -11,12 +11,13 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let ident = input.ident;
     quote!(
         impl IRecord for #ident {
-            fn get_id(&self) -> Option<RecordId> {
+            type RecordId = usize;
+            fn get_id(&self) -> Option<usize> {
                 self.id
             }
 
-            fn set_id(&mut self, id: RecordId) {
-                self.id = Some(id)
+            fn set_id(&mut self, id: &usize) {
+                self.id = Some(*id)
             }
         }
     )

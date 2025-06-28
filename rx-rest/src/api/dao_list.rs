@@ -38,7 +38,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 获取记录
-    pub async fn get(&self, id: Path<String>) -> Result<CodeResponse<R>> {
+    pub async fn get(&self, id: &Path<String>) -> Result<CodeResponse<R>> {
         let tab = self.table.lock().await;
         let id = match id.0.parse() {
             Ok(id) => id,
@@ -76,7 +76,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 删除元素
-    pub async fn delete(&self, id: Path<String>) -> Result<CodeResponse<R>> {
+    pub async fn delete(&self, id: &Path<String>) -> Result<CodeResponse<R>> {
         // FIXME: 不返回删除的元素, 好像是poem的BUG
         let mut tab = self.table.lock().await;
         let id = match id.0.parse() {
@@ -88,7 +88,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 更新元素
-    pub async fn update(&self, id: Path<String>, mut record: Json<R>) -> Result<CodeResponse<R>> {
+    pub async fn update(&self, id: &Path<String>, mut record: Json<R>) -> Result<CodeResponse<R>> {
         let mut tab = self.table.lock().await;
         let id = match id.0.parse() {
             Ok(id) => id,
