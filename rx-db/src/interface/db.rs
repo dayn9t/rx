@@ -1,4 +1,4 @@
-use crate::{IRecord, ITableDyn, IVariant, RecordId};
+use crate::{IRecord, ITableDyn, IVariant};
 use rx_core::prelude::*;
 use std::fmt;
 
@@ -87,14 +87,13 @@ pub trait IDatabase {
 
     /// 查找数据库表所有记录
     fn find_all_records<R: IRecord>(&self, table_name: &str) -> AnyResult<Vec<R>> {
-        self.find_records(table_name, RecordId::default(), usize::MAX, |_| true, None)
+        self.find_records(table_name, usize::MAX, |_| true, None)
     }
 
     /// 从数据库表中查找记录集合
     fn find_records<R, P>(
         &self,
         table_name: &str,
-        min_id: RecordId,
         limit: usize,
         predicate: P,
         partition_id: Option<u32>,
@@ -114,11 +113,11 @@ pub trait IDatabase {
         R: IRecord,
         P: Fn(&R) -> bool,
     {
-        self.find_records(table_name, 0, RecordId::MAX, predicate, partition_id)
+        self.find_records(table_name, usize::MAX, predicate, partition_id)
     }
 
     /// 从数据库表获取指定记录
-    fn get_record<R: IRecord + 'static>(&self, table_name: &str, id: RecordId) -> AnyResult<R> {
+    fn get_record<R: IRecord + 'static>(&self, table_name: &str, id: &R::RecordId) -> AnyResult<R> {
         self.open_table(table_name)?.get(id)
     }
 
@@ -126,7 +125,7 @@ pub trait IDatabase {
     fn put_record<R: IRecord + 'static>(
         &self,
         table_name: &str,
-        id: RecordId,
+        id: &R::RecordId,
         record: &mut R,
     ) -> AnyResult<()> {
         self.open_table(table_name)?.put(id, record)

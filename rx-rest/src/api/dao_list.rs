@@ -2,12 +2,11 @@ use tokio::sync::Mutex;
 use tokio::sync::MutexGuard;
 
 use super::common::*;
-pub use rx_db::RecordId;
 use rx_db::dirdb::DirTable;
 use rx_db::{IRecord, ITable, ITableDyn};
 
 //#[derive(Default)]
-pub struct DaoList<R> {
+pub struct DaoList<R: IRecord> {
     table: Mutex<DirTable<R>>,
 }
 
@@ -39,9 +38,13 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 获取记录
-    pub async fn get(&self, id: Path<u64>) -> Result<CodeResponse<R>> {
+    pub async fn get(&self, id: Path<String>) -> Result<CodeResponse<R>> {
         let tab = self.table.lock().await;
-        match tab.get(id.0 as RecordId) {
+        let id = match id.0.parse() {
+            Ok(id) => id,
+            Err(_) => return Ok(CodeResponse::InvalidRequest),
+        };
+        match tab.get(&id) {
             Ok(r) => Ok(CodeResponse::Ok(Json(r))),
             Err(_) => Ok(CodeResponse::NotFound),
         }
@@ -58,7 +61,6 @@ impl<R: IRecord + ToJSON> DaoList<R> {
 
     pub async fn find<P>(
         &self,
-        start_id: RecordId,
         limit: usize,
         predicate: P,
         partition_id: Option<u32>,
@@ -67,30 +69,38 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         P: Fn(&R) -> bool,
     {
         let tab = self.table.lock().await;
-        match tab.find(start_id, limit, predicate, partition_id) {
+        match tab.find(limit, predicate, partition_id) {
             Ok(rs) => Ok(CodeResponse::Ok(Json(rs))),
             Err(_) => Ok(CodeResponse::NotFound),
         }
     }
 
     /// 删除元素
-    pub async fn delete(&self, id: Path<u64>) -> Result<CodeResponse<R>> {
+    pub async fn delete(&self, id: Path<String>) -> Result<CodeResponse<R>> {
         // FIXME: 不返回删除的元素, 好像是poem的BUG
         let mut tab = self.table.lock().await;
-        tab.delete(id.0 as RecordId)?;
+        let id = match id.0.parse() {
+            Ok(id) => id,
+            Err(_) => return Ok(CodeResponse::InvalidRequest),
+        };
+        tab.delete(&id)?;
         Ok(CodeResponse::NoContent)
     }
 
     /// 更新元素
-    pub async fn update(&self, id: Path<u64>, mut record: Json<R>) -> Result<CodeResponse<R>> {
+    pub async fn update(&self, id: Path<String>, mut record: Json<R>) -> Result<CodeResponse<R>> {
         let mut tab = self.table.lock().await;
-        tab.put(id.0 as RecordId, &mut record.0)?;
+        let id = match id.0.parse() {
+            Ok(id) => id,
+            Err(_) => return Ok(CodeResponse::InvalidRequest),
+        };
+        tab.put(&id, &mut record.0)?;
         Ok(CodeResponse::Created(record))
     }
 
     /// 更新元素
-    pub async fn update_record(&self, id: RecordId, mut record: R) {
+    pub async fn update_record(&self, id: &R::RecordId, mut record: R) {
         let mut tab = self.table.lock().await;
-        tab.put(id as RecordId, &mut record).unwrap();
+        tab.put(id, &mut record).unwrap();
     }
 }

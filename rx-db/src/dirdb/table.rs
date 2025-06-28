@@ -1,5 +1,5 @@
 use crate::dirdb::{DirVariant, EXT, db_path, meta_path};
-use crate::{HttpError, IRecord, ITable, ITableDyn, IVariant, RecordId, TableMeta};
+use crate::{HttpError, IRecord, IRecordId, ITable, ITableDyn, IVariant, TableMeta};
 use path_macro::path;
 use rx_core::sys::fs::{SortOrder, find_file_by_name};
 use rx_core::{sys::fs, text::*};
@@ -7,14 +7,14 @@ use std::marker::PhantomData;
 use std::path::PathBuf;
 
 //#[derive(Size)]
-pub struct DirTable<T> {
+pub struct DirTable<R: IRecord> {
     name: String,
     path: PathBuf,
-    meta: DirVariant<TableMeta>,
-    _p: PhantomData<T>,
+    meta: DirVariant<TableMeta<R::RecordId>>,
+    _p: PhantomData<R>,
 }
 
-impl<T: IRecord> DirTable<T> {
+impl<R: IRecord> DirTable<R> {
     /// 打开表
     pub fn open_path(db_path: &Path, name: &str) -> AnyResult<Self> {
         let path = path!(db_path / name);
@@ -24,7 +24,7 @@ impl<T: IRecord> DirTable<T> {
             name: name.to_owned(),
             path,
             meta,
-            _p: PhantomData::<T>,
+            _p: PhantomData::<R>,
         })
     }
 
@@ -33,13 +33,13 @@ impl<T: IRecord> DirTable<T> {
         self.path.as_path()
     }
 
-    fn record_name(id: RecordId) -> String {
+    fn record_name(id: &R::RecordId) -> String {
         format!("{}.{}", id, EXT)
     }
 
     /// 记录文件全路径
-    fn record_path(&self, id: RecordId, partition_id: Option<u32>) -> PathBuf {
-        let name = Self::record_name(id);
+    fn record_path(&self, id: &R::RecordId, partition_id: Option<String>) -> PathBuf {
+        let name = Self::record_name(&id);
         let name = if let Some(partition_id) = partition_id {
             format!("{}/{}", partition_id, name)
         } else {
@@ -49,7 +49,7 @@ impl<T: IRecord> DirTable<T> {
     }
 
     /// 查找记录文件全路径
-    fn find_record_path(&self, id: RecordId) -> AnyResult<PathBuf> {
+    fn find_record_path(&self, id: &R::RecordId) -> AnyResult<PathBuf> {
         let name = Self::record_name(id);
         let files = find_file_by_name(&self.path, &name).unwrap_or_default();
         if files.is_empty() {
@@ -66,7 +66,7 @@ impl<T: IRecord> DirTable<T> {
     }
 }
 
-impl<T: IRecord> ITableDyn<T> for DirTable<T> {
+impl<R: IRecord> ITableDyn<R> for DirTable<R> {
     fn open(db_url: &str, name: &str) -> AnyResult<Self> {
         let db_path = db_path(db_url)?;
         Self::open_path(&db_path, name)
@@ -76,58 +76,54 @@ impl<T: IRecord> ITableDyn<T> for DirTable<T> {
         self.name.clone()
     }
 
-    fn get_meta(&self) -> AnyResult<TableMeta> {
+    fn get_meta(&self) -> AnyResult<TableMeta<R::RecordId>> {
         self.meta.get()
     }
 
-    fn set_meta(&mut self, meta: &TableMeta) -> AnyResult<()> {
+    fn set_meta(&mut self, meta: &TableMeta<R::RecordId>) -> AnyResult<()> {
         self.meta.set(meta)
     }
 
-    fn contains(&self, id: RecordId) -> bool {
+    fn contains(&self, id: &R::RecordId) -> bool {
         self.find_record_path(id).is_ok()
     }
 
-    fn get(&self, id: RecordId) -> AnyResult<T> {
+    fn get(&self, id: &R::RecordId) -> AnyResult<R> {
         let p = self.find_record_path(id)?;
         json::load(&p)
     }
 
-    fn put(&mut self, id: RecordId, record: &mut T) -> AnyResult<()> {
+    fn put(&mut self, id: &R::RecordId, record: &mut R) -> AnyResult<()> {
         record.set_id(id);
         let partition_id = record.get_partition_id();
         json::save(&record, &self.record_path(id, partition_id))?;
         self.update_last_id(id)
     }
 
-    fn delete(&mut self, id: RecordId) -> AnyResult<()> {
+    fn delete(&mut self, id: &R::RecordId) -> AnyResult<()> {
         let p = self.find_record_path(id)?; // FIXME：删除不存在的会报错
         Ok(fs::remove(&p)?)
     }
 
     /// 查询记录集
-    fn find_all(&self, partition_id: Option<u32>) -> AnyResult<Vec<T>> {
-        self.find(RecordId::default(), usize::MAX, |_| true, partition_id)
+    fn find_all(&self, partition_id: Option<u32>) -> AnyResult<Vec<R>> {
+        self.find(usize::MAX, |_| true, partition_id)
     }
 
     /// 查询K/V对
-    fn find_all_pairs(&self, partition_id: Option<u32>) -> AnyResult<Vec<(RecordId, T)>> {
-        self.find_pairs(RecordId::default(), usize::MAX, |_| true, partition_id)
+    fn find_all_pairs(&self, partition_id: Option<u32>) -> AnyResult<Vec<(R::RecordId, R)>> {
+        self.find_pairs(usize::MAX, |_| true, partition_id)
     }
 
-    fn find_ids(&self, min_id: RecordId, partition_id: Option<u32>) -> AnyResult<Vec<RecordId>> {
-        find_record_ids(&self.path, min_id, partition_id)
+    fn find_ids(&self, partition_id: Option<u32>) -> AnyResult<Vec<R::RecordId>> {
+        find_record_ids(&self.path, partition_id)
     }
 }
 
 impl<T: IRecord> ITable<T> for DirTable<T> {}
 
 /// 从路径中查找记录ID
-fn find_record_ids(
-    path: &Path,
-    min_id: RecordId,
-    partition_id: Option<u32>,
-) -> AnyResult<Vec<RecordId>> {
+fn find_record_ids<RID: IRecordId>(path: &Path, partition_id: Option<u32>) -> AnyResult<Vec<RID>> {
     let mut ids = Vec::new();
 
     let names = if let Some(partition_id) = partition_id {
@@ -141,18 +137,16 @@ fn find_record_ids(
     };
 
     for stem in names {
-        if let Ok(id) = stem.parse::<RecordId>() {
-            if id >= min_id {
-                ids.push(id);
-            }
+        if let Ok(id) = RID::from_str(&stem) {
+            ids.push(id);
         }
     }
     ids.sort();
     Ok(ids)
 }
-
+/*
 /// 从路径中查找最大记录ID
-fn _find_max_record_id(path: &Path, min_id: RecordId) -> AnyResult<RecordId> {
+fn _find_max_record_id(path: &Path) -> AnyResult<RecordId> {
     let mut max_id = 0;
     let names = fs::file_stems_in(path, EXT, SortOrder::None)?;
     for stem in names {
@@ -163,7 +157,7 @@ fn _find_max_record_id(path: &Path, min_id: RecordId) -> AnyResult<RecordId> {
         }
     }
     Ok(max_id)
-}
+}*/
 
 #[cfg(test)]
 mod tests {

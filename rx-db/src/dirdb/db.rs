@@ -1,5 +1,5 @@
 use crate::dirdb::{DirTable, DirVariant};
-use crate::{IDatabase, IRecord, ITable, ITableDyn, IVariant, RecordId};
+use crate::{IDatabase, IRecord, ITable, ITableDyn, IVariant};
 use anyhow::anyhow;
 use path_macro::path;
 use rx_core::sys::fs;
@@ -85,7 +85,6 @@ impl IDatabase for DirDb {
     fn find_records<R, P>(
         &self,
         table_name: &str,
-        min_id: RecordId,
         limit: usize,
         predicate: P,
         partition_id: Option<u32>,
@@ -95,7 +94,7 @@ impl IDatabase for DirDb {
         P: Fn(&R) -> bool,
     {
         let table = DirTable::<R>::open_path(&self.path, table_name)?;
-        table.find(min_id, limit, predicate, partition_id)
+        table.find(limit, predicate, partition_id)
     }
 }
 impl DirDb {
