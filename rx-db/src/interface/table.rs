@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use std::str::FromStr;
+use uuid::Uuid;
 
 pub trait IRecordId:
     Default
@@ -27,6 +28,12 @@ pub trait IRecordId:
 impl IRecordId for usize {
     fn next(&self) -> Self {
         self + 1
+    }
+}
+
+impl IRecordId for String {
+    fn next(&self) -> Self {
+        Uuid::new_v4().to_string()
     }
 }
 

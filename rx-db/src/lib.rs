@@ -1,6 +1,6 @@
 pub use interface::*;
 pub use rx_core::prelude::*;
-pub use rx_db_derive::Record;
+pub use rx_db_derive::{Record, RecordSid};
 pub use util::*;
 //#![feature(associated_type_defaults)]
 pub mod dirdb;

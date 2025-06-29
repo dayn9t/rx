@@ -23,3 +23,22 @@ pub fn derive(input: TokenStream) -> TokenStream {
     )
     .into()
 }
+
+#[proc_macro_derive(RecordSid)]
+pub fn derive1(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let ident = input.ident;
+    quote!(
+        impl IRecord for #ident {
+            type RecordId = String;
+            fn get_id(&self) -> Option<String> {
+                self.id
+            }
+
+            fn set_id(&mut self, id: &String) {
+                self.id = Some(*id)
+            }
+        }
+    )
+    .into()
+}
