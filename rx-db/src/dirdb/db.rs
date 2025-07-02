@@ -87,7 +87,7 @@ impl IDatabase for DirDb {
         table_name: &str,
         limit: usize,
         predicate: P,
-        partition_id: Option<u32>,
+        partition_id: Option<String>,
     ) -> AnyResult<Vec<R>>
     where
         R: IRecord,

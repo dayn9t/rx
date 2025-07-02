@@ -96,7 +96,7 @@ pub trait IDatabase {
         table_name: &str,
         limit: usize,
         predicate: P,
-        partition_id: Option<u32>,
+        partition_id: Option<String>,
     ) -> AnyResult<Vec<R>>
     where
         R: IRecord,
@@ -107,7 +107,7 @@ pub trait IDatabase {
         &self,
         table_name: &str,
         predicate: P,
-        partition_id: Option<u32>,
+        partition_id: Option<String>,
     ) -> AnyResult<Vec<R>>
     where
         R: IRecord,

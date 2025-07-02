@@ -142,7 +142,7 @@ pub trait ITableDyn<R: IRecord> {
     fn delete(&mut self, id: &R::RecordId) -> AnyResult<()>;
 
     /// 删除全部记录(幂等)
-    fn delete_all(&mut self, partition_id: Option<u32>) -> AnyResult<()> {
+    fn delete_all(&mut self, partition_id: Option<String>) -> AnyResult<()> {
         let ids = self.find_ids(partition_id)?;
         for id in ids {
             self.delete(&id)?;
@@ -151,19 +151,19 @@ pub trait ITableDyn<R: IRecord> {
     }
 
     /// 查询记录集
-    fn find_all(&self, partition_id: Option<u32>) -> AnyResult<Vec<R>>;
+    fn find_all(&self, partition_id: Option<String>) -> AnyResult<Vec<R>>;
 
     /// 查询K/V对
-    fn find_all_pairs(&self, partition_id: Option<u32>) -> AnyResult<Vec<(R::RecordId, R)>>;
+    fn find_all_pairs(&self, partition_id: Option<String>) -> AnyResult<Vec<(R::RecordId, R)>>;
 
     /// 查询Id集
-    fn find_ids(&self, partition_id: Option<u32>) -> AnyResult<Vec<R::RecordId>>;
+    fn find_ids(&self, partition_id: Option<String>) -> AnyResult<Vec<R::RecordId>>;
 }
 
 /// 数据库表
 pub trait ITable<R: IRecord>: ITableDyn<R> {
     /// 查询记录集
-    fn find<P>(&self, limit: usize, predicate: P, partition_id: Option<u32>) -> AnyResult<Vec<R>>
+    fn find<P>(&self, limit: usize, predicate: P, partition_id: Option<String>) -> AnyResult<Vec<R>>
     where
         P: Fn(&R) -> bool,
     {
@@ -186,7 +186,7 @@ pub trait ITable<R: IRecord>: ITableDyn<R> {
         &self,
         limit: usize,
         predicate: P,
-        partition_id: Option<u32>,
+        partition_id: Option<String>,
     ) -> AnyResult<Vec<(R::RecordId, R)>>
     where
         P: Fn(&R) -> bool,

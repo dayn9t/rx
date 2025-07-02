@@ -106,16 +106,16 @@ impl<R: IRecord> ITableDyn<R> for DirTable<R> {
     }
 
     /// 查询记录集
-    fn find_all(&self, partition_id: Option<u32>) -> AnyResult<Vec<R>> {
+    fn find_all(&self, partition_id: Option<String>) -> AnyResult<Vec<R>> {
         self.find(usize::MAX, |_| true, partition_id)
     }
 
     /// 查询K/V对
-    fn find_all_pairs(&self, partition_id: Option<u32>) -> AnyResult<Vec<(R::RecordId, R)>> {
+    fn find_all_pairs(&self, partition_id: Option<String>) -> AnyResult<Vec<(R::RecordId, R)>> {
         self.find_pairs(usize::MAX, |_| true, partition_id)
     }
 
-    fn find_ids(&self, partition_id: Option<u32>) -> AnyResult<Vec<R::RecordId>> {
+    fn find_ids(&self, partition_id: Option<String>) -> AnyResult<Vec<R::RecordId>> {
         find_record_ids(&self.path, partition_id)
     }
 }
@@ -123,7 +123,10 @@ impl<R: IRecord> ITableDyn<R> for DirTable<R> {
 impl<T: IRecord> ITable<T> for DirTable<T> {}
 
 /// 从路径中查找记录ID
-fn find_record_ids<RID: IRecordId>(path: &Path, partition_id: Option<u32>) -> AnyResult<Vec<RID>> {
+fn find_record_ids<RID: IRecordId>(
+    path: &Path,
+    partition_id: Option<String>,
+) -> AnyResult<Vec<RID>> {
     let mut ids = Vec::new();
 
     let names = if let Some(partition_id) = partition_id {
