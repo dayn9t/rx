@@ -87,7 +87,7 @@ pub trait IDatabase {
 
     /// 查找数据库表所有记录
     fn find_all_records<R: IRecord>(&self, table_name: &str) -> AnyResult<Vec<R>> {
-        self.find_records(table_name, usize::MAX, |_| true, None)
+        self.find_records(table_name, usize::MAX, |_| true, &None)
     }
 
     /// 从数据库表中查找记录集合
@@ -96,7 +96,7 @@ pub trait IDatabase {
         table_name: &str,
         limit: usize,
         predicate: P,
-        partition_id: Option<String>,
+        partition_id: &Option<String>,
     ) -> AnyResult<Vec<R>>
     where
         R: IRecord,
@@ -107,7 +107,7 @@ pub trait IDatabase {
         &self,
         table_name: &str,
         predicate: P,
-        partition_id: Option<String>,
+        partition_id: &Option<String>,
     ) -> AnyResult<Vec<R>>
     where
         R: IRecord,
@@ -118,7 +118,7 @@ pub trait IDatabase {
 
     /// 从数据库表获取指定记录
     fn get_record<R: IRecord + 'static>(&self, table_name: &str, id: &R::RecordId) -> AnyResult<R> {
-        self.open_table(table_name)?.get(id)
+        self.open_table(table_name)?.get(id, &None)
     }
 
     /// 更新数据库表中指定记录

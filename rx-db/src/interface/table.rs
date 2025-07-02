@@ -76,7 +76,7 @@ pub trait ITableDyn<R: IRecord> {
 
     /// 获取表长度
     fn len(&self) -> usize {
-        self.find_ids(None).unwrap().len()
+        self.find_ids(&None).unwrap().len()
     }
 
     /// 获取表是否为空
@@ -113,16 +113,16 @@ pub trait ITableDyn<R: IRecord> {
     fn contains(&self, id: &R::RecordId) -> bool;
 
     /// 获取记录
-    fn get(&self, id: &R::RecordId) -> AnyResult<R>;
+    fn get(&self, id: &R::RecordId, partition_id: &Option<String>) -> AnyResult<R>;
 
     /// 获取变量值/缺省值
-    fn get_or(&self, id: &R::RecordId, record: R) -> R {
-        self.get(id).unwrap_or(record)
+    fn get_or(&self, id: &R::RecordId, record: R, partition_id: &Option<String>) -> R {
+        self.get(id, partition_id).unwrap_or(record)
     }
 
     /// 获取变量值/缺省值
-    fn get_or_default(&self, id: &R::RecordId) -> R {
-        self.get_or(id, R::default())
+    fn get_or_default(&self, id: &R::RecordId, partition_id: &Option<String>) -> R {
+        self.get_or(id, R::default(), partition_id)
     }
 
     /// 添加记录
@@ -142,7 +142,7 @@ pub trait ITableDyn<R: IRecord> {
     fn delete(&mut self, id: &R::RecordId) -> AnyResult<()>;
 
     /// 删除全部记录(幂等)
-    fn delete_all(&mut self, partition_id: Option<String>) -> AnyResult<()> {
+    fn delete_all(&mut self, partition_id: &Option<String>) -> AnyResult<()> {
         let ids = self.find_ids(partition_id)?;
         for id in ids {
             self.delete(&id)?;
@@ -151,26 +151,31 @@ pub trait ITableDyn<R: IRecord> {
     }
 
     /// 查询记录集
-    fn find_all(&self, partition_id: Option<String>) -> AnyResult<Vec<R>>;
+    fn find_all(&self, partition_id: &Option<String>) -> AnyResult<Vec<R>>;
 
     /// 查询K/V对
-    fn find_all_pairs(&self, partition_id: Option<String>) -> AnyResult<Vec<(R::RecordId, R)>>;
+    fn find_all_pairs(&self, partition_id: &Option<String>) -> AnyResult<Vec<(R::RecordId, R)>>;
 
     /// 查询Id集
-    fn find_ids(&self, partition_id: Option<String>) -> AnyResult<Vec<R::RecordId>>;
+    fn find_ids(&self, partition_id: &Option<String>) -> AnyResult<Vec<R::RecordId>>;
 }
 
 /// 数据库表
 pub trait ITable<R: IRecord>: ITableDyn<R> {
     /// 查询记录集
-    fn find<P>(&self, limit: usize, predicate: P, partition_id: Option<String>) -> AnyResult<Vec<R>>
+    fn find<P>(
+        &self,
+        limit: usize,
+        predicate: P,
+        partition_id: &Option<String>,
+    ) -> AnyResult<Vec<R>>
     where
         P: Fn(&R) -> bool,
     {
         let mut vec = Vec::new();
         let ids = self.find_ids(partition_id)?;
         for id in ids {
-            let r = self.get(&id)?;
+            let r = self.get(&id, partition_id)?;
             if predicate(&r) {
                 vec.push(r);
                 if vec.len() >= limit {
@@ -186,7 +191,7 @@ pub trait ITable<R: IRecord>: ITableDyn<R> {
         &self,
         limit: usize,
         predicate: P,
-        partition_id: Option<String>,
+        partition_id: &Option<String>,
     ) -> AnyResult<Vec<(R::RecordId, R)>>
     where
         P: Fn(&R) -> bool,

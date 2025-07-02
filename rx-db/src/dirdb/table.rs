@@ -49,9 +49,18 @@ impl<R: IRecord> DirTable<R> {
     }
 
     /// 查找记录文件全路径
-    fn find_record_path(&self, id: &R::RecordId) -> AnyResult<PathBuf> {
+    fn find_record_path(
+        &self,
+        id: &R::RecordId,
+        partition_id: &Option<String>,
+    ) -> AnyResult<PathBuf> {
         let name = Self::record_name(id);
-        let files = find_file_by_name(&self.path, &name).unwrap_or_default();
+        let record_dir = if let Some(partition_id) = partition_id {
+            path!(self.path / partition_id.to_string())
+        } else {
+            self.path.clone()
+        };
+        let files = find_file_by_name(&record_dir, &name).unwrap_or_default();
         if files.is_empty() {
             Err(HttpError::not_found(format!("record not found: {}", id)).into())
         } else if files.len() > 1 {
@@ -85,11 +94,11 @@ impl<R: IRecord> ITableDyn<R> for DirTable<R> {
     }
 
     fn contains(&self, id: &R::RecordId) -> bool {
-        self.find_record_path(id).is_ok()
+        self.find_record_path(id, &None).is_ok()
     }
 
-    fn get(&self, id: &R::RecordId) -> AnyResult<R> {
-        let p = self.find_record_path(id)?;
+    fn get(&self, id: &R::RecordId, partition_id: &Option<String>) -> AnyResult<R> {
+        let p = self.find_record_path(id, partition_id)?;
         json::load(&p)
     }
 
@@ -101,21 +110,21 @@ impl<R: IRecord> ITableDyn<R> for DirTable<R> {
     }
 
     fn delete(&mut self, id: &R::RecordId) -> AnyResult<()> {
-        let p = self.find_record_path(id)?; // FIXME：删除不存在的会报错
+        let p = self.find_record_path(id, &None)?; // FIXME：删除不存在的会报错
         Ok(fs::remove(&p)?)
     }
 
     /// 查询记录集
-    fn find_all(&self, partition_id: Option<String>) -> AnyResult<Vec<R>> {
+    fn find_all(&self, partition_id: &Option<String>) -> AnyResult<Vec<R>> {
         self.find(usize::MAX, |_| true, partition_id)
     }
 
     /// 查询K/V对
-    fn find_all_pairs(&self, partition_id: Option<String>) -> AnyResult<Vec<(R::RecordId, R)>> {
+    fn find_all_pairs(&self, partition_id: &Option<String>) -> AnyResult<Vec<(R::RecordId, R)>> {
         self.find_pairs(usize::MAX, |_| true, partition_id)
     }
 
-    fn find_ids(&self, partition_id: Option<String>) -> AnyResult<Vec<R::RecordId>> {
+    fn find_ids(&self, partition_id: &Option<String>) -> AnyResult<Vec<R::RecordId>> {
         find_record_ids(&self.path, partition_id)
     }
 }
@@ -125,7 +134,7 @@ impl<T: IRecord> ITable<T> for DirTable<T> {}
 /// 从路径中查找记录ID
 fn find_record_ids<RID: IRecordId>(
     path: &Path,
-    partition_id: Option<String>,
+    partition_id: &Option<String>,
 ) -> AnyResult<Vec<RID>> {
     let mut ids = Vec::new();
 

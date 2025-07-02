@@ -24,7 +24,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 获取记录集合
-    pub async fn get_rs(&self, partition: Option<String>) -> Result<Vec<R>> {
+    pub async fn get_rs(&self, partition: &Option<String>) -> Result<Vec<R>> {
         let tab = self.table.lock().await;
         let rs = tab.find_all(partition)?;
         Ok(rs)
@@ -38,20 +38,24 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 获取记录
-    pub async fn get(&self, id: &Path<String>) -> Result<CodeResponse<R>> {
+    pub async fn get(
+        &self,
+        id: &Path<String>,
+        partition_id: &Option<String>,
+    ) -> Result<CodeResponse<R>> {
         let tab = self.table.lock().await;
         let id = match id.0.parse() {
             Ok(id) => id,
             Err(_) => return Ok(CodeResponse::InvalidRequest),
         };
-        match tab.get(&id) {
+        match tab.get(&id, partition_id) {
             Ok(r) => Ok(CodeResponse::Ok(Json(r))),
             Err(_) => Ok(CodeResponse::NotFound),
         }
     }
 
     /// 获取记录集合
-    pub async fn get_all(&self, partition_id: Option<String>) -> Result<CodeResponse<Vec<R>>> {
+    pub async fn get_all(&self, partition_id: &Option<String>) -> Result<CodeResponse<Vec<R>>> {
         let tab = self.table.lock().await;
         match tab.find_all(partition_id) {
             Ok(rs) => Ok(CodeResponse::Ok(Json(rs))),
@@ -63,7 +67,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         &self,
         limit: usize,
         predicate: P,
-        partition_id: Option<String>,
+        partition_id: &Option<String>,
     ) -> Result<CodeResponse<Vec<R>>>
     where
         P: Fn(&R) -> bool,
