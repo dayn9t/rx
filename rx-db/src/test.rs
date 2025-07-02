@@ -44,29 +44,29 @@ pub mod tests {
 
         let mut tab = T::open(db_url, name).unwrap();
         assert!(tab.is_empty());
-        assert!(tab.find_ids(None).unwrap().is_empty());
+        assert!(tab.find_ids(&None).unwrap().is_empty());
 
         let mut s1 = { Student::new(1, "Jack") };
         let mut s2 = { Student::new(2, "John") };
         let mut s3 = { Student::new(3, "Joel") };
 
         let id1 = tab.post(&mut s1).unwrap();
-        assert_eq!(tab.get(&id1).unwrap(), s1);
-        assert_eq!(tab.find_ids(None).unwrap(), vec![id1]);
+        assert_eq!(tab.get(&id1, &None).unwrap(), s1);
+        assert_eq!(tab.find_ids(&None).unwrap(), vec![id1]);
 
         let id2 = tab.post(&mut s2).unwrap();
-        assert_eq!(tab.get(&id2).unwrap(), s2);
-        assert_eq!(tab.find_ids(None).unwrap(), vec![id1, id2]);
+        assert_eq!(tab.get(&id2, &None).unwrap(), s2);
+        assert_eq!(tab.find_ids(&None).unwrap(), vec![id1, id2]);
 
         tab.put(&id2, &mut s3).unwrap();
-        assert_eq!(tab.get(&id2).unwrap(), s3);
-        assert_eq!(tab.find_ids(None).unwrap(), vec![id1, id2]);
+        assert_eq!(tab.get(&id2, &None).unwrap(), s3);
+        assert_eq!(tab.find_ids(&None).unwrap(), vec![id1, id2]);
 
-        let all = tab.find_all(None).unwrap();
+        let all = tab.find_all(&None).unwrap();
         assert_eq!(all, vec![s1.clone(), s3.clone()]);
 
         let name = s1.name.clone();
-        let v = tab.find(1, |s| s.name == name, None).unwrap();
+        let v = tab.find(1, |s| s.name == name, &None).unwrap();
         assert_eq!(v, vec![s1.clone()]);
     }
 }
