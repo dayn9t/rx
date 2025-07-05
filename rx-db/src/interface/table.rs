@@ -43,10 +43,6 @@ pub trait IRecord: Default + Serialize + DeserializeOwned + Sized {
     type RecordId: IRecordId;
     fn get_id(&self) -> Option<Self::RecordId>;
     fn set_id(&mut self, id: &Self::RecordId);
-
-    fn get_partition_id(&self) -> Option<String> {
-        None
-    }
 }
 
 /// Vec<Record> => HasMap<ID, Record>
@@ -126,17 +122,22 @@ pub trait ITableDyn<R: IRecord> {
     }
 
     /// 添加记录
-    fn post(&mut self, record: &mut R) -> AnyResult<R::RecordId> {
+    fn post(&mut self, record: &mut R, partition_id: &Option<String>) -> AnyResult<R::RecordId> {
         let id = match record.get_id() {
             None => self.next_id()?,
             Some(id) => id,
         };
 
-        self.put(&id, record)?;
+        self.put(&id, record, partition_id)?;
         Ok(id)
     }
     /// 更新记录
-    fn put(&mut self, id: &R::RecordId, record: &mut R) -> AnyResult<()>;
+    fn put(
+        &mut self,
+        id: &R::RecordId,
+        record: &mut R,
+        partition_id: &Option<String>,
+    ) -> AnyResult<()>;
 
     /// 删除记录(幂等)
     fn delete(&mut self, id: &R::RecordId) -> AnyResult<()>;

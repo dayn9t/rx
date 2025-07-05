@@ -127,7 +127,8 @@ pub trait IDatabase {
         table_name: &str,
         id: &R::RecordId,
         record: &mut R,
+        partition_id: &Option<String>,
     ) -> AnyResult<()> {
-        self.open_table(table_name)?.put(id, record)
+        self.open_table(table_name)?.put(id, record, partition_id)
     }
 }

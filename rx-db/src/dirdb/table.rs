@@ -38,7 +38,7 @@ impl<R: IRecord> DirTable<R> {
     }
 
     /// 记录文件全路径
-    fn record_path(&self, id: &R::RecordId, partition_id: Option<String>) -> PathBuf {
+    fn record_path(&self, id: &R::RecordId, partition_id: &Option<String>) -> PathBuf {
         let name = Self::record_name(&id);
         let name = if let Some(partition_id) = partition_id {
             format!("{}/{}", partition_id, name)
@@ -102,9 +102,13 @@ impl<R: IRecord> ITableDyn<R> for DirTable<R> {
         json::load(&p)
     }
 
-    fn put(&mut self, id: &R::RecordId, record: &mut R) -> AnyResult<()> {
+    fn put(
+        &mut self,
+        id: &R::RecordId,
+        record: &mut R,
+        partition_id: &Option<String>,
+    ) -> AnyResult<()> {
         record.set_id(id);
-        let partition_id = record.get_partition_id();
         json::save(&record, &self.record_path(id, partition_id))?;
         self.update_last_id(id)
     }

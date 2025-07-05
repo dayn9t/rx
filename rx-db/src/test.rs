@@ -50,15 +50,15 @@ pub mod tests {
         let mut s2 = { Student::new(2, "John") };
         let mut s3 = { Student::new(3, "Joel") };
 
-        let id1 = tab.post(&mut s1).unwrap();
+        let id1 = tab.post(&mut s1, &None).unwrap();
         assert_eq!(tab.get(&id1, &None).unwrap(), s1);
         assert_eq!(tab.find_ids(&None).unwrap(), vec![id1]);
 
-        let id2 = tab.post(&mut s2).unwrap();
+        let id2 = tab.post(&mut s2, &None).unwrap();
         assert_eq!(tab.get(&id2, &None).unwrap(), s2);
         assert_eq!(tab.find_ids(&None).unwrap(), vec![id1, id2]);
 
-        tab.put(&id2, &mut s3).unwrap();
+        tab.put(&id2, &mut s3, &None).unwrap();
         assert_eq!(tab.get(&id2, &None).unwrap(), s3);
         assert_eq!(tab.find_ids(&None).unwrap(), vec![id1, id2]);
 
