@@ -1,5 +1,6 @@
-use crate::{IRecord, ITableDyn, IVariant};
+use crate::{IRecord, ITableDyn, IVariant, vec_to_map};
 use rx_core::prelude::*;
+use std::collections::HashMap;
 use std::fmt;
 
 /// 通用错误类型，包含http状态码
@@ -85,9 +86,23 @@ pub trait IDatabase {
         table_name: &str,
     ) -> AnyResult<Box<dyn ITableDyn<R>>>;
 
+    /// 加载数据库表所有记录
+    fn load_records<R: IRecord>(
+        &self,
+        table_name: &str,
+        partition_id: &Option<String>,
+    ) -> AnyResult<Vec<R>> {
+        self.find_records(table_name, usize::MAX, |_| true, &partition_id)
+    }
+
     /// 查找数据库表所有记录
-    fn find_all_records<R: IRecord>(&self, table_name: &str) -> AnyResult<Vec<R>> {
-        self.find_records(table_name, usize::MAX, |_| true, &None)
+    fn load_record_map<R: IRecord>(
+        &self,
+        table_name: &str,
+        partition_id: &Option<String>,
+    ) -> AnyResult<HashMap<R::RecordId, R>> {
+        let rs = self.load_records(table_name, partition_id)?;
+        Ok(vec_to_map(rs))
     }
 
     /// 从数据库表中查找记录集合
