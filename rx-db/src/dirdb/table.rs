@@ -1,7 +1,7 @@
 use crate::dirdb::{DirVariant, EXT, db_path, meta_path};
 use crate::{HttpError, IRecord, IRecordId, ITable, ITableDyn, IVariant, TableMeta};
 use path_macro::path;
-use rx_core::sys::fs::{SortOrder, find_file_by_name};
+use rx_core::sys::fs::{SortOrder, find_file_by_ext, find_file_by_name};
 use rx_core::{sys::fs, text::*};
 use std::marker::PhantomData;
 use std::path::PathBuf;
@@ -138,7 +138,37 @@ impl<R: IRecord> ITableDyn<R> for DirTable<R> {
     }
 }
 
-impl<T: IRecord> ITable<T> for DirTable<T> {}
+impl<R: IRecord> ITable<R> for DirTable<R> {
+    /// 查询记录集
+    fn find<P>(
+        &self,
+        limit: usize,
+        predicate: P,
+        partition_id: &Option<String>,
+    ) -> AnyResult<Vec<R>>
+    where
+        P: Fn(&R) -> bool,
+    {
+        let dir = if let Some(partition_id) = partition_id {
+            &path!(self.path / partition_id.to_string())
+        } else {
+            &self.path
+        };
+        let files = find_file_by_ext(dir, EXT)?;
+
+        let mut records = Vec::new();
+        for file in files {
+            let r = json::load(&file)?;
+            if predicate(&r) {
+                records.push(r);
+                if records.len() >= limit {
+                    break;
+                }
+            }
+        }
+        Ok(records)
+    }
+}
 
 /// 从路径中查找记录ID
 fn find_record_ids<RID: IRecordId>(
