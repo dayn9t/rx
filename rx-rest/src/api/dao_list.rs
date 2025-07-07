@@ -111,6 +111,16 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         Ok(CodeResponse::Created(record))
     }
 
+    /// 获取记录
+    pub async fn get_record(
+        &self,
+        id: &R::RecordId,
+        partition_id: &Option<String>,
+    ) -> AnyResult<R> {
+        let tab = self.table.lock().await;
+        tab.get(&id, partition_id)
+    }
+
     /// 更新元素
     pub async fn update_record(
         &self,

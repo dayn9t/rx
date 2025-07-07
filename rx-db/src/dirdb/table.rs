@@ -48,7 +48,7 @@ impl<R: IRecord> DirTable<R> {
         path!(self.path / name)
     }
 
-    /// 查找记录文件全路径
+    /// 查找记录文件全路径，未指定partition_id则会递归搜索
     fn find_record_path(
         &self,
         id: &R::RecordId,
@@ -109,7 +109,11 @@ impl<R: IRecord> ITableDyn<R> for DirTable<R> {
         partition_id: &Option<String>,
     ) -> AnyResult<()> {
         record.set_id(id);
-        json::save(&record, &self.record_path(id, partition_id))?;
+        let p = match self.find_record_path(id, partition_id) {
+            Ok(p) => p,
+            Err(_) => self.record_path(id, partition_id),
+        };
+        json::save(&record, &p)?;
         self.update_last_id(id)
     }
 
