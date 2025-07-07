@@ -165,20 +165,6 @@ fn find_record_ids<RID: IRecordId>(
     ids.sort();
     Ok(ids)
 }
-/*
-/// 从路径中查找最大记录ID
-fn _find_max_record_id(path: &Path) -> AnyResult<RecordId> {
-    let mut max_id = 0;
-    let names = fs::file_stems_in(path, EXT, SortOrder::None)?;
-    for stem in names {
-        if let Ok(id) = stem.parse::<RecordId>() {
-            if id >= min_id && id > max_id {
-                max_id = id;
-            }
-        }
-    }
-    Ok(max_id)
-}*/
 
 #[cfg(test)]
 mod tests {

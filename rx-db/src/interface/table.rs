@@ -43,6 +43,9 @@ pub trait IRecord: Default + Serialize + DeserializeOwned + Sized {
     type RecordId: IRecordId;
     fn get_id(&self) -> Option<Self::RecordId>;
     fn set_id(&mut self, id: &Self::RecordId);
+    fn unwrap_id(&self) -> Self::RecordId {
+        self.get_id().expect("Record ID is not set")
+    }
 }
 
 /// Vec<Record> => HasMap<ID, Record>
