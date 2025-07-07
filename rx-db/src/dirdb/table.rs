@@ -150,9 +150,9 @@ impl<R: IRecord> ITable<R> for DirTable<R> {
         P: Fn(&R) -> bool,
     {
         let dir = if let Some(partition_id) = partition_id {
-            &path!(self.path / partition_id.to_string())
+            path!(self.path / partition_id.to_string())
         } else {
-            &self.path
+            self.path.clone()
         };
         let files = find_file_by_ext(dir, EXT)?;
 
