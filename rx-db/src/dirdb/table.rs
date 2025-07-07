@@ -113,6 +113,7 @@ impl<R: IRecord> ITableDyn<R> for DirTable<R> {
             Ok(p) => p,
             Err(_) => self.record_path(id, partition_id),
         };
+        // FIXME: 路径变化，删除老文件
         json::save(&record, &p)?;
         self.update_last_id(id)
     }
