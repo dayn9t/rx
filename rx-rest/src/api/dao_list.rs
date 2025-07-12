@@ -1,9 +1,9 @@
-use tokio::sync::Mutex;
-use tokio::sync::MutexGuard;
-
 use super::common::*;
 use rx_db::dirdb::DirTable;
-use rx_db::{IRecord, ITable, ITableDyn};
+use rx_db::{IRecord, ITable, ITableDyn, vec_to_map};
+use std::collections::HashMap;
+use tokio::sync::Mutex;
+use tokio::sync::MutexGuard;
 
 //#[derive(Default)]
 pub struct DaoList<R: IRecord> {
@@ -21,13 +21,6 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     /// 获取模型对应的表
     pub async fn table(&self) -> MutexGuard<DirTable<R>> {
         self.table.lock().await
-    }
-
-    /// 获取记录集合
-    pub async fn get_rs(&self, partition: &Option<String>) -> Result<Vec<R>> {
-        let tab = self.table.lock().await;
-        let rs = tab.find_all(partition)?;
-        Ok(rs)
     }
 
     /// 添加记录
@@ -119,6 +112,33 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     ) -> AnyResult<R> {
         let tab = self.table.lock().await;
         tab.get(&id, partition_id)
+    }
+
+    /// 获取记录集合
+    pub async fn get_rs(&self, partition: &Option<String>) -> Result<Vec<R>> {
+        let tab = self.table.lock().await;
+        let rs = tab.find_all(partition)?;
+        Ok(rs)
+    }
+
+    /// 获取记录集合
+    pub async fn get_map(&self, partition: &Option<String>) -> Result<HashMap<R::RecordId, R>> {
+        let rs = self.get_rs(partition).await?;
+        Ok(vec_to_map(rs))
+    }
+
+    /// 获取记录
+    pub async fn find_rs<P>(
+        &self,
+        limit: usize,
+        predicate: P,
+        partition_id: &Option<String>,
+    ) -> AnyResult<Vec<R>>
+    where
+        P: Fn(&R) -> bool,
+    {
+        let tab = self.table.lock().await;
+        tab.find(limit, predicate, partition_id)
     }
 
     /// 更新元素
