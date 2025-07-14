@@ -4,8 +4,10 @@ use std::fs::{DirEntry, create_dir_all};
 pub use std::io::*;
 pub use std::path::{Path, PathBuf};
 
+use crate::sys::fs::{make_parent, visit_dir, visit_dirs};
 use chrono::prelude::*;
-
+use path_macro::path;
+use tempfile::Builder;
 /// 时间转化为文件
 pub fn time_to_file(dt: &DateTime<Local>, ext: &str) -> String {
     let filename = dt.format("%Y-%m-%d/%H-%M-%S%.3f.").to_string() + ext;
@@ -146,13 +148,17 @@ pub fn copy_file_to_dir(src_file: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -
 }
 
 /// 合并目录内所有文件到一个文件
-pub fn combine_files_in(src_dir: &Path, dst_file: &Path, ext: &str) -> Result<()> {
+pub fn combine_files_in(
+    src_dir: impl AsRef<Path>,
+    dst_file: impl AsRef<Path>,
+    ext: &str,
+) -> Result<()> {
     let files = files_in(&src_dir, &ext, SortOrder::Asc)?;
     combine_files(&files, dst_file)
 }
 
 /// 合并文件集合到一个文件
-pub fn combine_files(src_files: &Vec<PathBuf>, dst_file: &Path) -> Result<()> {
+pub fn combine_files(src_files: &Vec<PathBuf>, dst_file: impl AsRef<Path>) -> Result<()> {
     make_parent(&dst_file)?;
     let mut dst_file = File::create(dst_file)?;
 
@@ -166,9 +172,6 @@ pub fn combine_files(src_files: &Vec<PathBuf>, dst_file: &Path) -> Result<()> {
     Ok(())
 }
 
-use crate::sys::fs::{make_parent, visit_dir, visit_dirs};
-use tempfile::Builder;
-
 /// 生成指定扩展名的临时文件
 pub fn temp_file_with(ext: &str) -> PathBuf {
     let file = Builder::new()
@@ -176,6 +179,22 @@ pub fn temp_file_with(ext: &str) -> PathBuf {
         .tempfile()
         .unwrap();
     file.path().to_path_buf()
+}
+
+/// 获取路径的伙伴路径，即将src_dir替换为dst_dir，并将扩展名改为dst_ext
+pub fn get_mate_path(
+    file: impl AsRef<Path>,
+    src_dir: impl AsRef<Path>,
+    dst_dir: impl AsRef<Path>,
+    dst_ext: &str,
+) -> PathBuf {
+    let file = file.as_ref();
+    let src_dir = src_dir.as_ref();
+    let dst_dir = dst_dir.as_ref();
+    let rel_path = file.strip_prefix(src_dir).unwrap();
+    let rel_path = rel_path.with_extension(dst_ext);
+    let mate_path = path!(dst_dir / rel_path);
+    mate_path
 }
 
 #[cfg(test)]
@@ -213,5 +232,32 @@ mod tests {
 
         let p = "/etc/passwd/abc";
         assert_eq!(make_parent(&p).is_ok(), false);
+    }
+
+    #[test]
+    fn get_mate_path_works() {
+        // 测试基本功能：替换目录和扩展名
+        let file = PathBuf::from("/src/project/file.txt");
+        let src_dir = PathBuf::from("/src/project");
+        let dst_dir = PathBuf::from("/dst/output");
+        let dst_ext = "json";
+
+        let result = get_mate_path(&file, &src_dir, &dst_dir, dst_ext);
+        assert_eq!(result, PathBuf::from("/dst/output/file.json"));
+
+        // 测试嵌套路径
+        let file = PathBuf::from("/src/project/nested/deep/file.txt");
+        let result = get_mate_path(&file, &src_dir, &dst_dir, dst_ext);
+        assert_eq!(result, PathBuf::from("/dst/output/nested/deep/file.json"));
+
+        // 测试不同类型的路径表示
+        let file = "/src/project/another.html";
+        let result = get_mate_path(file, "/src/project", "/dst/output", "md");
+        assert_eq!(result, PathBuf::from("/dst/output/another.md"));
+
+        // 测试无扩展名文件
+        let file = PathBuf::from("/src/project/no_extension");
+        let result = get_mate_path(&file, &src_dir, &dst_dir, "log");
+        assert_eq!(result, PathBuf::from("/dst/output/no_extension.log"));
     }
 }
