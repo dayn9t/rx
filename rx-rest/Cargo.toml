@@ -9,6 +9,7 @@ license.workspace = true
 [dependencies]
 rx-core = { version = "*", path = "../rx-core" }
 rx-db = { version = "*", path = "../rx-db" }
+rx-net = { version = "*", path = "../rx-net" }
 
 serde = "*"
 serde_json = "*"
@@ -16,9 +17,14 @@ serde_derive = "*"
 toml = "*"
 
 time = { version = "*", features = ["macros", "formatting"] }
+chrono = { version = "*", features = ["serde"] }
+
 poem = { version = "3", features = ["anyhow"] }
-poem-openapi = { version = "5", features = ["swagger-ui", "time", "uuid", "geo", "url"] }
+poem-openapi = { version = "5", features = ["swagger-ui", "time", "chrono", "uuid", "geo", "url", "redoc", "rapidoc"] }
+
+
 tokio = { version = "1", features = ["full"] }
 
 anyhow = "*"
 thiserror = "*"
+

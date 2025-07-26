@@ -1,6 +1,7 @@
 #![feature(type_alias_impl_trait)]
 
 pub mod api;
+pub mod task;
 
 pub const RX_REST_DIR: &str = env!("CARGO_MANIFEST_DIR");
 
