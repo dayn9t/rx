@@ -3,14 +3,12 @@ use crate::task::{TaskInfo, TaskStatusInfo};
 use poem::Result;
 use poem_openapi::OpenApi;
 /// API路径参数
-pub use poem_openapi::param::Path as ApiPath;
+pub use poem_openapi::param::Path; // FIXME: poem bug, 不能使用类型别名
 use poem_openapi::payload::Json;
 use rx_core::log::*;
 use rx_db::IRecord;
-use std::path::Path;
+use std::path::Path as FsPath;
 
-/// API路径参数-ID
-pub type PathId = ApiPath<String>;
 /// API服务
 pub struct ApiService {
     pub tasks: DaoList<TaskInfo>,
@@ -21,7 +19,7 @@ pub struct ApiService {
 #[OpenApi]
 impl ApiService {
     /// 打开API服务
-    pub fn new(db_path: &Path, task_table_name: &str, status_table_name: &str) -> Self {
+    pub fn new(db_path: &FsPath, task_table_name: &str, status_table_name: &str) -> Self {
         info!("Loading data from {:?}", db_path);
         let tasks = DaoList::open_name(db_path, task_table_name).unwrap();
         let status = DaoList::open_name(db_path, status_table_name).unwrap();
@@ -39,7 +37,7 @@ impl ApiService {
 
     /// 获取指定任务
     #[oai(path = "/tasks/:id", method = "get")]
-    pub async fn task_get(&self, id: PathId) -> Result<CodeResponse<TaskInfo>> {
+    pub async fn task_get(&self, id: Path<String>) -> Result<CodeResponse<TaskInfo>> {
         self.tasks.get(&id, &None).await
     }
 
@@ -60,7 +58,7 @@ impl ApiService {
             };
             self.status.update_record(&task_id, status, &None).await;
             self.tasks
-                .update(&ApiPath(task_id.to_string()), Json(task), &None)
+                .update(&Path(task_id.to_string()), Json(task), &None)
                 .await
         } else {
             Ok(resp)
@@ -69,7 +67,7 @@ impl ApiService {
 
     /// 删除指定任务
     #[oai(path = "/tasks/:id", method = "delete")]
-    pub async fn task_delete(&self, id: PathId) -> Result<CodeResponse<TaskInfo>> {
+    pub async fn task_delete(&self, id: Path<String>) -> Result<CodeResponse<TaskInfo>> {
         self.status.delete(&id).await?;
         self.tasks.delete(&id).await
     }
@@ -82,7 +80,7 @@ impl ApiService {
 
     /// 获取指定任务状态
     #[oai(path = "/statuses/:id", method = "get")]
-    pub async fn status_get(&self, id: PathId) -> Result<CodeResponse<TaskStatusInfo>> {
+    pub async fn status_get(&self, id: Path<String>) -> Result<CodeResponse<TaskStatusInfo>> {
         self.status.get(&id, &None).await
     }
 
@@ -90,7 +88,7 @@ impl ApiService {
     #[oai(path = "/statuses/:id", method = "put")]
     pub async fn status_put(
         &self,
-        id: PathId,
+        id: Path<String>,
         record: Json<TaskStatusInfo>,
     ) -> Result<CodeResponse<TaskStatusInfo>> {
         self.status.update(&id, record, &None).await

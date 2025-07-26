@@ -74,7 +74,7 @@ impl ApiCfg {
 pub async fn run_api<T: OpenApi + 'static>(
     ias_api: T,
     cfg: ApiCfg,
-    version: String,
+    version: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ip4s = if cfg.endpoint.host == ALL_ADDR {
         get_adapters_ip4s()

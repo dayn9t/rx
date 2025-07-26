@@ -31,7 +31,7 @@ pub struct TaskInfo {
     /// 任务描述
     pub desc: Option<String>,
     /// 任务数据
-    pub data: Option<String>,
+    pub data: String,
 }
 
 impl TaskInfo {
@@ -59,7 +59,7 @@ impl TaskInfo {
 /// 任务状态信息
 ///
 /// 描述一个任务的状态, 进展.
-#[derive(Object, Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, Record)]
+#[derive(Object, Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Record)]
 #[serde(default)]
 pub struct TaskStatusInfo {
     /// 任务ID
@@ -79,6 +79,21 @@ pub struct TaskStatusInfo {
     pub worker_id: Option<String>,
 }
 
+impl Default for TaskStatusInfo {
+    fn default() -> Self {
+        Self {
+            id: None,
+            status: 0,
+            progress: 0,
+            start_time: None,
+            update_time: None,
+            enabled: true,
+            worker_id: None,
+        }
+    }
+}
+
+// 保留这个函数用于 serde 默认值
 fn default_enabled() -> bool {
     true
 }

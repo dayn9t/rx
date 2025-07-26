@@ -9,7 +9,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     //println!("full_name: {}", app_params.info.full_name());
     let cfg = ApiCfg::default();
-    let version = "v1.0.0".to_string();
+    let version = "v1.0.0";
     println!("cfg: {:?}", cfg);
     run_api(ias_api, cfg, version).await
 }

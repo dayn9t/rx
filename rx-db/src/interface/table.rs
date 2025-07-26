@@ -128,7 +128,13 @@ pub trait ITableDyn<R: IRecord> {
     fn post(&mut self, record: &mut R, partition_id: &Option<String>) -> AnyResult<R::RecordId> {
         let id = match record.get_id() {
             None => self.next_id()?,
-            Some(id) => id,
+            Some(id) => {
+                if id == Default::default() {
+                    self.next_id()?
+                } else {
+                    id
+                }
+            }
         };
 
         self.put(&id, record, partition_id)?;
