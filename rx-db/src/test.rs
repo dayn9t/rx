@@ -66,7 +66,7 @@ pub mod tests {
         assert_eq!(all, vec![s1.clone(), s3.clone()]);
 
         let name = s1.name.clone();
-        let v = tab.find(1, |s| s.name == name, &None).unwrap();
+        let v = tab.find(|s| s.name == name, &None).unwrap();
         assert_eq!(v, vec![s1.clone()]);
     }
 }
