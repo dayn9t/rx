@@ -20,6 +20,6 @@ anyhow = "*"
 thiserror = "*"
 path_macro = "*"
 tempfile = "3.14.0"
-url = "2.5.4"
+url = "*"
 
 uuid = { version = "1.4", features = ["v4"] }
