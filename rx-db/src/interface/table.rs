@@ -173,12 +173,7 @@ pub trait ITableDyn<R: IRecord> {
 /// 数据库表
 pub trait ITable<R: IRecord>: ITableDyn<R> {
     /// 查询记录集
-    fn find<P>(
-        &self,
-        limit: usize,
-        predicate: P,
-        partition_id: &Option<String>,
-    ) -> AnyResult<Vec<R>>
+    fn find<P>(&self, predicate: P, partition_id: &Option<String>) -> AnyResult<Vec<R>>
     where
         P: Fn(&R) -> bool,
     {
@@ -188,9 +183,6 @@ pub trait ITable<R: IRecord>: ITableDyn<R> {
             let r = self.get(&id, partition_id)?;
             if predicate(&r) {
                 vec.push(r);
-                if vec.len() >= limit {
-                    break;
-                }
             }
         }
         Ok(vec)
@@ -199,14 +191,13 @@ pub trait ITable<R: IRecord>: ITableDyn<R> {
     /// 查询K/V对
     fn find_pairs<P>(
         &self,
-        limit: usize,
         predicate: P,
         partition_id: &Option<String>,
     ) -> AnyResult<Vec<(R::RecordId, R)>>
     where
         P: Fn(&R) -> bool,
     {
-        let records = self.find(limit, predicate, partition_id)?;
+        let records = self.find(predicate, partition_id)?;
         let pairs = records
             .into_iter()
             .map(|record| (record.get_id().unwrap(), record))

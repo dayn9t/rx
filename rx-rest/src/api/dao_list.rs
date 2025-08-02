@@ -62,7 +62,6 @@ impl<R: IRecord + ToJSON> DaoList<R> {
 
     pub async fn find<P>(
         &self,
-        limit: usize,
         predicate: P,
         partition_id: &Option<String>,
     ) -> Result<CodeResponse<Vec<R>>>
@@ -70,7 +69,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         P: Fn(&R) -> bool,
     {
         let tab = self.table.lock().await;
-        match tab.find(limit, predicate, partition_id) {
+        match tab.find(predicate, partition_id) {
             Ok(rs) => Ok(CodeResponse::Ok(Json(rs))),
             Err(_) => Ok(CodeResponse::NotFound),
         }
@@ -128,17 +127,12 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 获取记录
-    pub async fn find_rs<P>(
-        &self,
-        limit: usize,
-        predicate: P,
-        partition_id: &Option<String>,
-    ) -> AnyResult<Vec<R>>
+    pub async fn find_rs<P>(&self, predicate: P, partition_id: &Option<String>) -> AnyResult<Vec<R>>
     where
         P: Fn(&R) -> bool,
     {
         let tab = self.table.lock().await;
-        tab.find(limit, predicate, partition_id)
+        tab.find(predicate, partition_id)
     }
 
     /// 更新元素

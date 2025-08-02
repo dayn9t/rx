@@ -59,7 +59,7 @@ impl Default for ApiCfg {
     fn default() -> Self {
         Self {
             title: "RxApi".to_string(),
-            root: "/api".to_string(),
+            root: "api".to_string(),
             endpoint: Endpoint::default(),
         }
     }
@@ -68,6 +68,10 @@ impl Default for ApiCfg {
 impl ApiCfg {
     pub fn url(&self, scheme: &str) -> String {
         format!("{}://{}/{}", scheme, self.endpoint.to_string(), &self.root)
+    }
+
+    pub fn http_url(&self) -> String {
+        self.url("http")
     }
 }
 

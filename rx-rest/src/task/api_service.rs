@@ -4,20 +4,21 @@ use poem::Result;
 use poem_openapi::OpenApi;
 /// API路径参数
 pub use poem_openapi::param::Path; // FIXME: poem bug, 不能使用类型别名
+use poem_openapi::param::Query;
 use poem_openapi::payload::Json;
 use rx_core::log::*;
 use rx_db::IRecord;
 use std::path::Path as FsPath;
 
 /// API服务
-pub struct ApiService {
+pub struct TaskApiService {
     pub tasks: DaoList<TaskInfo>,
     pub status: DaoList<TaskStatusInfo>,
     //pub mqtt_cfg: DaoItem<MqttCfg>,
 }
 
 #[OpenApi]
-impl ApiService {
+impl TaskApiService {
     /// 打开API服务
     pub fn new(db_path: &FsPath, task_table_name: &str, status_table_name: &str) -> Self {
         info!("Loading data from {:?}", db_path);
@@ -74,8 +75,14 @@ impl ApiService {
 
     /// 获取全部任务状态
     #[oai(path = "/statuses", method = "get")]
-    pub async fn status_get_all(&self) -> Result<CodeResponse<Vec<TaskStatusInfo>>> {
-        self.status.get_all(&None).await
+    pub async fn status_get_all(
+        &self,
+        status: Query<Option<i32>>,
+        enabled: Query<Option<bool>>,
+    ) -> Result<CodeResponse<Vec<TaskStatusInfo>>> {
+        self.status
+            .find(|r| status_filter(r, &status, &enabled), &None)
+            .await
     }
 
     /// 获取指定任务状态
@@ -93,6 +100,25 @@ impl ApiService {
     ) -> Result<CodeResponse<TaskStatusInfo>> {
         self.status.update(&id, record, &None).await
     }
+}
+
+/// 店铺招牌过滤器
+pub fn status_filter(
+    record: &TaskStatusInfo,
+    status: &Query<Option<i32>>,
+    enabled: &Query<Option<bool>>,
+) -> bool {
+    if let Some(ref status) = status.0 {
+        if record.status != *status {
+            return false;
+        }
+    }
+    if let Some(ref enabled) = enabled.0 {
+        if record.enabled != *enabled {
+            return false;
+        }
+    }
+    true
 }
 
 #[cfg(test)]

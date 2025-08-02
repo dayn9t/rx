@@ -85,7 +85,6 @@ impl IDatabase for DirDb {
     fn find_records<R, P>(
         &self,
         table_name: &str,
-        limit: usize,
         predicate: P,
         partition_id: &Option<String>,
     ) -> AnyResult<Vec<R>>
@@ -94,7 +93,7 @@ impl IDatabase for DirDb {
         P: Fn(&R) -> bool,
     {
         let table = DirTable::<R>::open_path(&self.path, table_name)?;
-        table.find(limit, predicate, partition_id)
+        table.find(predicate, partition_id)
     }
 }
 impl DirDb {

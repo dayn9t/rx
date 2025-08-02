@@ -125,12 +125,12 @@ impl<R: IRecord> ITableDyn<R> for DirTable<R> {
 
     /// 查询记录集
     fn find_all(&self, partition_id: &Option<String>) -> AnyResult<Vec<R>> {
-        self.find(usize::MAX, |_| true, partition_id)
+        self.find(|_| true, partition_id)
     }
 
     /// 查询K/V对
     fn find_all_pairs(&self, partition_id: &Option<String>) -> AnyResult<Vec<(R::RecordId, R)>> {
-        self.find_pairs(usize::MAX, |_| true, partition_id)
+        self.find_pairs(|_| true, partition_id)
     }
 
     fn find_ids(&self, partition_id: &Option<String>) -> AnyResult<Vec<R::RecordId>> {
@@ -140,12 +140,7 @@ impl<R: IRecord> ITableDyn<R> for DirTable<R> {
 
 impl<R: IRecord> ITable<R> for DirTable<R> {
     /// 查询记录集
-    fn find<P>(
-        &self,
-        limit: usize,
-        predicate: P,
-        partition_id: &Option<String>,
-    ) -> AnyResult<Vec<R>>
+    fn find<P>(&self, predicate: P, partition_id: &Option<String>) -> AnyResult<Vec<R>>
     where
         P: Fn(&R) -> bool,
     {
@@ -161,9 +156,6 @@ impl<R: IRecord> ITable<R> for DirTable<R> {
             let r = json::load(&file)?;
             if predicate(&r) {
                 records.push(r);
-                if records.len() >= limit {
-                    break;
-                }
             }
         }
         Ok(records)

@@ -22,9 +22,9 @@ chrono = { version = "*", features = ["serde"] }
 poem = { version = "3", features = ["anyhow"] }
 poem-openapi = { version = "5", features = ["swagger-ui", "time", "chrono", "uuid", "geo", "url", "redoc", "rapidoc"] }
 
-
 tokio = { version = "1", features = ["full"] }
 
 anyhow = "*"
 thiserror = "*"
+dirs = "*"
 

@@ -92,7 +92,7 @@ pub trait IDatabase {
         table_name: &str,
         partition_id: &Option<String>,
     ) -> AnyResult<Vec<R>> {
-        self.find_records(table_name, usize::MAX, |_| true, &partition_id)
+        self.find_records(table_name, |_| true, &partition_id)
     }
 
     /// 查找数据库表所有记录
@@ -109,7 +109,6 @@ pub trait IDatabase {
     fn find_records<R, P>(
         &self,
         table_name: &str,
-        limit: usize,
         predicate: P,
         partition_id: &Option<String>,
     ) -> AnyResult<Vec<R>>
@@ -128,7 +127,7 @@ pub trait IDatabase {
         R: IRecord,
         P: Fn(&R) -> bool,
     {
-        self.find_records(table_name, usize::MAX, predicate, partition_id)
+        self.find_records(table_name, predicate, partition_id)
     }
 
     /// 从数据库表获取指定记录
