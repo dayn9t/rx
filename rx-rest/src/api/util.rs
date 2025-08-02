@@ -94,7 +94,7 @@ pub async fn run_api<T: OpenApi + 'static>(
     for ip in ip4s {
         if ip != LOCAL_ADDR {
             let service_url = format!("http://{}:{}{}", ip, cfg.endpoint.port, cfg.root);
-            info!("Swagger: {}/ui", &service_url);
+            info!("Swagger: {}/swagger", &service_url);
             api_service = api_service.server(service_url);
             server_count += 1;
         }

@@ -54,7 +54,7 @@ impl TaskApiService {
             info!("Task created: {:?}", task);
 
             let status = TaskStatusInfo {
-                id: Some(task_id),
+                id: Some(task_id.clone()),
                 ..TaskStatusInfo::default()
             };
             self.status.update_record(&task_id, status, &None).await;

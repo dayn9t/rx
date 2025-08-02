@@ -2,8 +2,7 @@ use chrono::Local;
 use poem_openapi::Object;
 use rx_core::prelude::*;
 use rx_core::time::LocalDateTime;
-use rx_db::IRecord;
-use rx_db::Record;
+use rx_db::{IRecord, RecordSid};
 
 /// 未启动
 pub const NOT_STARTED: u32 = 0;
@@ -17,11 +16,11 @@ pub const ERROR: u32 = 3;
 /// 任务信息
 ///
 /// 任务信息用于描述一个任务的基本信息.
-#[derive(Object, Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, Record)]
+#[derive(Object, Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, RecordSid)]
 #[serde(default)]
 pub struct TaskInfo {
     /// 任务ID, 一般创建时为空, 由系统分配
-    pub id: Option<usize>,
+    pub id: Option<String>,
     /// 任务名称, 用于跟踪任务的进展
     pub name: Option<String>,
     /// 任务类别
@@ -59,11 +58,11 @@ impl TaskInfo {
 /// 任务状态信息
 ///
 /// 描述一个任务的状态, 进展.
-#[derive(Object, Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Record)]
+#[derive(Object, Debug, Clone, Eq, PartialEq, Serialize, Deserialize, RecordSid)]
 #[serde(default)]
 pub struct TaskStatusInfo {
     /// 任务ID
-    pub id: Option<usize>,
+    pub id: Option<String>,
     /// 任务状态, 取值: 0-未开始, 1-进行中, 2-完成, 3-失败
     pub status: i32,
     /// 完成进度, 范围: 0-100
