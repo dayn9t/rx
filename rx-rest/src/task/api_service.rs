@@ -32,22 +32,33 @@ impl TaskApiService {
 
     /// 获取全部任务
     #[oai(path = "/tasks", method = "get")]
-    pub async fn task_get_all(&self) -> Result<CodeResponse<Vec<TaskInfo>>> {
-        self.tasks.get_all(&None).await
+    pub async fn task_get_all(
+        &self,
+        partition_id: Query<String>,
+    ) -> Result<CodeResponse<Vec<TaskInfo>>> {
+        self.tasks.get_all(&Some(partition_id.0)).await
     }
 
     /// 获取指定任务
     #[oai(path = "/tasks/:id", method = "get")]
-    pub async fn task_get(&self, id: Path<String>) -> Result<CodeResponse<TaskInfo>> {
-        self.tasks.get(&id, &None).await
+    pub async fn task_get(
+        &self,
+        id: Path<String>,
+        partition_id: Query<String>,
+    ) -> Result<CodeResponse<TaskInfo>> {
+        self.tasks.get(&id, &Some(partition_id.0)).await
     }
 
     /// 添加一个任务
     #[oai(path = "/tasks", method = "post")]
-    pub async fn task_post(&self, record: Json<TaskInfo>) -> Result<CodeResponse<TaskInfo>> {
-        //self.tasks.post(record, &None).await
+    pub async fn task_post(
+        &self,
+        record: Json<TaskInfo>,
+        partition_id: Query<String>,
+    ) -> Result<CodeResponse<TaskInfo>> {
+        let partition_id = Some(partition_id.0);
 
-        let resp = self.tasks.post(record, &None).await?;
+        let resp = self.tasks.post(record, &partition_id).await?;
         if let CodeResponse::Created(task) = resp {
             let task_id = task.unwrap_id();
             let task = task.0.complete();
@@ -57,8 +68,12 @@ impl TaskApiService {
                 id: Some(task_id.clone()),
                 ..TaskStatusInfo::default()
             };
-            self.status.put_record(&task_id, status, &None).await?;
-            self.tasks.put(&Path(task_id), Json(task), &None).await
+            self.status
+                .put_record(&task_id, status, &partition_id)
+                .await?;
+            self.tasks
+                .put(&Path(task_id), Json(task), &partition_id)
+                .await
         } else {
             Ok(resp)
         }
@@ -66,9 +81,14 @@ impl TaskApiService {
 
     /// 删除指定任务
     #[oai(path = "/tasks/:id", method = "delete")]
-    pub async fn task_delete(&self, id: Path<String>) -> Result<CodeResponse<TaskInfo>> {
-        self.status.delete(&id).await?;
-        self.tasks.delete(&id).await
+    pub async fn task_delete(
+        &self,
+        id: Path<String>,
+        partition_id: Query<String>,
+    ) -> Result<CodeResponse<TaskInfo>> {
+        let partition_id = Some(partition_id.0);
+        self.status.delete(&id, &partition_id).await?;
+        self.tasks.delete(&id, &partition_id).await
     }
 
     /// 获取全部任务状态
@@ -77,16 +97,24 @@ impl TaskApiService {
         &self,
         status: Query<Option<i32>>,
         enabled: Query<Option<bool>>,
+        partition_id: Query<String>,
     ) -> Result<CodeResponse<Vec<TaskStatusInfo>>> {
         self.status
-            .find(|r| status_filter(r, &status, &enabled), &None)
+            .find(
+                |r| status_filter(r, &status, &enabled),
+                &Some(partition_id.0),
+            )
             .await
     }
 
     /// 获取指定任务状态
     #[oai(path = "/statuses/:id", method = "get")]
-    pub async fn status_get(&self, id: Path<String>) -> Result<CodeResponse<TaskStatusInfo>> {
-        self.status.get(&id, &None).await
+    pub async fn status_get(
+        &self,
+        id: Path<String>,
+        partition_id: Query<String>,
+    ) -> Result<CodeResponse<TaskStatusInfo>> {
+        self.status.get(&id, &Some(partition_id.0)).await
     }
 
     /// 更新指定任务状态
@@ -95,8 +123,9 @@ impl TaskApiService {
         &self,
         id: Path<String>,
         record: Json<TaskStatusInfo>,
+        partition_id: Query<String>,
     ) -> Result<CodeResponse<TaskStatusInfo>> {
-        self.status.put(&id, record, &None).await
+        self.status.put(&id, record, &Some(partition_id.0)).await
     }
 }
 

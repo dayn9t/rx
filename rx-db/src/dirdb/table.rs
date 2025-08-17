@@ -118,8 +118,8 @@ impl<R: IRecord> ITableDyn<R> for DirTable<R> {
         self.update_last_id(id)
     }
 
-    fn delete(&mut self, id: &R::RecordId) -> AnyResult<()> {
-        let p = self.find_record_path(id, &None)?; // FIXME：删除不存在的会报错
+    fn delete(&mut self, id: &R::RecordId, partition_id: &Option<String>) -> AnyResult<()> {
+        let p = self.find_record_path(id, partition_id)?; // FIXME：删除不存在的会报错
         Ok(fs::remove(&p)?)
     }
 

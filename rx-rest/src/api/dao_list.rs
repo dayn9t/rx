@@ -76,14 +76,18 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 删除元素
-    pub async fn delete(&self, id: &Path<String>) -> Result<CodeResponse<R>> {
+    pub async fn delete(
+        &self,
+        id: &Path<String>,
+        partition_id: &Option<String>,
+    ) -> Result<CodeResponse<R>> {
         // FIXME: 不返回删除的元素, 好像是poem的BUG
         let mut tab = self.table.lock().await;
         let id = match id.0.parse() {
             Ok(id) => id,
             Err(_) => return Ok(CodeResponse::InvalidRequest),
         };
-        tab.delete(&id)?;
+        tab.delete(&id, partition_id)?;
         Ok(CodeResponse::NoContent)
     }
 

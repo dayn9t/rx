@@ -159,13 +159,13 @@ pub trait ITableDyn<R: IRecord> {
     ) -> AnyResult<()>;
 
     /// 删除记录(幂等)
-    fn delete(&mut self, id: &R::RecordId) -> AnyResult<()>;
+    fn delete(&mut self, id: &R::RecordId, partition_id: &Option<String>) -> AnyResult<()>;
 
     /// 删除全部记录(幂等)
     fn delete_all(&mut self, partition_id: &Option<String>) -> AnyResult<()> {
         let ids = self.find_ids(partition_id)?;
         for id in ids {
-            self.delete(&id)?;
+            self.delete(&id, partition_id)?;
         }
         Ok(())
     }
