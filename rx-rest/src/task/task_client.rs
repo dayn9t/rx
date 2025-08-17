@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use tokio::sync::Mutex;
 
 use super::types::{COMPLETED, ERROR, IN_PROGRESS, NOT_STARTED, TaskInfo, TaskStatusInfo};
-use crate::api::dao_list_client::{DaoListClient, ResultE};
+use crate::api::dao_list_client::{DaoListClient, ParamsMap, ResultE};
 
 /// 任务客户端
 ///
@@ -16,6 +16,8 @@ pub struct TaskClient {
     task_table_name: String,
     /// 状态表名称
     status_table_name: String,
+    /// 默认查询参数
+    params: HashMap<String, String>,
 }
 
 impl TaskClient {
@@ -25,16 +27,32 @@ impl TaskClient {
     /// * `base_url` - API的基础URL
     /// * `task_table_name` - 任务表名称
     /// * `status_table_name` - 状态表名称
+    /// * `partition_id` - 分区ID
     pub fn new(
         base_url: impl Into<String>,
         task_table_name: Option<&str>,
         status_table_name: Option<&str>,
+        partition_id: &str,
     ) -> Self {
+        let mut params = HashMap::new();
+        params.insert("partition_id".to_string(), partition_id.into());
+
         Self {
             client: Mutex::new(DaoListClient::new(base_url)),
             task_table_name: task_table_name.unwrap_or("task").to_string(),
             status_table_name: status_table_name.unwrap_or("status").to_string(),
+            params,
         }
+    }
+
+    fn merge_params(&self, extra: Option<&HashMap<String, String>>) -> HashMap<String, String> {
+        let mut final_params = self.params.clone();
+        if let Some(p) = extra {
+            for (k, v) in p {
+                final_params.insert(k.clone(), v.clone());
+            }
+        }
+        final_params
     }
 
     /// 设置认证令牌
@@ -53,12 +71,10 @@ impl TaskClient {
     ///
     /// # 返回
     /// * `ResultE<Vec<TaskInfo>>` - 所有任务记录列表
-    pub async fn get_all_tasks(
-        &self,
-        params: Option<&HashMap<String, String>>,
-    ) -> ResultE<Vec<TaskInfo>> {
+    pub async fn get_all_tasks(&self, params: Option<&ParamsMap>) -> ResultE<Vec<TaskInfo>> {
+        let params = self.merge_params(params);
         let client = self.client.lock().await;
-        client.get_all(&self.task_table_name, params).await
+        client.get_all(&self.task_table_name, Some(&params)).await
     }
 
     /// 添加新任务记录
@@ -70,7 +86,9 @@ impl TaskClient {
     /// * `ResultE<TaskInfo>` - 添加后的任务记录
     pub async fn add_task(&self, task: TaskInfo) -> ResultE<TaskInfo> {
         let client = self.client.lock().await;
-        client.post(&self.task_table_name, task).await
+        client
+            .post(&self.task_table_name, task, Some(&self.params))
+            .await
     }
 
     /// 获取全部任务状态列表，可选过滤参数
@@ -82,10 +100,11 @@ impl TaskClient {
     /// * `ResultE<Vec<TaskStatusInfo>>` - 所有任务状态记录列表
     pub async fn get_all_statuses(
         &self,
-        params: Option<&HashMap<String, String>>,
+        params: Option<&ParamsMap>,
     ) -> ResultE<Vec<TaskStatusInfo>> {
+        let params = self.merge_params(params);
         let client = self.client.lock().await;
-        client.get_all(&self.status_table_name, params).await
+        client.get_all(&self.status_table_name, Some(&params)).await
     }
 
     /// 获取指定任务的状态信息
@@ -97,7 +116,23 @@ impl TaskClient {
     /// * `ResultE<TaskStatusInfo>` - 任务状态信息
     pub async fn get_status(&self, task_id: &str) -> ResultE<TaskStatusInfo> {
         let client = self.client.lock().await;
-        client.get(&self.status_table_name, task_id).await
+        client
+            .get(&self.status_table_name, task_id, Some(&self.params))
+            .await
+    }
+
+    /// 获取指定任务信息
+    ///
+    /// # 参数
+    /// * `task_id` - 任务ID
+    ///
+    /// # 返回
+    /// * `ResultE<TaskInfo>` - 任务信息
+    pub async fn get_task(&self, task_id: &str) -> ResultE<TaskInfo> {
+        let client = self.client.lock().await;
+        client
+            .get(&self.task_table_name, task_id, Some(&self.params))
+            .await
     }
 
     /// 找到可执行任务
@@ -108,7 +143,7 @@ impl TaskClient {
     /// * `ResultE<(TaskInfo, TaskStatusInfo)>` - 任务信息和状态的元组
     pub async fn find_task(&self) -> ResultE<(TaskInfo, TaskStatusInfo)> {
         // 创建查询参数
-        let mut params = HashMap::new();
+        let mut params = self.params.clone();
         params.insert("status".to_string(), NOT_STARTED.to_string());
         params.insert("enabled".to_string(), "true".to_string());
 
@@ -130,7 +165,7 @@ impl TaskClient {
             .ok_or_else(|| anyhow!("任务状态缺少ID"))?;
 
         let task = client
-            .get::<TaskInfo>(&self.task_table_name, task_id)
+            .get::<TaskInfo>(&self.task_table_name, task_id, Some(&self.params))
             .await
             .map_err(|e| anyhow!("获取任务信息失败: {}", e))?;
 
@@ -172,7 +207,9 @@ impl TaskClient {
 
         // 提交更新
         let client = self.client.lock().await;
-        client.put(&self.status_table_name, status).await
+        client
+            .put(&self.status_table_name, status, Some(&self.params))
+            .await
     }
 
     /// 终结指定任务
@@ -206,7 +243,9 @@ impl TaskClient {
 
         // 提交更新
         let client = self.client.lock().await;
-        client.put(&self.status_table_name, status).await
+        client
+            .put(&self.status_table_name, status, Some(&self.params))
+            .await
     }
 
     /// 更新指定任务进度
@@ -245,19 +284,9 @@ impl TaskClient {
 
         // 提交更新
         let client = self.client.lock().await;
-        client.put(&self.status_table_name, status_info).await
-    }
-
-    /// 获取指定任务信息
-    ///
-    /// # 参数
-    /// * `task_id` - 任务ID
-    ///
-    /// # 返回
-    /// * `ResultE<TaskInfo>` - 任务信息
-    pub async fn get_task(&self, task_id: &str) -> ResultE<TaskInfo> {
-        let client = self.client.lock().await;
-        client.get(&self.task_table_name, task_id).await
+        client
+            .put(&self.status_table_name, status_info, Some(&self.params))
+            .await
     }
 
     /// 更新任务状态记录
@@ -269,7 +298,9 @@ impl TaskClient {
     /// * `ResultE<TaskStatusInfo>` - 更新后的任务状态
     pub async fn update_task_status(&self, status: TaskStatusInfo) -> ResultE<TaskStatusInfo> {
         let client = self.client.lock().await;
-        client.put(&self.status_table_name, status).await
+        client
+            .put(&self.status_table_name, status, Some(&self.params))
+            .await
     }
 
     /// 启用任务

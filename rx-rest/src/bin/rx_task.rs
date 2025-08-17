@@ -63,6 +63,10 @@ struct Cli {
     #[arg(long = "status-table")]
     status_table: Option<String>,
 
+    /// 分区ID，必须提供
+    #[arg(short, long, required = true)]
+    partition_id: String,
+
     /// 子命令
     #[command(subcommand)]
     command: Commands,
@@ -197,6 +201,7 @@ async fn main() -> Result<()> {
         &config.url,
         Some(&config.task_table),
         Some(&config.status_table),
+        &cli.partition_id,
     );
 
     // 执行对应的子命令
