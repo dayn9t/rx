@@ -2,11 +2,11 @@ use anyhow::anyhow;
 use chrono::Local;
 use clap::{Parser, Subcommand};
 use colored::Colorize;
-use prettytable::{row, Table};
+use prettytable::{Table, row};
 use rx_core::time::LocalDateTime;
-use rx_rest::task::task_client::TaskClient;
-use rx_rest::task::types::{TaskInfo, TaskStatusInfo, COMPLETED, ERROR, IN_PROGRESS, NOT_STARTED};
-use std::{collections::HashMap, fs, path::Path, process};
+use rx_rest::task::TaskClient;
+use rx_rest::task::{COMPLETED, ERROR, IN_PROGRESS, NOT_STARTED, TaskInfo};
+use std::{fs, path::Path, process};
 
 /// 配置类，存储全局配置
 #[derive(Debug, Clone)]
@@ -254,7 +254,14 @@ async fn list_statuses(client: &TaskClient) -> anyhow::Result<()> {
 
     // 创建表格
     let mut table = Table::new();
-    table.add_row(row!["任务ID", "状态", "进度", "开始时间", "更新时间", "启用"]);
+    table.add_row(row![
+        "任务ID",
+        "状态",
+        "进度",
+        "开始时间",
+        "更新时间",
+        "启用"
+    ]);
     for status in statuses {
         table.add_row(row![
             status.id.unwrap_or_default(),
@@ -452,7 +459,14 @@ async fn get_task_info(client: &TaskClient, task_id: &str) -> anyhow::Result<()>
             "无".to_string()
         }
     );
-    println!("启用状态: {}", if status.enabled { "已启用" } else { "已禁用" });
+    println!(
+        "启用状态: {}",
+        if status.enabled {
+            "已启用"
+        } else {
+            "已禁用"
+        }
+    );
     Ok(())
 }
 
@@ -502,4 +516,9 @@ async fn enable_task(client: &TaskClient, task_id: &str, enable: bool) -> anyhow
         format!("已{}任务: {}", action, status.id.unwrap_or_default()).green()
     );
     Ok(())
+}
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {}
 }
