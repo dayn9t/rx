@@ -88,7 +88,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 更新元素
-    pub async fn update(
+    pub async fn put(
         &self,
         id: &Path<String>,
         mut record: Json<R>,
@@ -101,16 +101,6 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         };
         tab.put(&id, &mut record.0, partition_id)?;
         Ok(CodeResponse::Created(record))
-    }
-
-    /// 获取记录
-    pub async fn get_record(
-        &self,
-        id: &R::RecordId,
-        partition_id: &Option<String>,
-    ) -> AnyResult<R> {
-        let tab = self.table.lock().await;
-        tab.get(&id, partition_id)
     }
 
     /// 获取记录集合
@@ -135,14 +125,34 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         tab.find(predicate, partition_id)
     }
 
+    /// 获取记录
+    pub async fn get_record(
+        &self,
+        id: &R::RecordId,
+        partition_id: &Option<String>,
+    ) -> AnyResult<R> {
+        let tab = self.table.lock().await;
+        tab.get(&id, partition_id)
+    }
+
+    /// 创建元素
+    pub async fn post_record(
+        &self,
+        mut record: R,
+        partition_id: &Option<String>,
+    ) -> AnyResult<R::RecordId> {
+        let mut tab = self.table.lock().await;
+        tab.post(&mut record, partition_id)
+    }
+
     /// 更新元素
-    pub async fn update_record(
+    pub async fn put_record(
         &self,
         id: &R::RecordId,
         mut record: R,
         partition_id: &Option<String>,
-    ) {
+    ) -> AnyResult<()> {
         let mut tab = self.table.lock().await;
-        tab.put(id, &mut record, partition_id).unwrap();
+        tab.put(id, &mut record, partition_id)
     }
 }

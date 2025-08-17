@@ -41,10 +41,20 @@ impl IRecordId for String {
 pub trait IRecord: Default + Serialize + DeserializeOwned + Sized {
     /// 记录ID类型
     type RecordId: IRecordId;
+    /// 获取ID
     fn get_id(&self) -> Option<Self::RecordId>;
+    /// 设置ID
     fn set_id(&mut self, id: &Self::RecordId);
+    /// 获取ID，如果ID未设置则panic
     fn unwrap_id(&self) -> Self::RecordId {
         self.get_id().expect("Record ID is not set")
+    }
+    /// 如果ID未设置，则设置ID
+    fn ensure_id(&mut self, id: &Self::RecordId) -> Self::RecordId {
+        if self.get_id().is_none() {
+            self.set_id(id);
+        }
+        self.unwrap_id()
     }
 }
 

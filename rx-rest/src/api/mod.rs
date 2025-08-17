@@ -8,3 +8,4 @@ mod dao_item;
 mod dao_list;
 mod proc;
 mod util;
+pub mod dao_list_client;

@@ -57,9 +57,9 @@ impl TaskApiService {
                 id: Some(task_id.clone()),
                 ..TaskStatusInfo::default()
             };
-            self.status.update_record(&task_id, status, &None).await;
+            self.status.put_record(&task_id, status, &None).await?;
             self.tasks
-                .update(&Path(task_id.to_string()), Json(task), &None)
+                .put(&Path(task_id), Json(task), &None)
                 .await
         } else {
             Ok(resp)
@@ -98,7 +98,7 @@ impl TaskApiService {
         id: Path<String>,
         record: Json<TaskStatusInfo>,
     ) -> Result<CodeResponse<TaskStatusInfo>> {
-        self.status.update(&id, record, &None).await
+        self.status.put(&id, record, &None).await
     }
 }
 

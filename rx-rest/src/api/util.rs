@@ -59,7 +59,7 @@ impl Default for ApiCfg {
     fn default() -> Self {
         Self {
             title: "RxApi".to_string(),
-            root: "api".to_string(),
+            root: "/api".to_string(),
             endpoint: Endpoint::default(),
         }
     }
@@ -93,7 +93,7 @@ pub async fn run_api<T: OpenApi + 'static>(
     let mut api_service = OpenApiService::new(ias_api, cfg.title, version);
     for ip in ip4s {
         if ip != LOCAL_ADDR {
-            let service_url = format!("http://{}:{}/{}", ip, cfg.endpoint.port, cfg.root);
+            let service_url = format!("http://{}:{}{}", ip, cfg.endpoint.port, cfg.root);
             info!("swagger: {}/swagger", &service_url);
             api_service = api_service.server(service_url);
             server_count += 1;
