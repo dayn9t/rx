@@ -140,14 +140,16 @@ enum Commands {
     /// 查找下一个可执行的任务
     Next,
 
-    /// 启用或禁用任务
+    /// 启用任务
     Enable {
         /// 任务ID
         task_id: String,
+    },
 
-        /// 是否启用任务
-        #[arg(long, default_value = "true")]
-        enable: bool,
+    /// 禁用任务
+    Disable {
+        /// 任务ID
+        task_id: String,
     },
 }
 
@@ -217,7 +219,8 @@ async fn main() -> Result<()> {
         Commands::Error { task_id } => mark_error(&client, &task_id).await?,
         Commands::Info { task_id } => get_task_info(&client, &task_id).await?,
         Commands::Next => find_next_task(&client).await?,
-        Commands::Enable { task_id, enable } => enable_task(&client, &task_id, enable).await?,
+        Commands::Enable { task_id } => enable_task(&client, &task_id).await?,
+        Commands::Disable { task_id } => disable_task(&client, &task_id).await?,
     }
 
     Ok(())
@@ -435,20 +438,25 @@ async fn find_next_task(client: &TaskClient) -> Result<()> {
     Ok(())
 }
 
-/// 启用或禁用任务
-async fn enable_task(client: &TaskClient, task_id: &str, enable: bool) -> Result<()> {
-    // 使用新添加的方法启用/禁用任务
+/// 启用任务
+async fn enable_task(client: &TaskClient, task_id: &str) -> Result<()> {
+    // 使用新添加的方法启用任务
+    let status = handle_result!(client.enable_task(task_id).await, "启用任务失败");
+
+    success_msg!(format!("已启用任务: {}", status.id.unwrap_or_default()));
+
+    Ok(())
+}
+
+/// 禁用任务
+async fn disable_task(client: &TaskClient, task_id: &str) -> Result<()> {
+    // 使用新添加的方法禁用任务
     let status = handle_result!(
-        client.enable_task(task_id, enable).await,
-        &format!("{}任务失败", if enable { "启用" } else { "禁用" })
+        client.disable_task(task_id).await,
+        &"禁用任务失败".to_string()
     );
 
-    let action = if enable { "启用" } else { "禁用" };
-    success_msg!(format!(
-        "已{}任务: {}",
-        action,
-        status.id.unwrap_or_default()
-    ));
+    success_msg!(format!("已禁用任务: {}", status.id.unwrap_or_default()));
 
     Ok(())
 }

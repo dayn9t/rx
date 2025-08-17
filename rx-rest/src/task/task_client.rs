@@ -272,6 +272,28 @@ impl TaskClient {
         client.put(&self.status_table_name, status).await
     }
 
+    /// 启用任务
+    ///
+    /// # 参数
+    /// * `task_id` - 任务ID
+    ///
+    /// # 返回
+    /// * `ResultE<TaskStatusInfo>` - 更新后的任务状态
+    pub async fn enable_task(&self, task_id: &str) -> ResultE<TaskStatusInfo> {
+        self.enable_disable_task(task_id, true).await
+    }
+
+    /// 禁用任务
+    ///
+    /// # 参数
+    /// * `task_id` - 任务ID
+    ///
+    /// # 返回
+    /// * `ResultE<TaskStatusInfo>` - 更新后的任务状态
+    pub async fn disable_task(&self, task_id: &str) -> ResultE<TaskStatusInfo> {
+        self.enable_disable_task(task_id, false).await
+    }
+
     /// 启用或禁用任务
     ///
     /// # 参数
@@ -280,7 +302,7 @@ impl TaskClient {
     ///
     /// # 返回
     /// * `ResultE<TaskStatusInfo>` - 更新后的任务状态
-    pub async fn enable_task(&self, task_id: &str, enable: bool) -> ResultE<TaskStatusInfo> {
+    async fn enable_disable_task(&self, task_id: &str, enable: bool) -> ResultE<TaskStatusInfo> {
         // 获取当前状态
         let mut status = self.get_status(task_id).await?;
 
