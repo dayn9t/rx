@@ -95,7 +95,7 @@ impl TaskClient {
     ///
     /// # 返回
     /// * `ResultE<TaskStatusInfo>` - 任务状态信息
-    pub async fn get_task_status(&self, task_id: &str) -> ResultE<TaskStatusInfo> {
+    pub async fn get_status(&self, task_id: &str) -> ResultE<TaskStatusInfo> {
         let client = self.client.lock().await;
         client.get(&self.status_table_name, task_id).await
     }
@@ -153,7 +153,7 @@ impl TaskClient {
         worker: Option<String>,
     ) -> ResultE<TaskStatusInfo> {
         // 获取当前状态
-        let mut status = self.get_task_status(task_id).await?;
+        let mut status = self.get_status(task_id).await?;
 
         if status.status != NOT_STARTED as i32 {
             return Err(anyhow!(
@@ -198,7 +198,7 @@ impl TaskClient {
     /// * `ResultE<TaskStatusInfo>` - 更新后的任务状态
     pub async fn task_error(&self, task_id: &str) -> ResultE<TaskStatusInfo> {
         // 获取当前状态
-        let mut status = self.get_task_status(task_id).await?;
+        let mut status = self.get_status(task_id).await?;
 
         // 更新状态为出错
         status.status = ERROR as i32;
@@ -229,7 +229,7 @@ impl TaskClient {
         }
 
         // 获取当前状态
-        let mut status_info = self.get_task_status(task_id).await?;
+        let mut status_info = self.get_status(task_id).await?;
 
         // 更新进度
         status_info.progress = progress;
@@ -246,6 +246,50 @@ impl TaskClient {
         // 提交更新
         let client = self.client.lock().await;
         client.put(&self.status_table_name, status_info).await
+    }
+
+    /// 获取指定任务信息
+    ///
+    /// # 参数
+    /// * `task_id` - 任务ID
+    ///
+    /// # 返回
+    /// * `ResultE<TaskInfo>` - 任务信息
+    pub async fn get_task(&self, task_id: &str) -> ResultE<TaskInfo> {
+        let client = self.client.lock().await;
+        client.get(&self.task_table_name, task_id).await
+    }
+
+    /// 更新任务状态记录
+    ///
+    /// # 参数
+    /// * `status` - 任务状态记录
+    ///
+    /// # 返回
+    /// * `ResultE<TaskStatusInfo>` - 更新后的任务状态
+    pub async fn update_task_status(&self, status: TaskStatusInfo) -> ResultE<TaskStatusInfo> {
+        let client = self.client.lock().await;
+        client.put(&self.status_table_name, status).await
+    }
+
+    /// 启用或禁用任务
+    ///
+    /// # 参数
+    /// * `task_id` - 任务ID
+    /// * `enable` - 是否启用
+    ///
+    /// # 返回
+    /// * `ResultE<TaskStatusInfo>` - 更新后的任务状态
+    pub async fn enable_task(&self, task_id: &str, enable: bool) -> ResultE<TaskStatusInfo> {
+        // 获取当前状态
+        let mut status = self.get_status(task_id).await?;
+
+        // 更新启用状态
+        status.enabled = enable;
+        status.update_time = Some(Local::now());
+
+        // 更新状态
+        self.update_task_status(status).await
     }
 }
 

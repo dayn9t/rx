@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use reqwest::{Client, Error, header};
 use rx_core::prelude::*;
+use std::collections::HashMap;
 
 /// 数据访问对象客户端
 ///
@@ -49,7 +49,10 @@ impl DaoListClient {
     fn create_header_map(&self) -> header::HeaderMap {
         let mut header_map = header::HeaderMap::new();
         for (key, value) in &self.headers {
-            if let (Ok(name), Ok(val)) = (header::HeaderName::from_bytes(key.as_bytes()), header::HeaderValue::from_str(value)) {
+            if let (Ok(name), Ok(val)) = (
+                header::HeaderName::from_bytes(key.as_bytes()),
+                header::HeaderValue::from_str(value),
+            ) {
                 header_map.insert(name, val);
             }
         }
@@ -110,10 +113,14 @@ impl DaoListClient {
         record_id: &str,
     ) -> Result<T, Error> {
         let url = format!("{}/{}/{}", self.base_url, table_name, record_id);
-        let resp = self.client.get(&url)
+        let resp = self
+            .client
+            .get(&url)
             .headers(self.create_header_map())
-            .send().await?
-            .json::<T>().await?;
+            .send()
+            .await?
+            .json::<T>()
+            .await?;
         Ok(resp)
     }
 
@@ -141,11 +148,15 @@ impl DaoListClient {
         record: &T,
     ) -> Result<T, Error> {
         let url = format!("{}/{}", self.base_url, table_name);
-        let resp = self.client.post(&url)
+        let resp = self
+            .client
+            .post(&url)
             .headers(self.create_header_map())
             .json(record)
-            .send().await?
-            .json::<T>().await?;
+            .send()
+            .await?
+            .json::<T>()
+            .await?;
         Ok(resp)
     }
 
@@ -175,11 +186,15 @@ impl DaoListClient {
         record: &T,
     ) -> Result<T, Error> {
         let url = format!("{}/{}/{}", self.base_url, table_name, record_id);
-        let resp = self.client.put(&url)
+        let resp = self
+            .client
+            .put(&url)
             .headers(self.create_header_map())
             .json(record)
-            .send().await?
-            .json::<T>().await?;
+            .send()
+            .await?
+            .json::<T>()
+            .await?;
         Ok(resp)
     }
 
@@ -197,15 +212,13 @@ impl DaoListClient {
     /// 成功时返回 `Result<bool, Error>`，值为 true 表示删除成功
     /// 失败时返回 reqwest 错误
     ///
-    pub async fn delete(
-        &self,
-        table_name: &str,
-        record_id: &str,
-    ) -> Result<bool, Error> {
+    pub async fn delete(&self, table_name: &str, record_id: &str) -> Result<bool, Error> {
         let url = format!("{}/{}/{}", self.base_url, table_name, record_id);
-        self.client.delete(&url)
+        self.client
+            .delete(&url)
             .headers(self.create_header_map())
-            .send().await?
+            .send()
+            .await?
             .error_for_status()?; // 只检查状态码
         Ok(true)
     }
@@ -219,10 +232,10 @@ impl DaoListClient {
     /// * `token` - 认证令牌，将被自动添加 "Bearer " 前缀
     ///
     pub fn set_auth_token(&mut self, token: &str) {
-        self.headers.insert("Authorization".to_string(), format!("Bearer {}", token));
+        self.headers
+            .insert("Authorization".to_string(), format!("Bearer {}", token));
     }
 }
-
 
 #[cfg(test)]
 mod tests {

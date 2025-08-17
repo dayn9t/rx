@@ -1,16 +1,15 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use reqwest::{Client, header};
 use rx_core::prelude::*;
 use rx_db::IRecord;
 use std::collections::HashMap;
 use tokio::sync::Mutex;
 
-
 /// API客户端返回结果类型
 pub type ResultE<T> = Result<T>;
 
 /// DAO列表客户端
-/// 
+///
 /// 提供对REST API的基础操作
 pub struct DaoListClient {
     /// API基础URL
@@ -79,21 +78,21 @@ impl DaoListClient {
         params: Option<&HashMap<String, String>>,
     ) -> ResultE<Vec<T>> {
         let url = self.build_url(table_name, None);
-        
+
         let client = self.client.lock().await;
         let mut builder = client.get(url);
         builder = self.apply_auth(builder).await;
-        
+
         if let Some(p) = params {
             builder = builder.query(p);
         }
-        
+
         let response = builder.send().await?;
-        
+
         if !response.status().is_success() {
             return Err(anyhow!("API错误: {}", response.status()));
         }
-        
+
         let records = response.json::<Vec<T>>().await?;
         Ok(records)
     }
@@ -109,17 +108,17 @@ impl DaoListClient {
     /// * `ResultE<T>` - 记录或错误
     pub async fn get<T: DeserializeOwned>(&self, table_name: &str, id: &str) -> ResultE<T> {
         let url = self.build_url(table_name, Some(id));
-        
+
         let client = self.client.lock().await;
         let builder = client.get(url);
         let builder = self.apply_auth(builder).await;
-        
+
         let response = builder.send().await?;
-        
+
         if !response.status().is_success() {
             return Err(anyhow!("API错误: {}", response.status()));
         }
-        
+
         let record = response.json::<T>().await?;
         Ok(record)
     }
@@ -138,17 +137,17 @@ impl DaoListClient {
         record: T,
     ) -> ResultE<T> {
         let url = self.build_url(table_name, None);
-        
+
         let client = self.client.lock().await;
         let builder = client.post(url);
         let builder = self.apply_auth(builder).await;
-        
+
         let response = builder.json(&record).send().await?;
-        
+
         if !response.status().is_success() {
             return Err(anyhow!("API错误: {}", response.status()));
         }
-        
+
         let created_record = response.json::<T>().await?;
         Ok(created_record)
     }
@@ -161,25 +160,21 @@ impl DaoListClient {
     ///
     /// # 返回
     /// * `ResultE<T>` - 更新后的记录或错误
-    pub async fn put<T: IRecord>(
-        &self,
-        table_name: &str,
-        record: T,
-    ) -> ResultE<T> {
+    pub async fn put<T: IRecord>(&self, table_name: &str, record: T) -> ResultE<T> {
         let id = record.unwrap_id();
         let id_str = id.to_string();
         let url = self.build_url(table_name, Some(&id_str));
-        
+
         let client = self.client.lock().await;
         let builder = client.put(url);
         let builder = self.apply_auth(builder).await;
-        
+
         let response = builder.json(&record).send().await?;
-        
+
         if !response.status().is_success() {
             return Err(anyhow!("API错误: {}", response.status()));
         }
-        
+
         let updated_record = response.json::<T>().await?;
         Ok(updated_record)
     }
@@ -194,17 +189,17 @@ impl DaoListClient {
     /// * `ResultE<()>` - 成功或错误
     pub async fn delete(&self, table_name: &str, id: &str) -> ResultE<()> {
         let url = self.build_url(table_name, Some(id));
-        
+
         let client = self.client.lock().await;
         let builder = client.delete(url);
         let builder = self.apply_auth(builder).await;
-        
+
         let response = builder.send().await?;
-        
+
         if !response.status().is_success() {
             return Err(anyhow!("API错误: {}", response.status()));
         }
-        
+
         Ok(())
     }
 }

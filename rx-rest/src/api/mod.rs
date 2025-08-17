@@ -6,6 +6,6 @@ pub use util::*;
 mod common;
 mod dao_item;
 mod dao_list;
+pub mod dao_list_client;
 mod proc;
 mod util;
-pub mod dao_list_client;

@@ -58,9 +58,7 @@ impl TaskApiService {
                 ..TaskStatusInfo::default()
             };
             self.status.put_record(&task_id, status, &None).await?;
-            self.tasks
-                .put(&Path(task_id), Json(task), &None)
-                .await
+            self.tasks.put(&Path(task_id), Json(task), &None).await
         } else {
             Ok(resp)
         }

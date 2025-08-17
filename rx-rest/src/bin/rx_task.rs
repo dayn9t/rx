@@ -1,9 +1,10 @@
-use anyhow::anyhow;
+use anyhow::{Result, anyhow};
 use chrono::Local;
 use clap::{Parser, Subcommand};
 use colored::Colorize;
 use prettytable::{Table, row};
 use rx_core::time::LocalDateTime;
+use rx_db::IRecord;
 use rx_rest::task::TaskClient;
 use rx_rest::task::{COMPLETED, ERROR, IN_PROGRESS, NOT_STARTED, TaskInfo};
 use std::{fs, path::Path, process};
@@ -31,10 +32,8 @@ impl Default for Config {
 
 /// 将日期时间格式化为简洁格式
 fn format_datetime(dt: &Option<LocalDateTime>) -> String {
-    match dt {
-        Some(dt) => dt.format("%Y-%m-%d %H:%M:%S").to_string(),
-        None => "".to_string(),
-    }
+    dt.as_ref()
+        .map_or_else(String::new, |dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
 }
 
 /// 获取任务状态文本描述
@@ -152,8 +151,28 @@ enum Commands {
     },
 }
 
+// 通用错误处理
+macro_rules! handle_result {
+    ($result:expr, $error_msg:expr) => {
+        match $result {
+            Ok(value) => value,
+            Err(e) => {
+                eprintln!("{}", format!("{}: {}", $error_msg, e).red());
+                process::exit(1);
+            }
+        }
+    };
+}
+
+// 成功消息打印
+macro_rules! success_msg {
+    ($msg:expr) => {
+        println!("{}", $msg.green())
+    };
+}
+
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
     // 解析命令行参数
     let cli = Cli::parse();
 
@@ -205,15 +224,9 @@ async fn main() -> anyhow::Result<()> {
 }
 
 /// 列出所有任务
-async fn list_tasks(client: &TaskClient) -> anyhow::Result<()> {
-    let result = client.get_all_tasks(None).await;
+async fn list_tasks(client: &TaskClient) -> Result<()> {
+    let tasks = handle_result!(client.get_all_tasks(None).await, "获取任务列表失败");
 
-    if let Err(e) = result {
-        eprintln!("{}", format!("获取任务列表失败: {}", e).red());
-        process::exit(1);
-    }
-
-    let tasks = result.unwrap();
     if tasks.is_empty() {
         println!("{}", "没有找到任何任务".yellow());
         return Ok(());
@@ -238,15 +251,9 @@ async fn list_tasks(client: &TaskClient) -> anyhow::Result<()> {
 }
 
 /// 列出所有任务状态
-async fn list_statuses(client: &TaskClient) -> anyhow::Result<()> {
-    let result = client.get_all_statuses(None).await;
+async fn list_statuses(client: &TaskClient) -> Result<()> {
+    let statuses = handle_result!(client.get_all_statuses(None).await, "获取任务状态列表失败");
 
-    if let Err(e) = result {
-        eprintln!("{}", format!("获取任务状态列表失败: {}", e).red());
-        process::exit(1);
-    }
-
-    let statuses = result.unwrap();
     if statuses.is_empty() {
         println!("{}", "没有找到任何任务状态".yellow());
         return Ok(());
@@ -284,7 +291,7 @@ async fn add_task(
     task_type: u32,
     data: String,
     desc: Option<String>,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     // 判断data是否为文件路径
     let data_content = if Path::new(&data).is_file() {
         fs::read_to_string(&data).map_err(|e| anyhow!("读取数据文件失败: {}", e))?
@@ -303,39 +310,17 @@ async fn add_task(
     };
 
     // 添加任务
-    let result = client.add_task(task).await;
+    let new_task = handle_result!(client.add_task(task).await, "添加任务失败");
 
-    if let Err(e) = result {
-        eprintln!("{}", format!("添加任务失败: {}", e).red());
-        process::exit(1);
-    }
-
-    let new_task = result.unwrap();
-    println!(
-        "{}",
-        format!("成功添加任务: {}", new_task.id.unwrap_or_default()).green()
-    );
+    success_msg!(format!("成功添加任务: {}", new_task.id.unwrap_or_default()));
     Ok(())
 }
 
 /// 开始执行指定任务
-async fn start_task(
-    client: &TaskClient,
-    task_id: &str,
-    worker: Option<String>,
-) -> anyhow::Result<()> {
-    let result = client.task_start(task_id, worker).await;
+async fn start_task(client: &TaskClient, task_id: &str, worker: Option<String>) -> Result<()> {
+    let status = handle_result!(client.task_start(task_id, worker).await, "启动任务失败");
 
-    if let Err(e) = result {
-        eprintln!("{}", format!("启动任务失败: {}", e).red());
-        process::exit(1);
-    }
-
-    let status = result.unwrap();
-    println!(
-        "{}",
-        format!("成功启动任务: {}", status.id.unwrap_or_default()).green()
-    );
+    success_msg!(format!("成功启动任务: {}", status.id.unwrap_or_default()));
     Ok(())
 }
 
@@ -345,91 +330,53 @@ async fn update_progress(
     task_id: &str,
     progress: u32,
     status: Option<i32>,
-) -> anyhow::Result<()> {
-    let result = client.update_progress(task_id, progress, status).await;
-
-    if let Err(e) = result {
-        eprintln!("{}", format!("更新任务进度失败: {}", e).red());
-        process::exit(1);
-    }
-
-    let status = result.unwrap();
-    println!(
-        "{}",
-        format!(
-            "成功更新任务进度: {}，当前进度: {}%",
-            status.id.unwrap_or_default(),
-            status.progress
-        )
-        .green()
+) -> Result<()> {
+    let status = handle_result!(
+        client.update_progress(task_id, progress, status).await,
+        "更新任务进度失败"
     );
+
+    success_msg!(format!(
+        "成功更新任务进度: {}，当前进度: {}%",
+        status.id.unwrap_or_default(),
+        status.progress
+    ));
     Ok(())
 }
 
 /// 标记任务为已完成
-async fn complete_task(client: &TaskClient, task_id: &str) -> anyhow::Result<()> {
-    let result = client.task_done(task_id).await;
+async fn complete_task(client: &TaskClient, task_id: &str) -> Result<()> {
+    let status = handle_result!(client.task_done(task_id).await, "完成任务失败");
 
-    if let Err(e) = result {
-        eprintln!("{}", format!("完成任务失败: {}", e).red());
-        process::exit(1);
-    }
-
-    let status = result.unwrap();
-    println!(
-        "{}",
-        format!("成功完成任务: {}", status.id.unwrap_or_default()).green()
-    );
+    success_msg!(format!("成功完成任务: {}", status.id.unwrap_or_default()));
     Ok(())
 }
 
 /// 标记任务为出错状态
-async fn mark_error(client: &TaskClient, task_id: &str) -> anyhow::Result<()> {
-    let result = client.task_error(task_id).await;
+async fn mark_error(client: &TaskClient, task_id: &str) -> Result<()> {
+    let status = handle_result!(client.task_error(task_id).await, "标记任务出错失败");
 
-    if let Err(e) = result {
-        eprintln!("{}", format!("标记任务出错失败: {}", e).red());
-        process::exit(1);
-    }
-
-    let status = result.unwrap();
-    println!(
-        "{}",
-        format!("成功标记任务为出错状态: {}", status.id.unwrap_or_default()).green()
-    );
+    success_msg!(format!(
+        "成功标记任务为出错状态: {}",
+        status.id.unwrap_or_default()
+    ));
     Ok(())
 }
 
 /// 获取指定任务的详细信息和状态
-async fn get_task_info(client: &TaskClient, task_id: &str) -> anyhow::Result<()> {
-    // 获取任务信息
-    let client_lock = client.client.lock().await;
-    let task_result = client_lock
-        .get::<TaskInfo>(&client.task_table_name, task_id)
-        .await;
-    drop(client_lock);
-
-    let status_result = client.get_task_status(task_id).await;
-
-    if let Err(e) = task_result {
-        eprintln!("{}", format!("获取任务信息失败: {}", e).red());
-        process::exit(1);
-    }
-
-    if let Err(e) = status_result {
-        eprintln!("{}", format!("获取任务状态失败: {}", e).red());
-        process::exit(1);
-    }
-
-    let task = task_result.unwrap();
-    let status = status_result.unwrap();
+async fn get_task_info(client: &TaskClient, task_id: &str) -> Result<()> {
+    // 使用并行查询同时获取任务信息和状态
+    let task = client.get_task(task_id).await;
+    let status = client.get_status(task_id).await;
+    let task = handle_result!(task, "获取任务信息失败");
+    let status = handle_result!(status, "获取任务状态失败");
 
     // 显示任务详细信息
     println!("{}", "任务信息".blue());
-    println!("ID: {}", task.id.unwrap_or_default());
+    println!("ID: {}", task.unwrap_id());
     println!("名称: {}", task.name.unwrap_or_default());
     println!("类型: {}", task.r#type);
-    println!("创建时间: {}", format_datetime(&task.created_at));
+    println!("创建: {}", format_datetime(&task.created_at));
     println!("描述: {}", task.desc.unwrap_or_else(|| "无".to_string()));
     println!(
         "数据: {}",
@@ -445,19 +392,17 @@ async fn get_task_info(client: &TaskClient, task_id: &str) -> anyhow::Result<()>
     println!("进度: {}%", status.progress);
     println!(
         "开始时间: {}",
-        if status.start_time.is_some() {
-            format_datetime(&status.start_time)
-        } else {
-            "未开始".to_string()
-        }
+        status.start_time.as_ref().map_or_else(
+            || "未开始".to_string(),
+            |t| format_datetime(&Some(t.clone()))
+        )
     );
     println!(
         "更新时间: {}",
-        if status.update_time.is_some() {
-            format_datetime(&status.update_time)
-        } else {
-            "无".to_string()
-        }
+        status
+            .update_time
+            .as_ref()
+            .map_or_else(|| "无".to_string(), |t| format_datetime(&Some(t.clone())))
     );
     println!(
         "启用状态: {}",
@@ -467,56 +412,47 @@ async fn get_task_info(client: &TaskClient, task_id: &str) -> anyhow::Result<()>
             "已禁用"
         }
     );
+
     Ok(())
 }
 
 /// 查找下一个可执行的任务
-async fn find_next_task(client: &TaskClient) -> anyhow::Result<()> {
-    let result = client.find_task().await;
-
-    if let Err(e) = result {
-        println!("{}", format!("{}", e).yellow());
-        return Ok(());
+async fn find_next_task(client: &TaskClient) -> Result<()> {
+    match client.find_task().await {
+        Ok((task, _)) => {
+            println!("{}", "找到可执行任务:".green());
+            println!("ID: {}", task.id.unwrap_or_default());
+            println!("名称: {}", task.name.unwrap_or_default());
+            println!("类型: {}", task.r#type);
+            println!("描述: {}", task.desc.unwrap_or_else(|| "无".to_string()));
+            println!("创建时间: {}", format_datetime(&task.created_at));
+        }
+        Err(e) => {
+            println!("{}", format!("{}", e).yellow());
+        }
     }
 
-    let (task, _) = result.unwrap();
-    println!("{}", "找到可执行任务:".green());
-    println!("ID: {}", task.id.unwrap_or_default());
-    println!("名称: {}", task.name.unwrap_or_default());
-    println!("类型: {}", task.r#type);
-    println!("描述: {}", task.desc.unwrap_or_else(|| "无".to_string()));
-    println!("创建时间: {}", format_datetime(&task.created_at));
     Ok(())
 }
 
 /// 启用或禁用任务
-async fn enable_task(client: &TaskClient, task_id: &str, enable: bool) -> anyhow::Result<()> {
-    // 获取当前状态
-    let mut status = client.get_task_status(task_id).await?;
-
-    // 更新启用状态
-    status.enabled = enable;
-    status.update_time = Some(Local::now());
-
-    // 提交更新
-    let client_lock = client.client.lock().await;
-    let result = client_lock.put(&client.status_table_name, status).await;
-    drop(client_lock);
-
-    if let Err(e) = result {
-        let action = if enable { "启用" } else { "禁用" };
-        eprintln!("{}", format!("{}任务失败: {}", action, e).red());
-        process::exit(1);
-    }
-
-    let status = result.unwrap();
-    let action = if enable { "启用" } else { "禁用" };
-    println!(
-        "{}",
-        format!("已{}任务: {}", action, status.id.unwrap_or_default()).green()
+async fn enable_task(client: &TaskClient, task_id: &str, enable: bool) -> Result<()> {
+    // 使用新添加的方法启用/禁用任务
+    let status = handle_result!(
+        client.enable_task(task_id, enable).await,
+        &format!("{}任务失败", if enable { "启用" } else { "禁用" })
     );
+
+    let action = if enable { "启用" } else { "禁用" };
+    success_msg!(format!(
+        "已{}任务: {}",
+        action,
+        status.id.unwrap_or_default()
+    ));
+
     Ok(())
 }
+
 #[cfg(test)]
 mod tests {
     #[test]
