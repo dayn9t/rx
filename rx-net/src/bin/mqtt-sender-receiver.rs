@@ -10,6 +10,8 @@ fn main() {
         server_url: "tcp://localhost:1883".to_string(),
         root_topic: None,
         keep_alive: 30,
+        user: None,
+        password: None,
     };
 
     println!("mqtt_cfg: {:?}", mqtt_cfg);

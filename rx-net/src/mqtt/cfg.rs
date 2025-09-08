@@ -17,6 +17,10 @@ pub struct MqttCfg {
     pub root_topic: Option<String>,
     /// 心跳间隔(秒)
     pub keep_alive: usize,
+    /// 用户名
+    pub user: Option<String>,
+    /// 密码
+    pub password: Option<String>,
 }
 
 impl MqttCfg {
@@ -26,6 +30,12 @@ impl MqttCfg {
         let uri = Url::parse(&self.server_url).unwrap();
         let mut opt = MqttOptions::new(id, uri.host_str().unwrap(), uri.port().unwrap());
         opt.set_keep_alive(Duration::from_secs(self.keep_alive as u64));
+
+        // 设置用户名和密码（如果提供的话）
+        if let (Some(ref user), Some(ref password)) = (&self.user, &self.password) {
+            opt.set_credentials(user, password);
+        }
+
         opt
     }
 
