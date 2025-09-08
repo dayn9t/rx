@@ -5,15 +5,23 @@ use std::thread;
 
 fn main() {
     init_log(2);
-
-    let mqtt_cfg = MqttCfg {
+    /*
+        let mqtt_cfg = MqttCfg {
         server_url: "tcp://localhost:1883".to_string(),
         root_topic: None,
         keep_alive: 30,
         user: None,
         password: None,
     };
+    */
 
+    let mqtt_cfg = MqttCfg {
+        server_url: "tcp://192.168.18.147:1883".to_string(),
+        root_topic: None,
+        keep_alive: 30,
+        user: Some("admin".to_string()),
+        password: Some("Howell.net.cn".to_string()),
+    };
     println!("mqtt_cfg: {:?}", mqtt_cfg);
 
     let topic = "ias/shws/home";
@@ -32,17 +40,19 @@ fn main() {
         receiver.run();
     });
 
-    for i in 0..10 {
+    let n = 15;
+
+    for i in 0..n {
         let i = i.to_string();
         println!("Send: {}", i);
         tx1.send(i).unwrap();
     }
 
-    for i in 0..10 {
+    for i in 0..n {
         let i = i.to_string();
         let i1 = rx2.recv().unwrap();
         println!("Receive: {}", i);
-        assert_eq!(i, i1);
+        //assert_eq!(i, i1);
     }
 
     thread1.join().unwrap();

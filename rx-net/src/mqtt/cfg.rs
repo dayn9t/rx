@@ -32,7 +32,7 @@ impl MqttCfg {
         opt.set_keep_alive(Duration::from_secs(self.keep_alive as u64));
 
         // 设置用户名和密码（如果提供的话）
-        if let (Some(ref user), Some(ref password)) = (&self.user, &self.password) {
+        if let (Some(user), Some(password)) = (&self.user, &self.password) {
             opt.set_credentials(user, password);
         }
 
