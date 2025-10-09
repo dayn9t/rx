@@ -2,6 +2,8 @@ use rx_core::log::init_log;
 use rx_net::mqtt::*;
 use std::sync::mpsc::channel;
 use std::thread;
+use std::thread::sleep;
+use std::time::Duration;
 
 fn main() {
     init_log(2);
@@ -32,29 +34,33 @@ fn main() {
     let sender = MqttSender::<String>::new(mqtt_cfg.clone(), topic, rx1);
     let receiver = MqttReceiver::<String>::new(mqtt_cfg, topic, tx2);
 
-    let thread1 = thread::spawn(move || {
-        sender.run();
-    });
-
     let thread2 = thread::spawn(move || {
         receiver.run();
     });
 
-    let n = 15;
+    let thread1 = thread::spawn(move || {
+        sender.run();
+    });
+
+    let n = 10;
 
     for i in 0..n {
         let i = i.to_string();
         println!("Send: {}", i);
         tx1.send(i).unwrap();
+        //sleep(Duration::from_millis(200));
     }
 
     for i in 0..n {
-        let i = i.to_string();
+        let _i = i.to_string();
         let i1 = rx2.recv().unwrap();
-        println!("Receive: {}", i);
+        println!("Receive: {}", i1);
         //assert_eq!(i, i1);
     }
 
+    println!("1");
     thread1.join().unwrap();
+    println!("2");
     thread2.join().unwrap();
+    println!("3");
 }

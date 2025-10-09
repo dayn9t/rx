@@ -17,7 +17,14 @@ impl StopWatch {
         Self::default()
     }
 
-    ///启动计时，总时间累计
+    /// 创建并启动秒表
+    pub fn with_start() -> Self {
+        let mut sw = Self::default();
+        sw.start();
+        sw
+    }
+
+    /// 启动计时，总时间累计
     pub fn start(&mut self) {
         if !self.started {
             self.count += 1;
@@ -26,13 +33,13 @@ impl StopWatch {
         }
     }
 
-    ///重新启动计时
+    /// 重新启动计时
     pub fn restart(&mut self) {
         self.reset();
         self.start();
     }
 
-    ///停止计时
+    /// 停止计时
     pub fn stop(&mut self) -> f64 {
         if !self.has_started() {
             return 0.0;
@@ -43,27 +50,27 @@ impl StopWatch {
         d as f64 / 1_000_000_000.0
     }
 
-    ///复位
+    /// 复位
     pub fn reset(&mut self) {
         *self = Self::default();
     }
 
-    ///是否已经启动
+    /// 是否已经启动
     pub fn has_started(&self) -> bool {
         self.started
     }
 
-    ///流逝的总时间
+    /// 流逝的总时间
     pub fn elapsed(&self) -> f64 {
         self.elapsed as f64 / 1_000_000_000.0
     }
 
-    ///计数次数
+    /// 计数次数
     pub fn count(&self) -> usize {
         self.count
     }
 
-    ///流逝的平均时间
+    /// 流逝的平均时间
     pub fn average(&self) -> f64 {
         self.elapsed() / self.count as f64
     }
