@@ -19,7 +19,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
     }
 
     /// 获取模型对应的表
-    pub async fn table(&self) -> MutexGuard<DirTable<R>> {
+    pub async fn table(&self) -> MutexGuard<'_, DirTable<R>> {
         self.table.lock().await
     }
 

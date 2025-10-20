@@ -113,7 +113,7 @@ impl<R: IdRecord> IdMap<R> {
     }
 
     /// 获取记录迭代器
-    pub fn iter(&self) -> std::slice::Iter<R> {
+    pub fn iter(&self) -> std::slice::Iter<'_, R> {
         self.records.iter()
     }
 

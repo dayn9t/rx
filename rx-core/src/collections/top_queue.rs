@@ -45,12 +45,12 @@ impl<T: Ord + Clone> TopQueue<T> {
     }
 
     /// 获取迭代器
-    pub fn iter(&self) -> std::slice::Iter<T> {
+    pub fn iter(&self) -> std::slice::Iter<'_, T> {
         self.elems.iter()
     }
 
     /// 获取迭代器
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<T> {
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
         self.elems.iter_mut()
     }
 

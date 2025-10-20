@@ -64,7 +64,7 @@ impl<K: Ord + Clone, V> TopMultiMap<K, V> {
     }*/
 
     /// 获取迭代器
-    pub fn iter(&self) -> TopMultiMapIter<K, V> {
+    pub fn iter(&self) -> TopMultiMapIter<'_, K, V> {
         TopMultiMapIter {
             k_iter: self.keys.iter(),
             v_iter: self.values.iter(),
