@@ -2,8 +2,6 @@ use rx_core::log::init_log;
 use rx_net::mqtt::*;
 use std::sync::mpsc::channel;
 use std::thread;
-use std::thread::sleep;
-use std::time::Duration;
 
 fn main() {
     init_log(2);
