@@ -27,7 +27,6 @@ impl StopWatch {
     /// 启动计时，总时间累计
     pub fn start(&mut self) {
         if !self.started {
-            self.count += 1;
             self.start = nsecs_since_epoch();
             self.started = true;
         }
@@ -44,10 +43,19 @@ impl StopWatch {
         if !self.has_started() {
             return 0.0;
         };
+        self.count += 1;
         let d = nsecs_since_epoch() - self.start;
         self.elapsed += d;
         self.started = false;
         d as f64 / 1_000_000_000.0
+    }
+
+    /// 跳过计时
+    pub fn skip(&mut self) {
+        if !self.has_started() {
+            return;
+        };
+        self.started = false;
     }
 
     /// 复位

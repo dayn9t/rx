@@ -12,10 +12,10 @@ pub fn read_text(file: impl AsRef<Path>) -> IoResult<String> {
     Ok(txt)
 }
 
-/// 写入字符串到文本文件
-pub fn write_text(file: impl AsRef<Path>, txt: String) -> IoResult<()> {
-    let mut file = File::create(file)?;
-    file.write_all(&txt.into_bytes())
+/// 写入字节序列到文本文件，txt 可为 `String`、`&str`、`Vec<u8>`、`&[u8]` 等
+pub fn write_text(file: impl AsRef<Path>, txt: impl AsRef<[u8]>) -> IoResult<()> {
+    let mut f = File::create(file)?;
+    f.write_all(txt.as_ref())
 }
 
 /// 按照列表条目，替换字符串中的全部文本
