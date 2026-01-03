@@ -1,6 +1,7 @@
 use reqwest::{Client, Error, header};
 use rx_core::prelude::*;
 use std::collections::HashMap;
+use url::Url;
 
 /// 数据访问对象客户端
 ///
@@ -80,14 +81,26 @@ impl DaoListClient {
         table_name: &str,
         params: Option<&HashMap<String, String>>,
     ) -> Result<Vec<T>, Error> {
-        let url = format!("{}/{}", self.base_url, table_name);
-        let req = self.client.get(&url).headers(self.create_header_map());
-        let req = if let Some(p) = params {
-            req.query(p)
-        } else {
-            req
-        };
-        let resp = req.send().await?.json::<Vec<T>>().await?;
+        let mut url = format!("{}/{}", self.base_url, table_name);
+        
+        // 如果有查询参数，手动构建带查询字符串的 URL
+        if let Some(p) = params {
+            if let Ok(mut parsed_url) = Url::parse(&url) {
+                for (key, value) in p {
+                    parsed_url.query_pairs_mut().append_pair(key, value);
+                }
+                url = parsed_url.to_string();
+            }
+        }
+        
+        let resp = self
+            .client
+            .get(&url)
+            .headers(self.create_header_map())
+            .send()
+            .await?
+            .json::<Vec<T>>()
+            .await?;
         Ok(resp)
     }
 
