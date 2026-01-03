@@ -1,6 +1,5 @@
 use anyhow::{Result, anyhow};
-use poem::http::Method;
-use reqwest::{Client, IntoUrl, Response, header};
+use reqwest::{Client, IntoUrl, Response, header, Method};
 use rx_core::prelude::*;
 use rx_db::IRecord;
 use std::collections::HashMap;
@@ -18,7 +17,7 @@ pub struct DaoListClient {
     /// API基础URL
     base_url: String,
     /// HTTP客户端
-    client: Mutex<Client>,
+    client: Client,
     /// 认证令牌
     auth_token: Mutex<Option<String>>,
 }
@@ -31,7 +30,7 @@ impl DaoListClient {
     pub fn new(base_url: impl Into<String>) -> Self {
         Self {
             base_url: base_url.into(),
-            client: Mutex::new(Client::new()),
+            client: Client::new(),
             auth_token: Mutex::new(None),
         }
     }
@@ -71,21 +70,27 @@ impl DaoListClient {
         url: impl IntoUrl,
         method: Method,
         params: Option<&ParamsMap>,
-    ) -> reqwest::RequestBuilder {
-        let client = self.client.lock().await;
-        let builder = client.request(method, url);
-
-        let auth_token = self.auth_token.lock().await;
-        let builder = match &*auth_token {
-            Some(token) => builder.header(header::AUTHORIZATION, format!("Bearer {}", token)),
-            None => builder,
-        };
+    ) -> Result<reqwest::RequestBuilder> {
+        // Convert to URL and add query parameters manually
+        let mut full_url = url.into_url()?;
 
         if let Some(p) = params {
-            builder.query(p)
-        } else {
-            builder
+            let mut query_pairs = full_url.query_pairs_mut();
+            for (key, value) in p {
+                query_pairs.append_pair(key, value);
+            }
         }
+
+        let mut builder = self.client.request(method, full_url);
+
+        {
+            let auth_token = self.auth_token.lock().await;
+            if let Some(token) = &*auth_token {
+                builder = builder.header(header::AUTHORIZATION, format!("Bearer {}", token));
+            }
+        }
+
+        Ok(builder)
     }
 
     /// 执行请求并处理响应
@@ -128,7 +133,7 @@ impl DaoListClient {
         T: DeserializeOwned + Serialize,
     {
         let url = self.build_url(table_name, id);
-        let mut builder = self.prepare_request(url, method, params).await;
+        let mut builder = self.prepare_request(url, method, params).await?;
 
         if let Some(data) = body {
             builder = builder.json(&data);
@@ -231,7 +236,7 @@ impl DaoListClient {
         params: Option<&ParamsMap>,
     ) -> ResultE<()> {
         let url = self.build_url(table_name, Some(id));
-        let builder = self.prepare_request(url, Method::DELETE, params).await;
+        let builder = self.prepare_request(url, Method::DELETE, params).await?;
         let _ = self.execute_request(builder).await?;
 
         Ok(())

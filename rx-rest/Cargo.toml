@@ -28,6 +28,7 @@ anyhow = "*"
 thiserror = "*"
 dirs = "*"
 reqwest = { version = "*", features = ["json"] }
+url = "*"
 clap = { version = "*", features = ["derive"] }
 colored = "*"
 prettytable = "*"
