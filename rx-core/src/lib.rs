@@ -18,6 +18,8 @@ pub mod log;
 pub mod m;
 pub mod prelude;
 pub mod sys;
+/// 用于测试程序的模块
+mod test;
 pub mod text;
 pub mod time;
 
