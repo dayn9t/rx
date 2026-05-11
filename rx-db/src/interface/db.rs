@@ -92,7 +92,7 @@ pub trait IDatabase {
         table_name: &str,
         partition_id: &Option<String>,
     ) -> AnyResult<Vec<R>> {
-        self.find_records(table_name, |_| true, &partition_id)
+        self.find_records(table_name, |_| true, partition_id)
     }
 
     /// 查找数据库表所有记录

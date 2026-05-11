@@ -2,6 +2,7 @@
 ///
 /// 用Vec实现的Map, 保证遍历元素的顺序与插入顺序一致
 ///
+#[derive(Default)]
 pub struct VecMap {
     vars: Vec<(String, String)>,
 }

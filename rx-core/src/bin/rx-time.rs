@@ -18,11 +18,11 @@ fn main() {
 
     let dt: NaiveDateTime = ts.into();
 
-    println!("DateTime: {}", dt.to_string());
+    println!("DateTime: {}", dt);
 
     let now1: NaiveDateTime = now();
 
-    println!("Now: {}", now1.to_string());
+    println!("Now: {}", now1);
 
     let t1 = now();
     let t2 = now();

@@ -52,7 +52,7 @@ where
     T: Serialize,
 {
     let s = to_pretty(&value)?;
-    writer.write(&s.into_bytes())?;
+    writer.write_all(&s.into_bytes())?;
 
     Ok(())
 }

@@ -1,5 +1,3 @@
-#![feature(duration_constructors)]
-
 use path_macro::path;
 use rx_core::log::{info, init_log};
 use rx_core::time::NaiveDateTime;

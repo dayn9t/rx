@@ -28,12 +28,12 @@ impl Timestamp {
 
     /// 获取最小值
     pub fn min_value() -> Self {
-        Timestamp(u32::min_value())
+        Timestamp(u32::MIN)
     }
 
     /// 获取最大值
     pub fn max_value() -> Self {
-        Timestamp(u32::max_value())
+        Timestamp(u32::MAX)
     }
 
     /// 获取时间戳的所有秒数
@@ -43,7 +43,7 @@ impl Timestamp {
 
     /// 饱和减法
     pub fn sub_sat(&self, v: u32) -> Self {
-        Self(if self.0 > v { self.0 - v } else { 0 })
+        Self(self.0.saturating_sub(v))
     }
 
     /// 转换成: NaiveDateTime
@@ -66,9 +66,9 @@ impl From<NaiveDateTime> for Timestamp {
     }
 }
 
-impl Into<NaiveDateTime> for Timestamp {
-    fn into(self) -> NaiveDateTime {
-        DateTime::from_timestamp(self.0 as i64, 0)
+impl From<Timestamp> for NaiveDateTime {
+    fn from(val: Timestamp) -> Self {
+        DateTime::from_timestamp(val.0 as i64, 0)
             .unwrap()
             .naive_local()
     }
@@ -76,7 +76,7 @@ impl Into<NaiveDateTime> for Timestamp {
 
 impl fmt::Display for Timestamp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_datetime().to_string())
+        write!(f, "{}", self.to_datetime())
     }
 }
 
@@ -85,7 +85,7 @@ impl Serialize for Timestamp {
     where
         S: Serializer,
     {
-        let dt: NaiveDateTime = self.clone().into();
+        let dt: NaiveDateTime = (*self).into();
         dt.serialize(serializer)
     }
 }
@@ -96,7 +96,7 @@ impl<'de> Deserialize<'de> for Timestamp {
         D: Deserializer<'de>,
     {
         let dt = NaiveDateTime::deserialize(deserializer);
-        dt.map(|v| Timestamp::from(v))
+        dt.map(Timestamp::from)
     }
 }
 

@@ -31,7 +31,7 @@ impl<T: Ord> RangeIndex<T> {
 
     /// 定位索引(下标)区间
     pub fn locate(&self, value_range: &Range<T>) -> Range<usize> {
-        algo::locate_range(&self.elems[..], &value_range)
+        algo::locate_range(&self.elems[..], value_range)
     }
 
     /// 追加条目，用户保证数据有序

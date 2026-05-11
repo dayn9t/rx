@@ -19,7 +19,7 @@ impl<R: IRecord> DirTable<R> {
     pub fn open_path(db_path: &Path, name: &str) -> AnyResult<Self> {
         let path = path!(db_path / name);
         fs::ensure_dir_exist(&path)?;
-        let meta = DirVariant::open_path(&meta_path(db_path), &name)?;
+        let meta = DirVariant::open_path(&meta_path(db_path), name)?;
         Ok(Self {
             name: name.to_owned(),
             path,
@@ -39,7 +39,7 @@ impl<R: IRecord> DirTable<R> {
 
     /// 记录文件全路径
     fn record_path(&self, id: &R::RecordId, partition_id: &Option<String>) -> PathBuf {
-        let name = Self::record_name(&id);
+        let name = Self::record_name(id);
         let name = if let Some(partition_id) = partition_id {
             format!("{}/{}", partition_id, name)
         } else {

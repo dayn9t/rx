@@ -1,5 +1,5 @@
 use anyhow::{Result, anyhow};
-use reqwest::{Client, IntoUrl, Response, header, Method};
+use reqwest::{Client, IntoUrl, Method, Response, header};
 use rx_core::prelude::*;
 use rx_db::IRecord;
 use std::collections::HashMap;

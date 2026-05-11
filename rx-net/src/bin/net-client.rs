@@ -9,7 +9,7 @@ fn main() -> io::Result<()> {
         println!("read_line:");
         io::stdin().read_line(&mut input).expect("Failed to read");
         //println!("write");
-        stream.write(input.as_bytes()).expect("failed to write");
+        stream.write_all(input.as_bytes()).expect("failed to write");
 
         println!("OK");
     }

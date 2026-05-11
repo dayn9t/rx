@@ -22,7 +22,7 @@ impl TextMap {
             let line = line?;
             let mut parts = line.splitn(2, sep);
             if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
-                vars.insert(&key.to_string(), &value.to_string());
+                vars.insert(key, value);
             }
         }
 

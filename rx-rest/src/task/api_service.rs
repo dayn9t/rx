@@ -135,15 +135,15 @@ pub fn status_filter(
     status: &Query<Option<i32>>,
     enabled: &Query<Option<bool>>,
 ) -> bool {
-    if let Some(ref status) = status.0 {
-        if record.status != *status {
-            return false;
-        }
+    if let Some(ref status) = status.0
+        && record.status != *status
+    {
+        return false;
     }
-    if let Some(ref enabled) = enabled.0 {
-        if record.enabled != *enabled {
-            return false;
-        }
+    if let Some(ref enabled) = enabled.0
+        && record.enabled != *enabled
+    {
+        return false;
     }
     true
 }

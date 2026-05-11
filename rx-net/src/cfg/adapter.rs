@@ -8,10 +8,8 @@ use rx_core::sys::fs;
 // 根据网卡设备路径确定网卡类型
 fn device_catalog(device_path: &Path) -> Option<String> {
     let link = device_path.read_link().unwrap();
-    let cs = link.components();
-    //println!("{:?}", &cs);
-    //Components([ParentDir, ParentDir, Normal("devices"), Normal("virtual"), Normal("net"), Normal("lo")])
-    let catalog = cs.skip(3).next().unwrap();
+    let mut cs = link.components();
+    let catalog = cs.nth(3).unwrap();
     if let Component::Normal(str) = catalog {
         str.to_str().map(|s| s.to_string())
     } else {
@@ -21,15 +19,15 @@ fn device_catalog(device_path: &Path) -> Option<String> {
 
 /// 获取网卡
 pub fn get_adapters(catalog: Option<&str>) -> Vec<String> {
-    let paths = fs::dirs_in(&"/sys/class/net").unwrap();
+    let paths = fs::dirs_in("/sys/class/net").unwrap();
     let mut adapters = Vec::new();
     for path in paths {
         //println!("{:?}", dir);
         let catalog_part = device_catalog(&path);
-        if let Some(c) = catalog_part {
-            if catalog.is_none() || c.contains(catalog.unwrap()) {
-                adapters.push(fs::file_name(&path));
-            }
+        if let Some(c) = catalog_part
+            && (catalog.is_none() || c.contains(catalog.unwrap()))
+        {
+            adapters.push(fs::file_name(&path));
         }
     }
     adapters
@@ -55,7 +53,7 @@ pub fn get_adapters_ip4s() -> Vec<V4IfAddr> {
 
 /// 获取PCI网卡
 pub fn get_pci_adapters() -> Vec<String> {
-    get_adapters(Some(&"pci"))
+    get_adapters(Some("pci"))
 }
 
 /// 获取网卡的IPv4信息

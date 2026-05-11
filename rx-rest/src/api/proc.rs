@@ -139,7 +139,7 @@ pub fn rsync(
     let mut rsync_opts: Vec<_> = opts.as_ref().split(' ').collect();
     rsync_opts.append(&mut vec![src.as_ref(), dst.as_ref()]);
 
-    let title = format!("rsync");
+    let title = "rsync".to_string();
     if let Some(password) = password {
         let mut args = vec!["-p", password, RSYNC];
         args.append(&mut rsync_opts);
@@ -153,7 +153,7 @@ pub fn reboot(delay: i32) -> Option<CommandOutput> {
     let program = "shutdown -r now + 2";
     let args = ["-r", "now", "+", &delay.to_string()];
     let title = "reboot";
-    run_command(program, args, &title)
+    run_command(program, args, title)
 }
 
 /// 利用supervisorctl管理服务

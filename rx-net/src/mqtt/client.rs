@@ -15,7 +15,7 @@ use rx_core::text::{AnyResult, json};
 pub type MqttResult<T> = paho_mqtt::Result<T>;
 
 /// MQTT消息接受者
-pub type Receiver = paho_mqtt::Receiver<Option<Message>>;
+pub type Receiver = paho_mqtt::SyncReceiver<Option<Message>>;
 
 /// MQTT客户
 pub struct MqttClient {

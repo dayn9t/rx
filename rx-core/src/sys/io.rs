@@ -2,10 +2,7 @@ use std::fs::File;
 use std::io::{Read, copy};
 use std::path::Path;
 
-pub fn save_bytes<R: ?Sized>(reader: &mut R, path: impl AsRef<Path>)
-where
-    R: Read,
-{
+pub fn save_bytes<R: Read>(reader: &mut R, path: impl AsRef<Path>) {
     let mut dest = File::create(path.as_ref()).unwrap();
 
     copy(reader, &mut dest).unwrap();

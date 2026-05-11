@@ -23,6 +23,11 @@ impl<T: Ord + Clone> TopQueue<T> {
         self.elems.len()
     }
 
+    /// 是否为空
+    pub fn is_empty(&self) -> bool {
+        self.elems.is_empty()
+    }
+
     /// 获取容量
     pub fn capacity(&self) -> usize {
         self.capacity
@@ -70,9 +75,9 @@ impl<T: Ord + Clone> TopQueue<T> {
     }
 }
 
-impl<T> Into<Vec<T>> for TopQueue<T> {
-    fn into(self) -> Vec<T> {
-        self.elems
+impl<T> From<TopQueue<T>> for Vec<T> {
+    fn from(val: TopQueue<T>) -> Self {
+        val.elems
     }
 }
 

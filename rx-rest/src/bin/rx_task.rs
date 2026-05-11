@@ -400,17 +400,17 @@ async fn get_task_info(client: &TaskClient, task_id: &str) -> Result<()> {
     println!("进度: {}%", status.progress);
     println!(
         "开始时间: {}",
-        status.start_time.as_ref().map_or_else(
-            || "未开始".to_string(),
-            |t| format_datetime(&Some(t.clone()))
-        )
+        status
+            .start_time
+            .as_ref()
+            .map_or_else(|| "未开始".to_string(), |t| format_datetime(&Some(*t)))
     );
     println!(
         "更新时间: {}",
         status
             .update_time
             .as_ref()
-            .map_or_else(|| "无".to_string(), |t| format_datetime(&Some(t.clone())))
+            .map_or_else(|| "无".to_string(), |t| format_datetime(&Some(*t)))
     );
     println!(
         "启用状态: {}",

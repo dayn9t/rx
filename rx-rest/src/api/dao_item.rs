@@ -41,9 +41,9 @@ impl<R: Default + Clone + Serialize + DeserializeOwned + ToJSON> DaoItem<R> {
     }*/
 
     /// 更新元素
-    pub async fn update(&self, mut record: Json<R>) -> Result<CodeResponse<R>> {
+    pub async fn update(&self, record: Json<R>) -> Result<CodeResponse<R>> {
         let mut var = self.variant.lock().await;
-        var.set(&mut record.0).unwrap();
+        var.set(&record.0).unwrap();
         Ok(CodeResponse::Created(record))
     }
 }

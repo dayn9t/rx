@@ -39,6 +39,11 @@ impl<K: Ord + Clone, V> TopMultiMap<K, V> {
         self.keys.len()
     }
 
+    /// 是否为空
+    pub fn is_empty(&self) -> bool {
+        self.keys.is_empty()
+    }
+
     /// 获取容量
     pub fn capacity(&self) -> usize {
         self.capacity

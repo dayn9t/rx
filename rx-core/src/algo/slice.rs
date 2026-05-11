@@ -18,7 +18,7 @@ pub fn diff<T: Eq>(new: &[T], old: &[T]) -> Vec<usize> {
 
 /// 截取制定半径内的数据(避免越界)
 pub fn slice_by_radius<T: Eq>(slice: &[T], center: usize, radius: usize) -> (usize, &[T]) {
-    let start = if center < radius { 0 } else { center - radius };
+    let start = center.saturating_sub(radius);
     let b = std::cmp::min(center + radius + 1, slice.len());
     (start, &slice[start..b])
 }
@@ -31,7 +31,7 @@ pub fn search_slice(slice: &[u8], value: u8) -> Vec<usize> {
             a.push(i);
         }
     }
-    return a;
+    a
 }
 
 #[test]

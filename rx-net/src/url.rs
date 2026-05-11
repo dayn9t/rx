@@ -94,8 +94,8 @@ pub fn get_url_mime_info(url: impl AsRef<str>) -> AnyResult<FileMimeInfo> {
     let url_str = url.as_ref();
     if url_str.starts_with(PROTO_HTTP) || url_str.starts_with(PROTO_HTTPS) {
         get_http_mime_info(url_str)
-    } else if url_str.starts_with(PROTO_FILE) {
-        let path = Path::new(&url_str[PROTO_FILE.len()..]);
+    } else if let Some(stripped) = url_str.strip_prefix(PROTO_FILE) {
+        let path = Path::new(stripped);
         get_file_mime_info(path)
     } else {
         Err(anyhow!("Unsupported URL: {}", url_str))

@@ -136,7 +136,7 @@ impl<R: IRecord + ToJSON> DaoList<R> {
         partition_id: &Option<String>,
     ) -> AnyResult<R> {
         let tab = self.table.lock().await;
-        tab.get(&id, partition_id)
+        tab.get(id, partition_id)
     }
 
     /// 创建元素

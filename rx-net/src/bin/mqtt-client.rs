@@ -66,6 +66,6 @@ fn test_send() {
 }
 
 fn main() {
-    thread::spawn(move || test_send());
+    thread::spawn(test_send);
     //thread::sleep(Duration::from_secs(10));
 }

@@ -1,4 +1,3 @@
-#![feature(new_range_api)]
 extern crate core;
 
 pub mod cfg;

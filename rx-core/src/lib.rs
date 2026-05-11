@@ -1,5 +1,3 @@
-#![feature(step_trait)]
-#![feature(new_range_api)]
 extern crate alloc;
 extern crate core;
 

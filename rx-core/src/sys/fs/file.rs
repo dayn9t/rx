@@ -10,8 +10,7 @@ use path_macro::path;
 use tempfile::Builder;
 /// 时间转化为文件
 pub fn time_to_file(dt: &DateTime<Local>, ext: &str) -> String {
-    let filename = dt.format("%Y-%m-%d/%H-%M-%S%.3f.").to_string() + ext;
-    filename
+    dt.format("%Y-%m-%d/%H-%M-%S%.3f.").to_string() + ext
 }
 
 /// 当前时间转化为文件
@@ -121,7 +120,7 @@ pub fn file_names_in(
     sort_order: SortOrder,
 ) -> Result<Vec<String>> {
     let v = files_in(dir, ext, sort_order)?;
-    let v: Vec<_> = v.iter().map(|p| file_name(p)).collect();
+    let v: Vec<_> = v.iter().map(file_name).collect();
     Ok(v)
 }
 
@@ -132,7 +131,7 @@ pub fn file_stems_in(
     sort_order: SortOrder,
 ) -> Result<Vec<String>> {
     let v = files_in(dir, ext, sort_order)?;
-    let v: Vec<_> = v.iter().map(|p| file_stem(p)).collect();
+    let v: Vec<_> = v.iter().map(file_stem).collect();
     Ok(v)
 }
 
@@ -142,7 +141,7 @@ pub fn copy_file_to_dir(src_file: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -
     let dst_dir = dst_dir.as_ref();
     let file_name = file_name(src_file);
     let dst_file = dst_dir.join(file_name);
-    create_dir_all(&dst_dir).unwrap();
+    create_dir_all(dst_dir).unwrap();
     std::fs::copy(src_file, &dst_file)?;
     Ok(dst_file)
 }
@@ -153,7 +152,7 @@ pub fn combine_files_in(
     dst_file: impl AsRef<Path>,
     ext: &str,
 ) -> Result<()> {
-    let files = files_in(&src_dir, &ext, SortOrder::Asc)?;
+    let files = files_in(&src_dir, ext, SortOrder::Asc)?;
     combine_files(&files, dst_file)
 }
 

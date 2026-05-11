@@ -9,9 +9,7 @@ pub fn is_ipv4_str(s: &str) -> bool {
 /// 判断字符串是否IPv4 & Mask，形如："10.1.1.1/24"
 pub fn is_ipv4_mask_str(s: &str) -> bool {
     match s.split_once("/") {
-        None => {
-            return false;
-        }
+        None => false,
         Some((ip, mask)) => is_ipv4_str(ip) && mask.parse::<u8>().is_ok(),
     }
 }

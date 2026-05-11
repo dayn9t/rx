@@ -38,7 +38,7 @@ pub fn to_dir_string(path: impl AsRef<Path>) -> String {
 
 /// 配置目录
 pub fn config_dir_of(name: impl AsRef<str>) -> PathBuf {
-    dirs::config_dir().unwrap().join(&name.as_ref())
+    dirs::config_dir().unwrap().join(name.as_ref())
 }
 
 /// 创建上级目录，幂等
@@ -55,7 +55,7 @@ pub fn make_parent(path: impl AsRef<Path>) -> std::io::Result<()> {
 pub fn ensure_dir_exist(path: impl AsRef<Path>) -> std::io::Result<()> {
     let p = path.as_ref();
     if !p.exists() {
-        fs::create_dir_all(&p)?;
+        fs::create_dir_all(p)?;
     }
     if p.is_dir() {
         Ok(())
@@ -102,13 +102,13 @@ pub fn dirs_in(dir: impl AsRef<Path>) -> std::io::Result<Vec<PathBuf>> {
 /// 获取目录中目录名
 pub fn dir_names_in(dir: impl AsRef<Path>) -> std::io::Result<Vec<String>> {
     let v = dirs_in(dir)?;
-    let v: Vec<_> = v.iter().map(|p| file_name(p)).collect();
+    let v: Vec<_> = v.iter().map(file_name).collect();
     Ok(v)
 }
 
 /// 查找MTP设备目录
 pub fn mtp_dirs() -> std::io::Result<Vec<PathBuf>> {
-    dirs_in(&"/run/user/1000/gvfs")
+    dirs_in("/run/user/1000/gvfs")
 }
 
 /// 查找第一个目录(广度优先)
@@ -141,16 +141,13 @@ pub fn find_first_dir(
 /// 把一个目录的内容合并到另一个目录, 子目录不替换
 pub fn merge_dir(src: &Path, dst: &Path) -> std::io::Result<()> {
     if !src.is_dir() {
-        return Err(Error::new(ErrorKind::Other, "Source is not a directory"));
+        return Err(Error::other("Source is not a directory"));
     }
 
     if !dst.exists() {
         fs::create_dir_all(dst)?;
     } else if !dst.is_dir() {
-        return Err(Error::new(
-            ErrorKind::Other,
-            "Destination is not a directory",
-        ));
+        return Err(Error::other("Destination is not a directory"));
     }
 
     for entry_result in src.read_dir()? {
@@ -279,10 +276,10 @@ pub fn find_matching_dirs(root: &Path, pattern: &str) -> Vec<PathBuf> {
 
             if path.is_dir() {
                 // Check if directory name matches the regex pattern
-                if let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) {
-                    if regex.is_match(dir_name) {
-                        result.push(path.clone());
-                    }
+                if let Some(dir_name) = path.file_name().and_then(|n| n.to_str())
+                    && regex.is_match(dir_name)
+                {
+                    result.push(path.clone());
                 }
 
                 // Recursively search subdirectories

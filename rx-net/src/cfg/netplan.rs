@@ -123,7 +123,8 @@ impl NetplanCfg {
 
     /// 更新以太网
     fn _update_ethernets(&mut self, names: Vec<String>) -> AnyResult<()> {
-        if names.len() == self.network.ethernets.len() {}
+        names.len();
+        self.network.ethernets.len();
         Ok(())
     }
 }

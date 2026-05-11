@@ -23,7 +23,7 @@ impl DaoListClient {
     /// # 参数
     ///
     /// * `base_url` - API 的基础 URL（例如 "http://api.example.com/v1"）
-    ///                如果 URL 以斜杠结尾，该方法会自动移除末尾斜杠
+    ///   如果 URL 以斜杠结尾，该方法会自动移除末尾斜杠
     ///
     /// # 返回值
     ///
@@ -82,17 +82,17 @@ impl DaoListClient {
         params: Option<&HashMap<String, String>>,
     ) -> Result<Vec<T>, Error> {
         let mut url = format!("{}/{}", self.base_url, table_name);
-        
+
         // 如果有查询参数，手动构建带查询字符串的 URL
-        if let Some(p) = params {
-            if let Ok(mut parsed_url) = Url::parse(&url) {
-                for (key, value) in p {
-                    parsed_url.query_pairs_mut().append_pair(key, value);
-                }
-                url = parsed_url.to_string();
+        if let Some(p) = params
+            && let Ok(mut parsed_url) = Url::parse(&url)
+        {
+            for (key, value) in p {
+                parsed_url.query_pairs_mut().append_pair(key, value);
             }
+            url = parsed_url.to_string();
         }
-        
+
         let resp = self
             .client
             .get(&url)

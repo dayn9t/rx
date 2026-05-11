@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use rand::Rng;
+use rand::RngExt;
 
 /// 随机等待(秒)
 pub fn rand_wait_secs(max_delay: u64) {

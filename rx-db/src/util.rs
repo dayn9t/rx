@@ -8,7 +8,7 @@ use url::Url;
 
 pub fn remove_table(url: &str, name: &str) -> AnyResult<()> {
     let uri = Url::parse(url)?;
-    let r = match uri.scheme() {
+    match uri.scheme() {
         dirdb::SCHEME => {
             let db = DirDb::open(url)?;
             db.remove_table(name)?
@@ -19,12 +19,12 @@ pub fn remove_table(url: &str, name: &str) -> AnyResult<()> {
         }*/
         _ => return Err(anyhow!("Invalid scheme")),
     };
-    Ok(r)
+    Ok(())
 }
 
 pub fn remove_variant(url: &str, name: &str) -> AnyResult<()> {
     let uri = Url::parse(url)?;
-    let r = match uri.scheme() {
+    match uri.scheme() {
         dirdb::SCHEME => {
             let db = DirDb::open(url)?;
             db.remove_variant(name)?
@@ -35,5 +35,5 @@ pub fn remove_variant(url: &str, name: &str) -> AnyResult<()> {
         }*/
         _ => return Err(anyhow!("Invalid scheme")),
     };
-    Ok(r)
+    Ok(())
 }

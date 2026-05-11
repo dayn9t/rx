@@ -101,7 +101,7 @@ impl DirDb {
     where
         Self: Sized,
     {
-        fs::ensure_dir_exist(&db_path)?;
+        fs::ensure_dir_exist(db_path)?;
         Ok(DirDb {
             path: db_path.to_path_buf(),
         })
@@ -121,14 +121,14 @@ impl DirDb {
         if path.exists() && !path.is_file() {
             return Err(anyhow!("File path not file"));
         }
-        Ok(fs::remove(&path)?)
+        Ok(fs::remove(path)?)
     }
 
     pub fn remove_dir(path: &Path) -> AnyResult<()> {
         if path.exists() && !path.is_dir() {
             return Err(anyhow!("File path not dir"));
         }
-        Ok(fs::remove(&path)?)
+        Ok(fs::remove(path)?)
     }
 }
 

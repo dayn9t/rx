@@ -9,8 +9,8 @@ use crate::api::common::Object;
 use std::process;
 use tokio::time::sleep;
 
-const ALL_ADDR: &'static str = "0.0.0.0";
-const LOCAL_ADDR: &'static str = "127.0.0.1";
+const ALL_ADDR: &str = "0.0.0.0";
+const LOCAL_ADDR: &str = "127.0.0.1";
 
 /// Endpoint信息
 #[derive(Object, Debug, Clone, Serialize, Deserialize)]
@@ -32,7 +32,7 @@ impl Default for Endpoint {
 
 impl Display for Endpoint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{}:{}", &self.host, &self.port))
+        write!(f, "{}:{}", self.host, self.port)
     }
 }
 
@@ -67,7 +67,7 @@ impl Default for ApiCfg {
 
 impl ApiCfg {
     pub fn url(&self, scheme: &str) -> String {
-        format!("{}://{}/{}", scheme, self.endpoint.to_string(), &self.root)
+        format!("{}://{}/{}", scheme, self.endpoint, self.root)
     }
 
     pub fn http_url(&self) -> String {

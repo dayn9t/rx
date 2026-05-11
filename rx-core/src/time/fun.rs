@@ -4,7 +4,7 @@ use chrono::format::strftime::StrftimeItems;
 
 /// 获取纪元到现在秒数
 pub fn secs_since_epoch() -> f64 {
-    now().and_utc().timestamp_nanos_opt().unwrap() as f64 / 1000_000_000.0
+    now().and_utc().timestamp_nanos_opt().unwrap() as f64 / 1_000_000_000.0
 }
 
 /// 获取纪元到现在纳秒数

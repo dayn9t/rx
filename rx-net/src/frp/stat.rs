@@ -23,6 +23,12 @@ pub struct TimeStat {
     exclude: String,
 }
 
+impl Default for TimeStat {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TimeStat {
     pub fn new() -> Self {
         TimeStat {
@@ -92,7 +98,7 @@ impl TimeStat {
             .find(|(_, range)| range.start > start_time)
             .map(|(name, range)| NodeStat {
                 name: name.clone(),
-                time_range: range.clone(),
+                time_range: *range,
             })
             .into_iter()
             .collect()
@@ -102,7 +108,7 @@ impl TimeStat {
             .iter()
             .map(|(name, range)| NodeStat {
                 name: name.clone(),
-                time_range: range.clone(),
+                time_range: *range,
             })
             .collect()
     }

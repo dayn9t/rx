@@ -35,19 +35,15 @@ impl<T: DeserializeOwned> MqttReceiver<T> {
 
         for notification in connection.iter() {
             match notification {
-                Ok(Event::Incoming(incoming)) => match incoming {
-                    Incoming::Publish(p) => {
-                        let msg_str = std::str::from_utf8(&p.payload).unwrap();
-                        //info!("Received: {:?}", msg_str);
-                        match json::from_str(msg_str) {
-                            Ok(msg) => self.sender.send(msg).unwrap(),
-                            Err(e) => {
-                                error!("Load: {:?}  error: {:?}", msg_str, e);
-                            }
+                Ok(Event::Incoming(Incoming::Publish(p))) => {
+                    let msg_str = std::str::from_utf8(&p.payload).unwrap();
+                    match json::from_str(msg_str) {
+                        Ok(msg) => self.sender.send(msg).unwrap(),
+                        Err(e) => {
+                            error!("Load: {:?}  error: {:?}", msg_str, e);
                         }
                     }
-                    _ => {}
-                },
+                }
                 Err(e) => {
                     error!("Error: {:?}", e);
                 }

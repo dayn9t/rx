@@ -109,9 +109,9 @@ impl<'de> Deserialize<'de> for ClockTime {
     }
 }
 
-impl Into<NaiveTime> for ClockTime {
-    fn into(self) -> NaiveTime {
-        NaiveTime::from_hms_opt(self.hour(), self.minute(), self.second()).unwrap()
+impl From<ClockTime> for NaiveTime {
+    fn from(val: ClockTime) -> Self {
+        NaiveTime::from_hms_opt(val.hour(), val.minute(), val.second()).unwrap()
     }
 }
 

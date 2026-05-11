@@ -23,7 +23,7 @@ impl ApiClientJson {
         let path = path.as_ref();
         let client = blocking::Client::new();
         let response = client
-            .get(&format!("{}{}", self.url_base, path))
+            .get(format!("{}{}", self.url_base, path))
             .header(ACCEPT, "text/json")
             .send()?
             .text()?;

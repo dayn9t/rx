@@ -38,8 +38,8 @@ impl Period {
 
     /// 创建时间段 - 根据可选时间
     pub fn option_datetime(start: &Option<NaiveDateTime>, end: &Option<NaiveDateTime>) -> Period {
-        let start = timestamp_or(&start, Timestamp::min_value());
-        let end = timestamp_or(&end, Timestamp::max_value());
+        let start = timestamp_or(start, Timestamp::min_value());
+        let end = timestamp_or(end, Timestamp::max_value());
 
         Self::new(start, end)
     }
@@ -68,6 +68,11 @@ impl Period {
         self.end - self.start
     }
 
+    /// 时间段是否为空
+    pub fn is_empty(&self) -> bool {
+        self.end == self.start
+    }
+
     /// 时间段是否有效
     pub fn valid(&self) -> bool {
         self.end >= self.start
@@ -90,20 +95,20 @@ impl Period {
     }
 }
 
-impl Into<Period> for Range<Timestamp> {
-    fn into(self) -> Period {
+impl From<Range<Timestamp>> for Period {
+    fn from(val: Range<Timestamp>) -> Self {
         Period {
-            start: self.start,
-            end: self.end,
+            start: val.start,
+            end: val.end,
         }
     }
 }
 
-impl Into<Range<Timestamp>> for Period {
-    fn into(self) -> Range<Timestamp> {
+impl From<Period> for Range<Timestamp> {
+    fn from(val: Period) -> Self {
         Range {
-            start: self.start,
-            end: self.end,
+            start: val.start,
+            end: val.end,
         }
     }
 }
