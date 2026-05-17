@@ -44,6 +44,10 @@ pub struct AppInfo {
     pub name: String,
     /// 厂商信息
     pub vendor: String,
+
+    /// 解决方案
+    pub solution: String,
+
     /// 应用程序表述信息
     pub about: String,
     /// 包信息
@@ -52,10 +56,17 @@ pub struct AppInfo {
 
 impl AppInfo {
     /// 创建引用程序信息
-    pub fn new(name: &str, vendor: &str, about: &str, package: PackageInfo) -> AppInfo {
+    pub fn new(
+        name: &str,
+        vendor: &str,
+        solution: &str,
+        about: &str,
+        package: PackageInfo,
+    ) -> AppInfo {
         AppInfo {
             name: name.to_owned(),
             vendor: vendor.to_owned(),
+            solution: solution.to_owned(),
             about: about.to_owned(),
             package,
         }
