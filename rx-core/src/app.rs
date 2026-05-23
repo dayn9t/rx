@@ -44,10 +44,8 @@ pub struct AppInfo {
     pub name: String,
     /// 厂商信息
     pub vendor: String,
-
     /// 解决方案
     pub solution: String,
-
     /// 应用程序表述信息
     pub about: String,
     /// 包信息
