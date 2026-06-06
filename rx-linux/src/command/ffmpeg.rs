@@ -11,6 +11,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "requires ffmpeg installed"]
     fn test_ffmpeg() {
         let args = "-version";
         let output = ffmpeg(args);
