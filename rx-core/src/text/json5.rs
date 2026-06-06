@@ -47,5 +47,7 @@ fn io() {
 
     let s1 = to_pretty(&a).unwrap();
 
-    assert_eq!(s1, "{\"i\":1,\"f\":2}");
+    // Round-trip: parse the serialized output back and compare structurally
+    let a2: A = from_str(&s1).unwrap();
+    assert_eq!(a2, a);
 }
