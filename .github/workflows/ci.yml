@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Remove broken symlinks
+        run: find . -type l ! -exec test -e {} \; -delete
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
