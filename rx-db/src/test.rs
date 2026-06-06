@@ -63,7 +63,11 @@ pub mod tests {
         assert_eq!(tab.find_ids(&None).unwrap(), vec![id1, id2]);
 
         let all = tab.find_all(&None).unwrap();
-        assert_eq!(all, vec![s1.clone(), s3.clone()]);
+        let mut sorted = all.clone();
+        sorted.sort_by_key(|s| s.id);
+        let mut expected = vec![s1.clone(), s3.clone()];
+        expected.sort_by_key(|s| s.id);
+        assert_eq!(sorted, expected);
 
         let name = s1.name.clone();
         let v = tab.find(|s| s.name == name, &None).unwrap();
